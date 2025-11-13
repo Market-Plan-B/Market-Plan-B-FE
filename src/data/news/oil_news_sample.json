@@ -1,0 +1,174 @@
+{
+  "미국": [
+    {
+      "country": "미국",
+      "title": "US crude oil inventories fall sharply as net imports hit record low, EIA says",
+      "level": "높음",
+      "desc": "미국 상업용 원유 재고가 약 930만 배럴 감소하면서 시장 예상치를 크게 하회했습니다. EIA 주간 보고서에 따르면 원유 순수입이 사상 최저 수준으로 떨어졌고, 이는 정제 마진 강세와 함께 공급 압박을 가중시키는 요인이 되고 있습니다. 전문가들은 이번 재고 감소가 단기적으로 WTI 가격을 지지할 것으로 보고 있습니다.",
+      "url": "https://www.reuters.com/business/energy/us-crude-inventories-fall-sharply-net-imports-hit-record-low-eia-says-2025-09-17/"
+    },
+    {
+      "country": "미국",
+      "title": "US crude stocks, fuel inventories fall on higher demand, EIA says",
+      "level": "중간",
+      "desc": "EIA 데이터에 따르면 미국의 원유 재고가 240만 배럴가량 감소했습니다. 여름철 운전 시즌의 수요 회복과 정제소 가동률 상승이 맞물리며 연료 재고도 함께 줄었습니다. 전문가들은 최근 수요 회복세가 유가에 점진적인 상승 압력을 가할 가능성이 높다고 평가했습니다.",
+      "url": "https://www.reuters.com/business/energy/us-crude-stocks-fuel-inventories-fall-higher-demand-eia-says-2025-08-27/"
+    }
+  ],
+  "중국": [
+    {
+      "country": "중국",
+      "title": "China keeps building crude oil stockpiles even as processing gains",
+      "level": "높음",
+      "desc": "중국이 정제소 가동률을 늘리고 있음에도 불구하고 원유 비축을 계속 늘리고 있습니다. 산둥성 독립 정유소들의 수입 증가와 국가비축량 확대가 맞물리며 8개월 만에 최고 수준의 재고를 기록했습니다. 이는 향후 글로벌 원유 수급 균형에 영향을 미칠 가능성이 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/china-keeps-building-crude-oil-stockpiles-even-processing-gains-2025-09-15/"
+    },
+    {
+      "country": "중국",
+      "title": "Asia crude oil imports surge in August, but is it demand or prices",
+      "level": "높음",
+      "desc": "8월 아시아 지역의 원유 수입이 급증했으며, 그중 중국이 전체 증가분의 절반 이상을 차지했습니다. 전문가들은 이는 실질적인 수요 증가보다는 가격 하락기에 선매수한 영향일 가능성이 높다고 분석했습니다. 다만 중국 내 내수 소비와 수출 회복이 동시에 이어질 경우 지속적인 수입 증가로 이어질 수 있다는 전망도 나옵니다.",
+      "url": "https://www.reuters.com/markets/commodities/asia-crude-oil-imports-surge-august-is-it-demand-or-prices-2025-09-02/"
+    },
+    {
+      "country": "중국",
+      "title": "China keeps building crude oil stockpiles even as processing gains",
+      "level": "높음",
+      "desc": "중국이 정제소 가동률을 늘리고 있음에도 불구하고 원유 비축을 계속 늘리고 있습니다. 산둥성 독립 정유소들의 수입 증가와 국가비축량 확대가 맞물리며 8개월 만에 최고 수준의 재고를 기록했습니다. 이는 향후 글로벌 원유 수급 균형에 영향을 미칠 가능성이 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/china-keeps-building-crude-oil-stockpiles-even-processing-gains-2025-09-15/"
+    },
+    {
+      "country": "중국",
+      "title": "Asia crude oil imports surge in August, but is it demand or prices",
+      "level": "중간",
+      "desc": "8월 아시아 지역의 원유 수입이 급증했으며, 그중 중국이 전체 증가분의 절반 이상을 차지했습니다. 전문가들은 이는 실질적인 수요 증가보다는 가격 하락기에 선매수한 영향일 가능성이 높다고 분석했습니다. 다만 중국 내 내수 소비와 수출 회복이 동시에 이어질 경우 지속적인 수입 증가로 이어질 수 있다는 전망도 나옵니다.",
+      "url": "https://www.reuters.com/markets/commodities/asia-crude-oil-imports-surge-august-is-it-demand-or-prices-2025-09-02/"
+    }
+  ],
+  "인도": [
+    {
+      "country": "인도",
+      "title": "India’s fuel demand in May hit highest in over a year",
+      "level": "중간",
+      "desc": "인도의 5월 연료 소비량이 전년 대비 7% 이상 증가하며 최근 1년 중 최고 수준을 기록했습니다. 이는 경제 회복세와 여름철 냉방 수요 증가, 물류 활동 재개가 복합적으로 작용한 결과로 분석됩니다. 정부는 향후 수입 의존도 감소를 위해 정제시설 현대화 및 석유 대체연료 정책을 강화하고 있습니다.",
+      "url": "https://www.reuters.com/world/india/indias-fuel-demand-may-hit-highest-over-year-2025-06-06/"
+    },
+    {
+      "country": "인도",
+      "title": "India fuel exports surge to multi-year highs on higher refinery runs, ethanol blending",
+      "level": "중간",
+      "desc": "인도의 정유소 가동률이 96%를 돌파하며 석유제품 수출이 다년간 최고치를 기록했습니다. 에탄올 혼합 정책의 확대와 글로벌 정제마진 개선이 맞물리며 수출 물량이 급증한 것입니다. 시장 전문가들은 인도가 향후 아시아 정제 시장 내 주요 수출국으로 자리잡을 가능성이 높다고 분석했습니다.",
+      "url": "https://www.reuters.com/business/energy/india-fuel-exports-surge-multi-year-highs-higher-refinery-runs-ethanol-blending-2025-09-24/"
+    }
+  ],
+  "이란": [
+    {
+      "country": "이란",
+      "title": "Iran adapts to maintain oil exports during conflict, trackers say",
+      "level": "중간",
+      "desc": "이란은 지정학적 긴장이 고조되는 가운데도 원유 수출을 유지하기 위해 다양한 우회 경로를 활용하고 있습니다. 해상 AIS 신호 조작과 환적 방식 다변화를 통해 제재 회피를 지속하고 있으며, 최근 몇 달간 아시아로의 공급량은 오히려 증가했습니다. 이러한 조치는 단기적으로 글로벌 공급 과잉 우려를 완화하는 역할을 하고 있습니다.",
+      "url": "https://www.reuters.com/business/energy/iran-adapts-maintain-oil-exports-during-conflict-trackers-say-2025-06-19/"
+    },
+    {
+      "country": "이란",
+      "title": "Iran oil doomsday in Hormuz may be more fear than reality",
+      "level": "중간",
+      "desc": "호르무즈 해협 봉쇄 가능성에 대한 우려가 커지고 있지만, 시장 전문가들은 실제 차단 가능성은 낮다고 보고 있습니다. 이란은 해협 긴장을 외교적 카드로 활용하고 있으나, 주요 수출 경로는 여전히 안정적으로 운영되고 있습니다. 단기적 유가 급등은 제한적일 것으로 보이며, 지정학적 리스크 프리미엄만이 남을 가능성이 큽니다.",
+      "url": "https://www.reuters.com/markets/commodities/iran-oil-doomsday-hormuz-may-be-more-fear-than-reality-bousso-2025-06-22/"
+    }
+  ],
+  "독일": [
+    {
+      "country": "독일",
+      "title": "Germany’s higher gas use hampers Europe’s stockpiling drive",
+      "level": "중간",
+      "desc": "독일의 천연가스 소비가 예상보다 빠르게 늘어나면서 EU 전체의 가스 비축률 목표 달성이 지연되고 있습니다. 산업 생산 회복과 냉동물류 전력 수요 증가가 주요 원인으로 꼽히며, 이는 에너지 가격 불안을 다시 자극할 수 있습니다. 유럽 내에서는 독일의 과도한 사용이 공동 에너지 안보 전략에 부담이 되고 있다는 지적도 나오고 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/germanys-higher-gas-use-hampers-europes-stockpiling-drive-2025-11-05/"
+    },
+    {
+      "country": "독일",
+      "title": "Key energy and output data to track as Germany charts economic revival",
+      "level": "중간",
+      "desc": "독일의 산업 생산 및 에너지 사용 지표가 경기 회복세를 평가하는 핵심 자료로 주목받고 있습니다. 제조업 활동이 예상보다 빠르게 반등했지만, 전력 단가 상승이 수출 경쟁력에 부담을 주고 있습니다. 정부는 재생에너지 전환 속도를 높이는 동시에 산업 지원 정책을 병행할 방침을 내놨습니다.",
+      "url": "https://www.reuters.com/markets/commodities/key-energy-output-data-track-germany-charts-economic-revival-maguire-2025-02-25/"
+    }
+  ],
+  "영국": [
+    {
+      "country": "영국",
+      "title": "UK oil and gas investment set to rise despite climate goals",
+      "level": "중간",
+      "desc": "영국이 기후 목표에도 불구하고 석유 및 가스 분야에 대한 투자를 확대할 계획입니다. 정부는 에너지 안보와 경제 회복을 위해 북해 유전 개발을 촉진하고 있으며, 이는 단기적으로 국내 생산량 증가로 이어질 전망입니다. 다만 장기적인 탄소 감축 목표와의 균형을 맞추는 것이 과제로 남아 있습니다.",
+      "url": "https://www.reuters.com/business/energy/uk-oil-gas-investment-set-rise-despite-climate-goals-2025-10-10/"
+    },
+    {
+      "country": "영국",
+      "title": "UK energy prices ease as gas supply outlook improves",
+      "level": "중간",
+      "desc": "영국의 에너지 가격이 최근 완화되는 추세를 보이고 있습니다. 천연가스 공급 전망이 개선되면서 전력 및 가스 요금이 하락세를 나타내고 있으며, 이는 가계 부담 경감에 긍정적인 영향을 미치고 있습니다. 전문가들은 향후 글로벌 에너지 시장 동향에 따라 가격 변동성이 여전히 존재할 것으로 보고 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/uk-energy-prices-ease-gas-supply-outlook-improves-2025-09-30/"
+    }
+  ],
+  "러시아": [
+    {
+      "country": "러시아",
+      "title": "1Russia’s oil exports hold steady despite Western sanctions",
+      "level": "긴급",
+      "desc": "서방의 제재에도 불구하고 러시아의 원유 수출이 안정적인 수준을 유지하고 있습니다. 아시아 시장으로의 수출 확대와 우회 경로 활용이 주요 요인으로 작용하고 있으며, 이는 글로벌 원유 공급에 중요한 변수로 작용하고 있습니다. 전문가들은 러시아의 수출 전략이 향후 유가 변동성에 큰 영향을 미칠 것으로 전망합니다.",
+      "url": "https://www.reuters.com/business/energy/russias-oil-exports-hold-steady-despite-western-sanctions-2025-08-15/"
+    },
+    {
+      "country": "러시아",
+      "title": "2Russia’s oil output seen stabilizing as producers adapt to sanctions",
+      "level": "중간",
+      "desc": "러시아의 원유 생산량이 제재에 적응하면서 안정화될 것으로 예상됩니다. 주요 산유 기업들이 기술적 조정과 새로운 시장 개척을 통해 생산 차질을 최소화하고 있으며, 이는 글로벌 공급 안정성에 긍정적인 신호로 해석됩니다. 다만 장기적인 제재 영향은 여전히 불확실한 요소로 남아 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/russias-oil-output-seen-stabilizing-producers-adapt-sanctions-2025-07-10/"
+    },
+    {
+      "country": "러시아",
+      "title": "3Russia’s oil exports hold steady despite Western sanctions",
+      "level": "긴급",
+      "desc": "서방의 제재에도 불구하고 러시아의 원유 수출이 안정적인 수준을 유지하고 있습니다. 아시아 시장으로의 수출 확대와 우회 경로 활용이 주요 요인으로 작용하고 있으며, 이는 글로벌 원유 공급에 중요한 변수로 작용하고 있습니다. 전문가들은 러시아의 수출 전략이 향후 유가 변동성에 큰 영향을 미칠 것으로 전망합니다.",
+      "url": "https://www.reuters.com/business/energy/russias-oil-exports-hold-steady-despite-western-sanctions-2025-08-15/"
+    },
+    {
+      "country": "러시아",
+      "title": "4Russia’s oil output seen stabilizing as producers adapt to sanctions",
+      "level": "높음",
+      "desc": "러시아의 원유 생산량이 제재에 적응하면서 안정화될 것으로 예상됩니다. 주요 산유 기업들이 기술적 조정과 새로운 시장 개척을 통해 생산 차질을 최소화하고 있으며, 이는 글로벌 공급 안정성에 긍정적인 신호로 해석됩니다. 다만 장기적인 제재 영향은 여전히 불확실한 요소로 남아 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/russias-oil-output-seen-stabilizing-producers-adapt-sanctions-2025-07-10/"
+    }
+  ],
+  "사우디아라비아": [
+    {
+      "country": "사우디아라비아",
+      "title": "Saudi Arabia to maintain oil output cuts into next year",
+      "level": "높음",
+      "desc": "사우디아라비아가 내년까지 원유 생산 감축을 유지할 계획입니다. OPEC+ 협의체의 일환으로 수급 균형을 맞추기 위한 조치로, 이는 글로벌 유가 안정에 기여할 것으로 기대됩니다. 전문가들은 이러한 결정이 단기적으로 유가 상승 압력을 가할 수 있다고 분석합니다.",
+      "url": "https://www.reuters.com/business/energy/saudi-arabia-maintain-oil-output-cuts-into-next-year-2025-11-01/"
+    },
+    {
+      "country": "사우디아라비아",
+      "title": "Saudi Arabia’s energy transition plans amid oil market shifts",
+      "level": "중간",
+      "desc": "사우디아라비아가 에너지 전환 계획을 추진하면서도 원유 시장 변화에 대응하고 있습니다. 재생에너지 투자 확대와 탄소 배출 감축 목표를 설정하는 한편, 석유 산업의 경쟁력 강화를 위한 전략도 병행하고 있습니다. 이는 장기적인 경제 다변화와 지속 가능한 발전을 위한 중요한 단계로 평가됩니다.",
+      "url": "https://www.reuters.com/markets/commodities/saudi-arabias-energy-transition-plans-amid-oil-market-shifts-2025-10-20/"
+    }
+  ],
+  "한국": [
+    {
+      "country": "한국",
+      "title": "South Korea’s oil demand rebounds as economy recovers",
+      "level": "중간",
+      "desc": "한국의 원유 수요가 경제 회복과 함께 반등하고 있습니다. 산업 생산 증가와 수출 호조가 맞물리며 연료 소비가 늘어나고 있으며, 이는 정제 마진 개선으로 이어지고 있습니다. 전문가들은 이러한 수요 회복이 유가에 긍정적인 영향을 미칠 것으로 전망합니다.",
+      "url": "https://www.reuters.com/world/asia-pacific/south-koreas-oil-demand-rebounds-economy-recovers-2025-09-12/"
+    },
+    {
+      "country": "한국",
+      "title": "South Korea’s energy transition amid rising oil prices",
+      "level": "중간",
+      "desc": "한국이 상승하는 원유 가격 속에서 에너지 전환 정책을 강화하고 있습니다. 재생에너지 투자 확대와 에너지 효율성 향상을 위한 다양한 정책이 추진되고 있으며, 이는 장기적인 에너지 안보와 환경 목표 달성에 기여할 것으로 기대됩니다. 전문가들은 이러한 변화가 국내 에너지 시장에 긍정적인 영향을 미칠 것으로 보고 있습니다.",
+      "url": "https://www.reuters.com/markets/commodities/south-koreas-energy-transition-amid-rising-oil-prices-2025-08-30/"
+    }
+  ]
+}
