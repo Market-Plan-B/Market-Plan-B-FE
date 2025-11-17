@@ -1,30 +1,43 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+    <div class="min-h-screen bg-[#f9fafc] font-['Pretendard'] flex">
+        <Sidebar @sidebar-hover="handleSidebarHover" />
+
+        <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
+            :style="{ marginLeft: isExpanded ? '13rem' : '4rem' }">
+            <main class="flex-1 overflow-y-auto p-8">
+                <router-view />
+            </main>
+        </div>
+    </div>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+<script setup>
+import { ref } from "vue";
+import Sidebar from "@/components/Sidebar.vue";
+
+const isExpanded = ref(false);
+
+function handleSidebarHover(state) {
+    isExpanded.value = state;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+</script>
+
+<style>
+body {
+    margin: 0;
+    background: #f9fafc;
+    display: block;
+    min-height: 100vh;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+html {
+    height: 100%;
+}
+
+#app {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100%;
 }
 </style>
