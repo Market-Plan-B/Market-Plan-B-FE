@@ -1,47 +1,38 @@
 <template>
     <div id="map-wrapper"
         class="relative w-full h-[520px] rounded-2xl border border-slate-200 bg-gray-100 shadow-sm overflow-visible">
-        <!-- 🗺️ 지도 -->
         <div ref="mapContainer" id="map" class="absolute inset-0 w-full h-full z-0"></div>
-        <!-- 🔥 국가별 위험도 표시 박스 -->
+
         <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md border border-gray-200 
            rounded-xl shadow-md p-4 w-[220px] z-20">
 
             <h3 class="text-sm font-bold text-gray-700 mb-2">국가별 위험도 요약</h3>
 
-            <!-- 긴급 -->
             <div v-if="urgentList.length" class="mb-2">
                 <div class="text-xs font-semibold mb-1">🟥 긴급</div>
                 <div class="text-xs text-gray-800">{{ urgentList.join(', ') }}</div>
             </div>
 
-            <!-- 높음 -->
             <div v-if="highList.length" class="mb-2">
                 <div class="text-xs font-semibold mb-1">🟧 높음</div>
                 <div class="text-xs text-gray-800">{{ highList.join(', ') }}</div>
             </div>
 
-            <!-- 중간 -->
             <div v-if="midList.length">
                 <div class="text-xs font-semibold mb-1">🟨 중간</div>
                 <div class="text-xs text-gray-800">{{ midList.join(', ') }}</div>
             </div>
         </div>
 
-        <!-- 📰 중앙 고정 뉴스 모달 -->
         <transition name="fade-zoom">
             <div v-if="selectedCountry">
-                <!-- 🧱 기존 모달 카드 (스타일 그대로 유지) -->
                 <div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
-             bg-white rounded-3xl shadow-2xl border border-gray-200
-             w-[420px] h-[500px] p-6 flex flex-col justify-between items-center
-             backdrop-blur-md z-50">
-                    <!-- ✖ 닫기 버튼 -->
+                    bg-white rounded-3xl shadow-2xl border border-gray-200
+                    w-[420px] h-[500px] p-6 flex flex-col justify-between items-center
+                    backdrop-blur-md z-50">
                     <button @click="closeModal" class="absolute top-3 right-4
-           text-gray-500 hover:text-gray-800 text-lg font-bold
-           transition cursor-pointer">
-                        ✕
-                    </button>
+                        text-gray-500 hover:text-gray-800 text-lg font-bold
+                        transition cursor-pointer">✕</button>
 
                     <h2 class="font-extrabold text-2xl mb-3 text-gray-900 text-center">
                         {{ selectedCountry.name }} 주요 뉴스
@@ -52,8 +43,11 @@
                             class="w-full h-full flex justify-center items-center">
                             <div v-for="(news, i) in [selectedCountry.articles[currentIndex]]" :key="i"
                                 class="w-full h-[460px] bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-inner overflow-y-auto">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h3 class="text-[16px] font-semibold text-gray-900 text-left">{{ news.title }}</h3>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-[16px] font-semibold text-gray-900 text-left leading-snug">
+                                        {{ news.title }}
+                                    </h3>
+
                                     <span
                                         class="text-xs px-2 py-0.5 rounded-full border font-semibold inline-flex items-center justify-center"
                                         :style="{
@@ -71,9 +65,6 @@
                                                     : news.level === '중간'
                                                         ? '#ffd43b'
                                                         : '#111827',
-                                            whiteSpace: 'nowrap',
-                                            writingMode: 'horizontal-tb',
-                                            textOrientation: 'mixed',
                                         }">
                                         {{ news.level }}
                                     </span>
@@ -82,32 +73,38 @@
                                 <p class="text-[13px] text-gray-700 mb-3 leading-snug text-left">
                                     {{ news.desc }}
                                 </p>
-                                <a :href="news.url" target="_blank" rel="noopener noreferrer"
-                                    class="text-[14px] font-semibold text-orange-600 hover:underline">
-                                    자세히 보기 →
-                                </a>
+
+                                <div class="flex justify-between items-center mt-4">
+                                    <a :href="news.url" target="_blank" rel="noopener noreferrer"
+                                        class="text-[7px] text-orange-600 hover:underline text-left">
+                                        원본 Link →
+                                    </a>
+                                    <p class="text-xs text-gray-500 text-right">
+                                        📅 {{ news.date }}
+                                    </p>
+                                </div>
                             </div>
+
                         </transition-group>
 
-                        <!-- 슬라이드 버튼 -->
                         <button @click="prevSlide" class="absolute left-1 top-1/2 -translate-y-1/2
-                 bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                 border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                 shadow-sm text-gray-700 hover:text-orange-500 transition-all duration-200">
+                            bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
+                            border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
+                            shadow-sm text-gray-700 hover:text-orange-500 transition-all">
                             ‹
                         </button>
 
                         <button @click="nextSlide" class="absolute right-1 top-1/2 -translate-y-1/2
-                 bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                 border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                 shadow-sm text-gray-700 hover:text-orange-500 transition-all duration-200">
+                            bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
+                            border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
+                            shadow-sm text-gray-700 hover:text-orange-500 transition-all">
                             ›
                         </button>
                     </div>
 
                     <div class="flex justify-center gap-2 pt-4">
                         <span v-for="(n, i) in selectedCountry.articles.length" :key="i"
-                            class="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                            class="w-2.5 h-2.5 rounded-full transition-all"
                             :class="i === currentIndex ? 'bg-orange-500' : 'bg-gray-300'"></span>
                     </div>
                 </div>
@@ -123,20 +120,14 @@ import { ref, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import maplibregl from "maplibre-gl";
 import newsData from "@/data/news/oil_news_sample.json";
 
-// 뉴스 영향도 데이터 보관용
 const newsLevelMap = ref<Record<string, string | null>>({});
-
-// API Key 설정
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
-if (!MAPTILER_KEY) alert("❌ MapTiler API Key 누락 (.env 확인)");
 
-// 상태 관리
 const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
 const selectedCountry = ref<any | null>(null);
 const currentIndex = ref(0);
 
-// 주요 국가 정의 (단일 구조)
 const countries = [
     { name: "미국", key: "미국", iso: "USA" },
     { name: "중국", key: "중국", iso: "CHN" },
@@ -148,7 +139,7 @@ const countries = [
     { name: "영국", key: "영국", iso: "GBR" },
     { name: "한국", key: "한국", iso: "KOR" }
 ];
-// ⚠️ 위험도 리스트 계산
+
 const urgentList = computed(() =>
     countries.filter(c => newsLevelMap.value[c.key] === "긴급").map(c => c.name)
 );
@@ -172,56 +163,47 @@ async function initMap() {
     const map = new maplibregl.Map({
         container: mapContainer.value,
         style: `https://api.maptiler.com/maps/pastel/style.json?key=${MAPTILER_KEY}`,
-        center: [140, 45],   // ← 아시아 중심
-        zoom: 1.2,             // ← 적당한 줌
+        center: [140, 45],
+        zoom: 1.2,
         attributionControl: false,
     });
 
     map.on("style.load", async () => {
-        console.log("✅ MapLibre 지도 로드 완료");
-
-        // 1️⃣ GeoJSON 로드
         const geoData = await fetch(
             "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
         ).then((r) => r.json());
 
-        // 2️⃣ 뉴스 영향도 계산
         const priority = { 긴급: 3, 높음: 2, 중간: 1 };
+
         Object.keys(newsData).forEach(country => {
             const articles = newsData[country] || [];
-            if (!articles.length) {
-                newsLevelMap.value[country] = null;
-            } else {
+            if (!articles.length) newsLevelMap.value[country] = null;
+            else {
                 const top = articles.sort(
                     (a, b) => (priority[b.level] || 0) - (priority[a.level] || 0)
                 )[0];
                 newsLevelMap.value[country] = top.level;
             }
         });
-        console.table(newsLevelMap);
 
-        // 3️⃣ 색상 함수
-        function getColorByLevel(level) {
+        const getColorByLevel = (level) => {
             if (level === "긴급") return "#ff3b3b";
             if (level === "높음") return "#ff9f1c";
             if (level === "중간") return "#ffd43b";
             return "transparent";
-        }
+        };
 
-        // 4️⃣ ISO 코드 → 색상 매핑 생성
         const isoColorMatch = countries.flatMap((c) => [
             c.iso,
             getColorByLevel(newsLevelMap.value[c.key] || null)
         ]);
 
-        // 5️⃣ 데이터 소스 등록
         map.addSource("world-borders", {
             type: "geojson",
             data: geoData,
             generateId: true,
         });
 
-        // 6️⃣ Fill Layer
         map.addLayer({
             id: "country-fill",
             type: "fill",
@@ -237,7 +219,6 @@ async function initMap() {
             },
         });
 
-        // 7️⃣ Outline Layer
         map.addLayer({
             id: "country-outline",
             type: "line",
@@ -249,7 +230,6 @@ async function initMap() {
             },
         });
 
-        // 8️⃣ Hover layer
         map.addLayer({
             id: "country-highlight",
             type: "line",
@@ -276,7 +256,6 @@ async function initMap() {
             },
         });
 
-        // 9️⃣ Hover 이벤트
         let hoveredId = null;
         map.on("mousemove", "country-fill", (e) => {
             if (e.features?.length) {
@@ -298,31 +277,22 @@ async function initMap() {
             map.getCanvas().style.cursor = "";
         });
 
-        // 🔥 10️⃣ 클릭 시 한국어 국가명 매핑 필요 없음 (countryMap 제거)
-        // 단일 구조만으로 바로 targetCountry 찾기
         map.on("click", "country-fill", (e) => {
             if (!e.features?.length) return;
 
             const isoCode = e.features[0].properties["ISO3166-1-Alpha-3"];
             const targetCountry = countries.find((c) => c.iso === isoCode);
 
-            if (targetCountry) {
-                openModal(targetCountry);
-            }
+            if (targetCountry) openModal(targetCountry);
         });
     });
 
     mapInstance.value = map;
 }
 
-
-// 뉴스 모달 로직
 function openModal(country) {
     const newsList = newsData[country.key];
-    if (!newsList || newsList.length === 0) {
-        console.warn(`⚠️ ${country.name} 뉴스 없음`);
-        return;
-    }
+    if (!newsList || newsList.length === 0) return;
 
     const priority = { 긴급: 3, 높음: 2, 중간: 1 };
     const sorted = [...newsList].sort(
@@ -354,6 +324,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+
 <style>
 #map-wrapper {
     position: relative;
@@ -362,19 +333,16 @@ onBeforeUnmount(() => {
     background-color: #e5ebf2;
 }
 
-/* 🪟 모달 애니메이션 */
+/* 모달 애니메이션 */
 .fade-zoom-enter-active,
 .fade-zoom-leave-active {
     transition: opacity 0.25s ease;
-    /* opacity만 부드럽게 */
 }
 
 .fade-zoom-enter-from,
 .fade-zoom-leave-to {
     opacity: 0;
-    /* 페이드 효과만 남김 */
 }
-
 
 .slide-x-enter-active,
 .slide-x-leave-active {

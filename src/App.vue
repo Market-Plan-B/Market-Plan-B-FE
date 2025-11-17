@@ -1,9 +1,7 @@
 <template>
     <div class="min-h-screen bg-[#f9fafc] font-['Pretendard'] flex">
-        <!-- 🧭 사이드바 -->
         <Sidebar @sidebar-hover="handleSidebarHover" />
 
-        <!-- 🧩 메인 영역 -->
         <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
             :style="{ marginLeft: isExpanded ? '13rem' : '4rem' }">
             <main class="flex-1 overflow-y-auto p-8">
@@ -17,7 +15,6 @@
 import { ref } from "vue";
 import Sidebar from "@/components/Sidebar.vue";
 
-// hover 이벤트로부터 확장 상태 받기
 const isExpanded = ref(false);
 
 function handleSidebarHover(state) {

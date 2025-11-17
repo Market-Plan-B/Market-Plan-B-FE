@@ -52,11 +52,12 @@ async function loadScenario() {
 
     let targetFile: string | null = null;
 
+    // 파일 목록 확인
     for (const path in files) {
         console.log("🔎 found file:", path);
     }
 
-    // 1) JSON 우선
+    // 🔥 JSON만 선택
     for (const path in files) {
         if (path.endsWith(".json")) {
             targetFile = path;
@@ -64,31 +65,24 @@ async function loadScenario() {
         }
     }
 
-    // 2) JSON 없으면 MD 사용
-    if (!targetFile) {
-        for (const path in files) {
-            if (path.endsWith(".md")) {
-                targetFile = path;
-                break;
-            }
-        }
-    }
-
     console.log("🎯 selected scenario file:", targetFile);
 
+    // JSON이 아예 없을 때
     if (!targetFile) {
-        console.log("❌ No scenario file found!");
+        console.log("❌ No JSON scenario file found!");
         rawText.value = null;
         return;
     }
 
+    // JSON 파일 로드
     rawText.value = await files[targetFile]();
-    console.log("📄 loaded content:", rawText.value);
+    console.log("📄 loaded JSON content:", rawText.value);
 }
 
 onMounted(() => {
     loadScenario();
 });
+
 
 // 콘텐츠 타입 분류
 const contentType = computed(() => {
@@ -99,12 +93,6 @@ const contentType = computed(() => {
     } catch {
         return "markdown";
     }
-});
-
-// Markdown 렌더링
-const compiledMarkdown = computed(() => {
-    if (contentType.value !== "markdown") return "";
-    return marked.parse(rawText.value || "");
 });
 
 // JSON 렌더링

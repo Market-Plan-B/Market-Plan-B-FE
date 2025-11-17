@@ -26,13 +26,11 @@ let svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
 let ro: ResizeObserver | null = null;
 
 const renderChart = async () => {
-    await nextTick(); // ✅ DOM 렌더 보장
+    await nextTick();
     if (!chart.value) return;
 
-    // ✅ 이미 DOM이 사라진 상태면 중단
     if (!document.body.contains(chart.value)) return;
 
-    // 초기화
     d3.select(chart.value).selectAll("*").remove();
 
     const fullWidth = chart.value.clientWidth || 500;
@@ -61,7 +59,6 @@ const renderChart = async () => {
         .range([0, height])
         .padding(0.35);
 
-    // 기준선
     svg
         .append("line")
         .attr("x1", x(0))
@@ -72,7 +69,6 @@ const renderChart = async () => {
         .attr("stroke-width", 1.2)
         .attr("stroke-dasharray", "4,3");
 
-    // Y축
     svg
         .append("g")
         .call(d3.axisLeft(y).tickSize(0))
@@ -81,7 +77,6 @@ const renderChart = async () => {
         .style("font-weight", "600")
         .style("fill", "#334155");
 
-    // 부정
     svg
         .selectAll(".bar-neg")
         .data(data)
@@ -95,7 +90,6 @@ const renderChart = async () => {
         .attr("fill", "url(#negGradient)")
         .attr("opacity", 0.9);
 
-    // 긍정
     svg
         .selectAll(".bar-pos")
         .data(data)
@@ -109,7 +103,6 @@ const renderChart = async () => {
         .attr("fill", "url(#posGradient)")
         .attr("opacity", 0.9);
 
-    // 라벨
     svg
         .selectAll(".val-pos")
         .data(data)
@@ -133,7 +126,6 @@ const renderChart = async () => {
         .attr("text-anchor", "end")
         .text((d) => Math.abs(d.negative));
 
-    // 그라디언트
     const defs = svg.append("defs");
     defs
         .append("linearGradient")
@@ -172,7 +164,6 @@ onMounted(() => {
     renderChart();
 
     ro = new ResizeObserver(() => {
-        // ✅ DOM이 살아있을 때만 반응
         if (chart.value && document.body.contains(chart.value)) {
             renderChart();
         }
