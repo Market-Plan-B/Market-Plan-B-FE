@@ -34,7 +34,7 @@ const getChartData = () => {
     if (Object.keys(factorData.value).length === 0) {
         return [];
     }
-    
+
     return Object.entries(factorData.value).map(([key, value]) => ({
         source: key,
         positive: Math.max(0, value as number),
@@ -65,12 +65,12 @@ const renderChart = async () => {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const data = getChartData();
-    
+
     if (data.length === 0) {
         isRendered.value = true;
         return;
     }
-    
+
     const maxVal = Math.max(
         Math.abs(d3.min(data, (d) => d.negative) || 0),
         d3.max(data, (d) => d.positive) || 0

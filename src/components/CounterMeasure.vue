@@ -16,7 +16,7 @@
                     </p>
                 </div>
             </div>
-            
+
             <div v-else class="text-gray-500 text-sm italic">
                 AI 대응책을 불러오는 중...
             </div>

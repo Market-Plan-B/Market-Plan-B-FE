@@ -74,7 +74,6 @@ onMounted(async () => {
             path: "/lottie/robot.json",
         });
     }
-    
     await loadOverallImpact();
 });
 </script>
