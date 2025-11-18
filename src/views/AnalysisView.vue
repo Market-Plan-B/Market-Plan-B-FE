@@ -23,12 +23,12 @@
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <div class="text-5xl font-bold text-orange-600 mb-2">{{ currentScore.score }}</div>
+                    <div class="text-5xl font-bold text-orange-600 mb-2">{{ apiData?.impact_score || '0.0' }}</div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-gray-600 font-medium">10점 만점 기준</span>
                         <div class="flex-1 bg-orange-200 rounded-full h-2">
                             <div class="bg-orange-600 h-2 rounded-full transition-all duration-500"
-                                :style="{ width: (currentScore.score * 10) + '%' }"></div>
+                                :style="{ width: (parseFloat(apiData?.impact_score || '0') * 10) + '%' }"></div>
                         </div>
                     </div>
                 </div>
@@ -42,10 +42,9 @@
                                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                     </div>
-                    <div class="text-5xl font-bold text-green-600 mb-2">{{ currentScore.change >= 0 ? '+' : '' }}{{
-                        currentScore.change }}</div>
+                    <div class="text-5xl font-bold text-green-600 mb-2">{{ parseFloat(apiData?.change_score || '0') >= 0 ? '+' : '' }}{{ apiData?.change_score || '0.0' }}</div>
                     <div class="inline-flex items-center px-3 py-1 rounded-full bg-green-200">
-                        <span class="text-xs text-green-800 font-bold">{{ currentScore.trend }}</span>
+                        <span class="text-xs text-green-800 font-bold">{{ parseFloat(apiData?.change_score || '0') >= 0 ? '상승 추세' : '하락 추세' }}</span>
                     </div>
                 </div>
 
@@ -143,7 +142,10 @@
                 <span class="text-xs text-gray-500 ml-2">(AI 모델이 영향도 평가 시 활용한 주요 지표)</span>
             </div>
 
-            <div ref="chartContainer" class="w-full" style="min-height: 600px;"></div>
+            <div v-if="loading" class="flex justify-center items-center h-96">
+                <div class="text-gray-500">데이터를 불러오는 중...</div>
+            </div>
+            <div v-else ref="chartContainer" class="w-full" style="min-height: 600px;"></div>
 
             <div class="mt-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl">
                 <div class="flex items-start gap-3">
@@ -198,9 +200,12 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import * as d3 from 'd3';
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
+import { getImpactAnalysis } from '@/api/analysisApi';
 
-const selectedDate = ref('2025-11-17');
+const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const activeTab = ref('overall');
+const apiData = ref(null);
+const loading = ref(false);
 
 const impactTabs = [
     { id: 'overall', label: '전체 요인' },
@@ -263,18 +268,16 @@ const impactData = {
     ]
 };
 
-const featureImportance = [
-    { name: 'OPEC+ 감산 이행률', positive: 0.25, negative: -0.08, description: '사우디 주도 감산 준수도' },
-    { name: '중동 지정학 지수', positive: 0.22, negative: -0.12, description: '이란-이라크 분쟁, 호르무즈 리스크' },
-    { name: '중국 PMI', positive: 0.18, negative: -0.15, description: '제조업 경기 확장/위축 신호' },
-    { name: '미국 원유 재고', positive: 0.05, negative: -0.20, description: 'EIA 주간 재고 변동' },
-    { name: 'WTI-Brent 스프레드', positive: 0.15, negative: -0.10, description: '시장 타이트닝 지표' },
-    { name: 'USD 달러 인덱스', positive: 0.08, negative: -0.18, description: '달러 강세 시 유가 하락 압력' },
-    { name: '정제 마진(Crack Spread)', positive: 0.16, negative: -0.06, description: '수요 강도 반영' },
-    { name: '러시아 수출량', positive: 0.12, negative: -0.14, description: '제재 우회 수출 규모' },
-    { name: '글로벌 항공 수요', positive: 0.14, negative: -0.09, description: '제트유 소비 회복세' },
-    { name: 'VIX 변동성 지수', positive: 0.06, negative: -0.16, description: '시장 불확실성 척도' }
-];
+const featureImportance = computed(() => {
+    if (!apiData.value?.features) return [];
+    
+    return Object.entries(apiData.value.features).map(([key, values]) => ({
+        name: key,
+        negative: values[0] / 100,
+        positive: values[1] / 100,
+        description: `${key} 영향도 분석`
+    }));
+});
 
 const currentScore = computed(() => {
     return scoreData[selectedDate.value] || scoreData['2025-11-17'];
@@ -287,7 +290,7 @@ const currentImpacts = computed(() => {
 const chartContainer = ref(null);
 
 const drawChart = () => {
-    if (!chartContainer.value) return;
+    if (!chartContainer.value || !featureImportance.value.length) return;
 
     d3.select(chartContainer.value).selectAll('*').remove();
 
@@ -303,11 +306,11 @@ const drawChart = () => {
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
     const xScale = d3.scaleLinear()
-        .domain([-0.25, 0.25])
+        .domain([-0.5, 0.5])
         .range([0, width]);
 
     const yScale = d3.scaleBand()
-        .domain(featureImportance.map(d => d.name))
+        .domain(featureImportance.value.map(d => d.name))
         .range([0, height])
         .padding(0.2);
 
@@ -335,7 +338,7 @@ const drawChart = () => {
         .attr('stroke-dasharray', '4,4');
 
     svg.selectAll('.bar-negative')
-        .data(featureImportance)
+        .data(featureImportance.value)
         .enter()
         .append('rect')
         .attr('class', 'bar-negative')
@@ -378,7 +381,7 @@ const drawChart = () => {
         .attr('width', d => xScale(0) - xScale(d.negative));
 
     svg.selectAll('.bar-positive')
-        .data(featureImportance)
+        .data(featureImportance.value)
         .enter()
         .append('rect')
         .attr('class', 'bar-positive')
@@ -481,15 +484,27 @@ const drawChart = () => {
         .text('상승 모멘텀 →');
 };
 
-onMounted(() => {
-    nextTick(() => {
-        drawChart();
-    });
+const fetchData = async () => {
+    loading.value = true;
+    try {
+        apiData.value = await getImpactAnalysis(selectedDate.value);
+    } catch (error) {
+        console.error('Failed to fetch impact analysis:', error);
+    } finally {
+        loading.value = false;
+    }
+};
 
+onMounted(() => {
+    fetchData();
     window.addEventListener('resize', drawChart);
 });
 
 watch(selectedDate, () => {
+    fetchData();
+});
+
+watch(apiData, () => {
     nextTick(() => {
         drawChart();
     });
