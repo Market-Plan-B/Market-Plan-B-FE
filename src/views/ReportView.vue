@@ -305,139 +305,86 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, watch, onMounted } from "vue";
+import api from "@/api";  // axios 인스턴스
 import ReportCards from "@/components/ReportCards.vue";
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 
-const sampleNewsData = {
-    "2025-11-14": [
-        { id: 1, date: "2025-11-14", title: "사우디, OPEC+ 감산 연장 전격 발표", desc: "사우디아라비아가 OPEC+ 회원국들과 원유 감산 합의를 2024년 1분기까지 연장한다고 발표했습니다.", level: "긴급", country: "사우디", url: "#" },
-        { id: 2, date: "2025-11-14", title: "미국 전략비축유 방출 계획 발표", desc: "바이든 행정부가 유가 안정화를 위해 전략비축유 추가 방출을 검토 중입니다.", level: "높음", country: "미국", url: "#" },
-        { id: 3, date: "2025-11-14", title: "중국 원유 수입량 3개월 연속 증가", desc: "중국의 11월 원유 수입량이 경제 회복세에 힘입어 전월 대비 8% 증가했습니다.", level: "중간", country: "중국", url: "#" },
-        { id: 4, date: "2025-11-14", title: "이란-이스라엘 긴장 고조, 호르무즈 해협 우려", desc: "중동 정세 불안으로 호르무즈 해협 통행 리스크가 높아지고 있습니다.", level: "긴급", country: "이란", url: "#" },
-        { id: 5, date: "2025-11-14", title: "독일, 재생에너지 전환 가속화 선언", desc: "독일 정부가 2030년까지 화석연료 의존도를 50% 줄이는 정책을 발표했습니다.", level: "낮음", country: "독일", url: "#" }
-    ],
-    "2025-11-13": [
-        { id: 6, date: "2025-11-13", title: "WTI 유가 $85 돌파, 3개월 만에 최고치", desc: "공급 감소 우려로 서부텍사스산 원유 가격이 급등했습니다.", level: "높음", country: "미국", url: "#" },
-        { id: 7, date: "2025-11-13", title: "러시아, 원유 수출 물량 감축 시사", desc: "러시아가 OPEC+ 합의에 따라 추가 감산을 검토 중입니다.", level: "중간", country: "러시아", url: "#" }
-    ],
-    "2025-11-15": [
-        { id: 8, date: "2025-11-15", title: "미국 셰일 생산량 예상보다 감소", desc: "미 에너지정보청(EIA)은 12월 셰일 생산량이 시장 예상보다 낮을 것이라 전망했습니다.", level: "높음", country: "미국", url: "#" },
-        { id: 9, date: "2025-11-15", title: "사우디 국영 아람코, 설비 점검 계획 발표", desc: "아람코는 일부 정유시설의 정기 점검을 앞당긴다고 밝혀 공급 감소 우려가 커지고 있습니다.", level: "긴급", country: "사우디", url: "#" },
-        { id: 10, date: "2025-11-15", title: "중국 산업생산 반등, 에너지 수요 증가 전망", desc: "중국의 산업생산 지표가 반등해 에너지 소비 증가가 예상됩니다.", level: "중간", country: "중국", url: "#" },
-        { id: 11, date: "2025-11-15", title: "이란, 호르무즈 해협 군사 훈련 확대", desc: "이란 혁명수비대가 해협 일대 군사 훈련을 확대하며 원유 운송 위험이 재차 부각되고 있습니다.", level: "긴급", country: "이란", url: "#" }
-    ],
-    "2025-11-16": [
-        { id: 12, date: "2025-11-16", title: "미국 원유 재고 예상 밖 증가", desc: "EIA 주간 보고서에서 미국 원유 재고가 시장 예상과 달리 증가한 것으로 나타났습니다.", level: "중간", country: "미국", url: "#" },
-        { id: 13, date: "2025-11-16", title: "러시아, 원유 수출 경로 다변화 발표", desc: "러시아 정부는 수출 리스크를 줄이기 위해 아시아권 국가와의 새로운 원유 수송 계약을 추진 중입니다.", level: "중간", country: "러시아", url: "#" },
-        { id: 14, date: "2025-11-16", title: "중국, 정제 석유제품 수출 확대 검토", desc: "내수 공급 안정화 이후 잉여 제품의 해외 수출 확대 방안을 논의하고 있습니다.", level: "낮음", country: "중국", url: "#" },
-        { id: 15, date: "2025-11-16", title: "사우디·UAE, 중동 정세 안정 위한 공동성명", desc: "양국은 최근 긴장된 지역 갈등 완화를 위해 공동 외교활동을 강화하기로 했습니다.", level: "높음", country: "사우디", url: "#" }
-    ],
-    "2025-11-17": [
-        { id: 20, date: "2025-11-17", title: "사우디, OPEC+ 감산 연장 전격 발표", desc: "사우디아라비아가 OPEC+ 회원국들과 원유 감산 합의를 2024년 1분기까지 연장한다고 발표했습니다.", level: "긴급", country: "사우디", url: "#" },
-        { id: 16, date: "2025-11-17", title: "국제 유가, 지정학적 리스크로 2% 상승", desc: "중동 지역 긴장 고조로 인해 국제 유가가 일제히 상승세를 보였습니다.", level: "높음", country: "미국", url: "#" },
-        { id: 17, date: "2025-11-17", title: "이란-이라크 국경지역 충돌 발생", desc: "이란과 이라크 국경 인근에서 군사적 충돌이 발생하며 원유 수송 차질이 우려됩니다.", level: "긴급", country: "이란", url: "#" },
-        { id: 18, date: "2025-11-17", title: "중국, 국가비축유 비상 방출 검토", desc: "중국 정부가 산업 안정화를 위해 비축유 추가 방출 시나리오를 검토 중입니다.", level: "중간", country: "중국", url: "#" },
-        { id: 19, date: "2025-11-17", title: "유럽연합(EU), 러시아산 원유 제재 강화 논의", desc: "EU는 러시아산 원유 가격상한제를 강화하는 새로운 조치를 논의했습니다.", level: "높음", country: "독일", url: "#" }
-    ]
-};
-
-const levelPriority = { 긴급: 3, 높음: 2, 중간: 1, 낮음: 0 };
-
+// Daily / Weekly 모드
 const mode = ref("daily");
 const selectedDate = ref("2025-11-17");
+
+// API 데이터 저장
+const cardNews = ref([]);     // 뉴스 카드 리스트
+const summaryData = ref({});  // 상세 리포트
 
 function switchMode(m) {
     mode.value = m;
 }
 
-function getWeekKey(dateStr) {
+function getWeekRange(dateStr) {
     const date = new Date(dateStr);
     const day = date.getDay() || 7;
     date.setDate(date.getDate() + 4 - day);
-    const yearStart = new Date(date.getFullYear(), 0, 1);
-    const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-    return `${date.getFullYear()}-W${week}`;
+    const start = new Date(date);
+    start.setDate(start.getDate() - 3); // 월요일
+    const end = new Date(date);
+    end.setDate(end.getDate() + 3); // 일요일
+
+    return {
+        start: start.toISOString().slice(0, 10),
+        end: end.toISOString().slice(0, 10)
+    };
+}
+async function fetchDailyCardnews() {
+    try {
+        const res = await api.get("/api/reports/daily/cardnews", {
+            params: { query_date: selectedDate.value }
+        });
+        cardNews.value = res.data;
+    } catch (e) { console.error("Daily Cardnews Error:", e); }
 }
 
-const mergedNews = computed(() => Object.values(sampleNewsData).flat());
+async function fetchDailyReport() {
+    try {
+        const res = await api.get("/api/reports/daily/report", {
+            params: { query_date: selectedDate.value }
+        });
+        summaryData.value = res.data;
+    } catch (e) { console.error("Daily Report Error:", e); }
+}
 
-const filteredNews = computed(() => {
-    const selected = selectedDate.value;
-    let result = [];
+async function fetchWeeklyCardnews() {
+    try {
+        const { start, end } = getWeekRange(selectedDate.value);
+        const res = await api.post("/api/reports/weekly/cardnews", {
+            start_date: start,
+            end_date: end
+        });
+        cardNews.value = res.data;
+    } catch (e) { console.error("Weekly Cardnews Error:", e); }
+}
 
+async function fetchWeeklyReport() {
+    try {
+        const { start, end } = getWeekRange(selectedDate.value);
+        const res = await api.post("/api/reports/weekly/report", {
+            start_date: start,
+            end_date: end
+        });
+        summaryData.value = res.data;
+    } catch (e) { console.error("Weekly Report Error:", e); }
+}
+
+watch([mode, selectedDate], () => {
     if (mode.value === "daily") {
-        result = mergedNews.value.filter(n => n.date === selected);
+        fetchDailyCardnews();
+        fetchDailyReport();
     } else {
-        const weekKey = getWeekKey(selected);
-        result = mergedNews.value.filter(n => getWeekKey(n.date) === weekKey);
+        fetchWeeklyCardnews();
+        fetchWeeklyReport();
     }
-
-    return result.sort((a, b) => levelPriority[b.level] - levelPriority[a.level]);
-});
-
-const displayCards = computed(() => filteredNews.value);
-
-const summaryDummyData = {
-    "2025-11-17": {
-        executive_summary:
-            "중동 지정학적 리스크의 급격한 확대와 OPEC+ 감산 연장 이슈가 동시 발생하면서 단기 유가는 강한 상승 압력을 받았습니다. 특히 이란-이라크 접경 충돌은 리스크 프리미엄을 평균 3~5$/bbl 상승시키는 구조적 요인으로 작용하며, 단기적 변동성 확대가 불가피한 상황입니다.",
-
-        metrics: [
-            { label: "WTI", price: "$87.50", dd: 2.3, ww: 4.7, comment: "지정학 리스크 반영" },
-            { label: "Brent", price: "$91.20", dd: 2.1, ww: 4.2, comment: "구조적 타이트닝" },
-            { label: "Dubai", price: "$89.80", dd: 2.0, ww: 3.9, comment: "아시아 프리미엄 확대" },
-            { label: "정제마진", price: "$15.30", dd: 1.8, ww: 2.5, comment: "정제마진 강세 유지" }
-        ],
-
-        macro: {
-            supply:
-                "사우디가 주도한 OPEC+ 감산 연장은 2024년 1분기까지의 공급 제한을 의미하며, 글로벌 공급 부족폭은 80~120kb/d 수준으로 확대될 전망입니다. 이란-이라크 충돌은 호르무즈 해협 리스크를 재부각시키며 단기 공급 차질 위험을 높이고 있습니다.",
-            demand:
-                "중국 제조업 PMI 반등으로 산업용 석유 수요 회복세가 유지되고 있습니다. NDRC는 산업 안정화를 위해 전략비축유 방출을 검토하고 있어 단기 수급 미스매치 완화 효과가 예상됩니다.",
-            policy:
-                "EU는 러시아산 원유 가격상한제 강화를 검토 중이며, 러시아의 우회 수출 확대가 장기적으로 가격 변동성을 지속시킬 가능성이 높습니다. 미국의 SPR 추가 방출은 제한적일 것으로 보입니다."
-        },
-
-        scenarios: [
-            { type: "Base", range: "88-92", prob: 0.6, desc: "감산 연장 + 지정학 리스크 부분 반영" },
-            { type: "Bull", range: "95+", prob: 0.25, desc: "충돌 확전 및 리스크 프리미엄 확대" },
-            { type: "Bear", range: "82-85", prob: 0.15, desc: "중국 수요 둔화 및 SPR 방출" }
-        ],
-
-        risk_matrix: [
-            { risk: "중동 지정학", impact: "high", comment: "충돌 확전 시 공급 차질 심화" },
-            { risk: "정책 리스크", impact: "medium", comment: "EU 제재 강화 영향" },
-            { risk: "수요 둔화", impact: "low", comment: "중국 재개 효과로 단기 둔화 가능성 낮음" }
-        ],
-
-        implications: [
-            "단기 Long Bias 유지 권고",
-            "WTI $85 이탈 시 포지션 축소",
-            "콜옵션 기반 Tactical Hedge 전략",
-            "정제마진 강세 구간에서 정유 섹터 비중 확대"
-        ],
-
-        monitoring: [
-            "11/30 OPEC+ 회의",
-            "12/13 FOMC 금리 결정",
-            "12월 중국 PMI 발표"
-        ]
-    }
-};
-
-const summaryData = computed(() => {
-    return summaryDummyData[selectedDate.value] || {
-        executive_summary: "",
-        metrics: [],
-        macro: {},
-        scenarios: [],
-        risk_matrix: [],
-        implications: [],
-        monitoring: []
-    };
-});
-
+}, { immediate: true });
 </script>
 
 <style scoped>
