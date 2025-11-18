@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { marked } from "marked";
-import { dashboardAPI } from "@/router/api";
+import { dashboardAPI } from "@/api/dashboard";
 
 // /src/data/scenario/* 폴더만 탐색
 const files = import.meta.glob("../data/scenario/*", {
