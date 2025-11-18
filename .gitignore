@@ -25,6 +25,7 @@ dist-ssr
 
 # Environments
 .env
+<<<<<<< HEAD
 .envrc
 .venv
 env/
@@ -32,3 +33,33 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+=======
+.env.*
+
+# Python virtual environments
+venv/
+env/
+.venv/
+.env/
+pyvenv.cfg
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+>>>>>>> d2b428d111d2a6f4c6a934d232152a1c0e7f4837

@@ -10,13 +10,13 @@
 <script setup lang="ts">
 import * as d3 from "d3";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { dashboardAPI } from "@/router/api";
+import { dashboardAPI } from "@/api/dashboard";
 
 const chart = ref<HTMLElement | null>(null);
 const isRendered = ref(false);
 const factorData = ref({});
 
-let svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
+let svg: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
 let ro: ResizeObserver | null = null;
 
 const loadFactorData = async () => {
@@ -32,9 +32,9 @@ const loadFactorData = async () => {
 
 const getChartData = () => {
     if (Object.keys(factorData.value).length === 0) {
-        return defaultData;
+        return [];
     }
-    
+
     return Object.entries(factorData.value).map(([key, value]) => ({
         source: key,
         positive: Math.max(0, value as number),
@@ -65,10 +65,15 @@ const renderChart = async () => {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const data = getChartData();
-    
+
+    if (data.length === 0) {
+        isRendered.value = true;
+        return;
+    }
+
     const maxVal = Math.max(
-        Math.abs(d3.min(data, (d) => d.negative)!),
-        d3.max(data, (d) => d.positive)!
+        Math.abs(d3.min(data, (d) => d.negative) || 0),
+        d3.max(data, (d) => d.positive) || 0
     );
 
     const x = d3.scaleLinear().domain([-maxVal, maxVal]).range([0, width]);
@@ -77,6 +82,8 @@ const renderChart = async () => {
         .domain(data.map((d) => d.source))
         .range([0, height])
         .padding(0.35);
+
+    if (!svg) return;
 
     svg
         .append("line")

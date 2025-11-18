@@ -40,14 +40,14 @@
 
                     <div class="p-5 relative flex items-center justify-center overflow-visible h-[360px]">
                         <!-- 뉴스가 없을 때 -->
-                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0" 
+                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0"
                             class="w-full h-full flex items-center justify-center">
                             <div class="text-center">
                                 <div class="text-4xl mb-4">📰</div>
                                 <p class="text-gray-500 text-sm">해당 국가의 뉴스가 없습니다</p>
                             </div>
                         </div>
-                        
+
                         <!-- 뉴스가 있을 때 -->
                         <transition-group v-else name="slide-x" tag="div"
                             class="w-full h-full flex justify-center items-center">
@@ -117,7 +117,7 @@
                     </div>
 
                     <!-- 뉴스가 있을 때만 인디케이터 표시 -->
-                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0" 
+                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0"
                         class="flex justify-center gap-2 pt-4">
                         <span v-for="(n, i) in selectedCountry.articles.length" :key="i"
                             class="w-2.5 h-2.5 rounded-full transition-all"
@@ -134,11 +134,11 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ref, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import maplibregl from "maplibre-gl";
-import { dashboardAPI } from "@/router/api";
+import { dashboardAPI, MapImpact } from "@/api/dashboard";
 
 const newsLevelMap = ref<Record<string, string | null>>({});
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
-const mapImpactData = ref([]);
+const MAPTILER_KEY = (import.meta as any).env.VITE_MAPTILER_KEY;
+const mapImpactData = ref<MapImpact[]>([]);
 
 const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
@@ -180,16 +180,10 @@ const midList = computed(() =>
 
 const loadMapData = async () => {
     try {
-        // Router에서 미리 로드된 데이터 사용
-        if (window.dashboardData?.map) {
-            mapImpactData.value = window.dashboardData.map;
-            console.log('✅ Router에서 지도 데이터 로드:', mapImpactData.value);
-        } else {
-            console.log('🗺️ 직접 지도 API 호출...');
-            const dashboardData = await dashboardAPI.fetchDashboardPageData();
-            mapImpactData.value = dashboardData.map;
-            console.log('✅ 직접 지도 데이터 로드 완료:', mapImpactData.value);
-        }
+        console.log('🗺️ 지도 API 호출...');
+        const response = await dashboardAPI.getMapImpact();
+        mapImpactData.value = response.data;
+        console.log('✅ 지도 데이터 로드 완료:', mapImpactData.value);
     } catch (error) {
         console.error('❌ 지도 데이터 로드 실패:', error);
     }
@@ -219,14 +213,14 @@ async function initMap() {
 
         // 백엔드 API 데이터만 사용
 
-        const getColorByScore = (score) => {
+        const getColorByScore = (score: number) => {
             if (score >= 8) return "#ff3b3b"; // 긴급
             if (score >= 6) return "#ff9f1c"; // 높음
             if (score >= 4) return "#ffd43b"; // 중간
             if (score >= 2) return "#90ee90"; // 낮음
             return "transparent";
         };
-        
+
         // 백엔드 API 데이터만 사용
         const isoColorMatch = countries.flatMap((c) => {
             const apiData = mapImpactData.value.find(item => item.code === c.iso);
@@ -252,7 +246,7 @@ async function initMap() {
                     ["get", "ISO3166-1-Alpha-3"],
                     ...isoColorMatch,
                     "transparent",
-                ],
+                ] as any,
                 "fill-opacity": 0.85,
             },
         });
@@ -294,15 +288,17 @@ async function initMap() {
             },
         });
 
-        let hoveredId = null;
+        let hoveredId: string | number | null = null;
         map.on("mousemove", "country-fill", (e) => {
             if (e.features?.length) {
                 const f = e.features[0];
                 if (hoveredId !== null) {
                     map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: false });
                 }
-                hoveredId = f.id;
-                map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: true });
+                hoveredId = f.id ?? null;
+                if (hoveredId !== null) {
+                    map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: true });
+                }
                 map.getCanvas().style.cursor = "pointer";
             }
         });
@@ -324,9 +320,10 @@ async function initMap() {
             if (targetCountry) {
                 // 국가별 영향도 및 뉴스 데이터 호출
                 try {
-                    const regionData = await dashboardAPI.fetchRegionData(isoCode);
+                    const response = await dashboardAPI.getRegionImpact(isoCode);
+                    const regionData = response.data;
                     console.log('✅ 국가 데이터 로드 완료:', regionData);
-                    
+
                     // region-impact API에서 contents 배열을 뉴스로 사용
                     const newsContents = regionData.contents || [];
                     openModal(targetCountry, { articles: newsContents });
@@ -341,24 +338,24 @@ async function initMap() {
     mapInstance.value = map;
 }
 
-function openModal(country, newsData) {
+function openModal(country: any, newsData: any) {
     console.log('국가 클릭:', country.name);
-    
+
     if (newsData && newsData.articles && newsData.articles.length > 0) {
         // source_score 기준으로 정렬 (높은 점수 순)
         const sorted = [...newsData.articles].sort(
             (a, b) => (b.source_score || 0) - (a.source_score || 0)
         );
-        
+
         // API 응답 구조에 맞게 데이터 변환
         const formattedArticles = sorted.map(article => ({
             title: article.title,
             desc: article.summary,
             url: article.url,
-            date: article.published_date ,
+            date: article.published_date,
             level: article.source_score // 백엔드 숫자 그대로 사용
         }));
-        
+
         selectedCountry.value = { ...country, articles: formattedArticles };
         currentIndex.value = 0;
         console.log('✅ 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);
