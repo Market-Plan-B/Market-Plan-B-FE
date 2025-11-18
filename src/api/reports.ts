@@ -1,73 +1,78 @@
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 
-// 📌 공통 베이스 URL
 const API_BASE_URL = "http://localhost:8000";
 
-// 📌 Daily Cardnews Item 타입
-export interface CardNewsItem {
-  country: string;
+// ==============================
+// 📌 백엔드 스키마 기반 타입
+// ==============================
+export interface NewsItem {
+  date: string;
   title: string;
-  level: string;
-  desc: string;
+  summary: string;
   url: string;
-  published_date: string;
 }
 
-// 📌 Daily Report 타입
-export interface DailyReport {
+export interface CardNewsResponse {
+  news: NewsItem[];
+}
+
+export interface ReportResponse {
   start_date: string;
   end_date: string;
-  html_resource: string;
-  executive_summary: string;
-  metrics: any[];
-  macro: any;
-  scenarios: any[];
-  risk_matrix: any[];
-  implications: string[];
-  monitoring: string[];
+  html_resource: string; // HTML 그대로 들어옴
 }
 
-// 📌 Weekly Report 타입 (지금은 동일 구조로 가정)
-export interface WeeklyReport extends DailyReport {}
-
-// ==========================
-// 📌 reportsAPI 구현부
-// ==========================
-
+// ==============================
+// 📌 reportsAPI (변환 없음)
+// ==============================
 export const reportsAPI = {
-  // 🔵 Daily Cardnews - GET
-  getDailyCardnews: (
-    queryDate: string
-  ): Promise<AxiosResponse<CardNewsItem[]>> =>
-    axios.get(`${API_BASE_URL}/api/reports/daily/cardnews`, {
-      params: { query_date: queryDate },
-    }),
+  // 🔵 Daily Cardnews
+  async getDailyCardnews(queryDate: string): Promise<CardNewsResponse> {
+    const res = await axios.get<CardNewsResponse>(
+      `${API_BASE_URL}/api/reports/daily/cardnews`,
+      { params: { query_date: queryDate } }
+    );
+    return res.data; // 그대로 반환
+  },
 
-  // 🔵 Daily Report - GET
-  getDailyReport: (queryDate: string): Promise<AxiosResponse<DailyReport>> =>
-    axios.get(`${API_BASE_URL}/api/reports/daily/report`, {
-      params: { query_date: queryDate },
-    }),
+  // 🔵 Daily Report
+  async getDailyReport(queryDate: string): Promise<ReportResponse> {
+    const res = await axios.get<ReportResponse>(
+      `${API_BASE_URL}/api/reports/daily/report`,
+      { params: { query_date: queryDate } }
+    );
+    return res.data; // 그대로 반환
+  },
 
-  // 🟢 Weekly Cardnews - POST
-  getWeeklyCardnews: (
+  // 🟢 Weekly Cardnews
+  async getWeeklyCardnews(
     startDate: string,
     endDate: string
-  ): Promise<AxiosResponse<CardNewsItem[]>> =>
-    axios.post(`${API_BASE_URL}/api/reports/weekly/cardnews`, {
-      start_date: startDate,
-      end_date: endDate,
-    }),
+  ): Promise<CardNewsResponse> {
+    const res = await axios.post<CardNewsResponse>(
+      `${API_BASE_URL}/api/reports/weekly/cardnews`,
+      {
+        start_date: startDate,
+        end_date: endDate,
+      }
+    );
+    return res.data; // 그대로 반환
+  },
 
-  // 🟢 Weekly Report - POST
-  getWeeklyReport: (
+  // 🟢 Weekly Report
+  async getWeeklyReport(
     startDate: string,
     endDate: string
-  ): Promise<AxiosResponse<WeeklyReport>> =>
-    axios.post(`${API_BASE_URL}/api/reports/weekly/report`, {
-      start_date: startDate,
-      end_date: endDate,
-    }),
+  ): Promise<ReportResponse> {
+    const res = await axios.post<ReportResponse>(
+      `${API_BASE_URL}/api/reports/weekly/report`,
+      {
+        start_date: startDate,
+        end_date: endDate,
+      }
+    );
+    return res.data; // 그대로 반환
+  },
 };
 
 export default reportsAPI;
