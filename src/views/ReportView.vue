@@ -62,7 +62,6 @@
                 리포트가 없습니다.
             </div>
         </section>
-
     </div>
 </template>
 
@@ -91,7 +90,6 @@ async function loadDaily() {
         desc: n.summary,
         url: n.url
     }));
-
     // HTML 리소스 직접 렌더링
     reportHtml.value = reportRes.html_resource ?? "";
 }
