@@ -39,7 +39,17 @@
                     </h2>
 
                     <div class="p-5 relative flex items-center justify-center overflow-visible h-[360px]">
-                        <transition-group name="slide-x" tag="div"
+                        <!-- 뉴스가 없을 때 -->
+                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0" 
+                            class="w-full h-full flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-4xl mb-4">📰</div>
+                                <p class="text-gray-500 text-sm">해당 국가의 뉴스가 없습니다</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 뉴스가 있을 때 -->
+                        <transition-group v-else name="slide-x" tag="div"
                             class="w-full h-full flex justify-center items-center">
                             <div v-for="(news, i) in [selectedCountry.articles[currentIndex]]" :key="i"
                                 class="w-full h-[460px] bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-inner overflow-y-auto">
@@ -51,20 +61,21 @@
                                     <span
                                         class="text-xs px-2 py-0.5 rounded-full border font-semibold inline-flex items-center justify-center"
                                         :style="{
-                                            borderColor: news.level === '긴급'
+                                            borderColor: news.level >= 7
                                                 ? '#ff3b3b'
-                                                : news.level === '높음'
+                                                : news.level >= 4
                                                     ? '#ff9f1c'
-                                                    : news.level === '중간'
-                                                        ? '#ffd43b'
-                                                        : '#d1d5db',
-                                            color: news.level === '긴급'
+                                                    : '#ffd43b',
+                                            color: news.level >= 7
                                                 ? '#ff3b3b'
-                                                : news.level === '높음'
+                                                : news.level >= 4
                                                     ? '#ff9f1c'
-                                                    : news.level === '중간'
-                                                        ? '#ffd43b'
-                                                        : '#111827',
+                                                    : '#f59e0b',
+                                            backgroundColor: news.level >= 7
+                                                ? '#fef2f2'
+                                                : news.level >= 4
+                                                    ? '#fff7ed'
+                                                    : '#fffbeb'
                                         }">
                                         {{ news.level }}
                                     </span>
@@ -87,22 +98,27 @@
 
                         </transition-group>
 
-                        <button @click="prevSlide" class="absolute left-1 top-1/2 -translate-y-1/2
-                            bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                            border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                            shadow-sm text-gray-700 hover:text-orange-500 transition-all">
-                            ‹
-                        </button>
+                        <!-- 뉴스가 있을 때만 네비게이션 버튼 표시 -->
+                        <template v-if="selectedCountry.articles && selectedCountry.articles.length > 1">
+                            <button @click="prevSlide" class="absolute left-1 top-1/2 -translate-y-1/2
+                                bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
+                                border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
+                                shadow-sm text-gray-700 hover:text-orange-500 transition-all">
+                                ‹
+                            </button>
 
-                        <button @click="nextSlide" class="absolute right-1 top-1/2 -translate-y-1/2
-                            bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                            border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                            shadow-sm text-gray-700 hover:text-orange-500 transition-all">
-                            ›
-                        </button>
+                            <button @click="nextSlide" class="absolute right-1 top-1/2 -translate-y-1/2
+                                bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
+                                border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
+                                shadow-sm text-gray-700 hover:text-orange-500 transition-all">
+                                ›
+                            </button>
+                        </template>
                     </div>
 
-                    <div class="flex justify-center gap-2 pt-4">
+                    <!-- 뉴스가 있을 때만 인디케이터 표시 -->
+                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0" 
+                        class="flex justify-center gap-2 pt-4">
                         <span v-for="(n, i) in selectedCountry.articles.length" :key="i"
                             class="w-2.5 h-2.5 rounded-full transition-all"
                             :class="i === currentIndex ? 'bg-orange-500' : 'bg-gray-300'"></span>
@@ -118,10 +134,11 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ref, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import maplibregl from "maplibre-gl";
-import newsData from "@/data/news/oil_news_sample.json";
+import { dashboardAPI } from "@/router/api";
 
 const newsLevelMap = ref<Record<string, string | null>>({});
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
+const mapImpactData = ref([]);
 
 const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
@@ -141,19 +158,46 @@ const countries = [
 ];
 
 const urgentList = computed(() =>
-    countries.filter(c => newsLevelMap.value[c.key] === "긴급").map(c => c.name)
+    countries.filter(c => {
+        const apiData = mapImpactData.value.find(item => item.code === c.iso);
+        return apiData && apiData.region_score >= 8;
+    }).map(c => c.name)
 );
 
 const highList = computed(() =>
-    countries.filter(c => newsLevelMap.value[c.key] === "높음").map(c => c.name)
+    countries.filter(c => {
+        const apiData = mapImpactData.value.find(item => item.code === c.iso);
+        return apiData && apiData.region_score >= 6 && apiData.region_score < 8;
+    }).map(c => c.name)
 );
 
 const midList = computed(() =>
-    countries.filter(c => newsLevelMap.value[c.key] === "중간").map(c => c.name)
+    countries.filter(c => {
+        const apiData = mapImpactData.value.find(item => item.code === c.iso);
+        return apiData && apiData.region_score >= 4 && apiData.region_score < 6;
+    }).map(c => c.name)
 );
+
+const loadMapData = async () => {
+    try {
+        // Router에서 미리 로드된 데이터 사용
+        if (window.dashboardData?.map) {
+            mapImpactData.value = window.dashboardData.map;
+            console.log('✅ Router에서 지도 데이터 로드:', mapImpactData.value);
+        } else {
+            console.log('🗺️ 직접 지도 API 호출...');
+            const dashboardData = await dashboardAPI.fetchDashboardPageData();
+            mapImpactData.value = dashboardData.map;
+            console.log('✅ 직접 지도 데이터 로드 완료:', mapImpactData.value);
+        }
+    } catch (error) {
+        console.error('❌ 지도 데이터 로드 실패:', error);
+    }
+};
 
 onMounted(async () => {
     await nextTick();
+    await loadMapData();
     initMap();
 });
 
@@ -173,30 +217,24 @@ async function initMap() {
             "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
         ).then((r) => r.json());
 
-        const priority = { 긴급: 3, 높음: 2, 중간: 1 };
+        // 백엔드 API 데이터만 사용
 
-        Object.keys(newsData).forEach(country => {
-            const articles = newsData[country] || [];
-            if (!articles.length) newsLevelMap.value[country] = null;
-            else {
-                const top = articles.sort(
-                    (a, b) => (priority[b.level] || 0) - (priority[a.level] || 0)
-                )[0];
-                newsLevelMap.value[country] = top.level;
-            }
-        });
-
-        const getColorByLevel = (level) => {
-            if (level === "긴급") return "#ff3b3b";
-            if (level === "높음") return "#ff9f1c";
-            if (level === "중간") return "#ffd43b";
+        const getColorByScore = (score) => {
+            if (score >= 8) return "#ff3b3b"; // 긴급
+            if (score >= 6) return "#ff9f1c"; // 높음
+            if (score >= 4) return "#ffd43b"; // 중간
+            if (score >= 2) return "#90ee90"; // 낮음
             return "transparent";
         };
-
-        const isoColorMatch = countries.flatMap((c) => [
-            c.iso,
-            getColorByLevel(newsLevelMap.value[c.key] || null)
-        ]);
+        
+        // 백엔드 API 데이터만 사용
+        const isoColorMatch = countries.flatMap((c) => {
+            const apiData = mapImpactData.value.find(item => item.code === c.iso);
+            if (apiData) {
+                return [c.iso, getColorByScore(apiData.region_score)];
+            }
+            return [c.iso, "transparent"];
+        });
 
         map.addSource("world-borders", {
             type: "geojson",
@@ -277,30 +315,58 @@ async function initMap() {
             map.getCanvas().style.cursor = "";
         });
 
-        map.on("click", "country-fill", (e) => {
+        map.on("click", "country-fill", async (e) => {
             if (!e.features?.length) return;
 
             const isoCode = e.features[0].properties["ISO3166-1-Alpha-3"];
             const targetCountry = countries.find((c) => c.iso === isoCode);
 
-            if (targetCountry) openModal(targetCountry);
+            if (targetCountry) {
+                // 국가별 영향도 및 뉴스 데이터 호출
+                try {
+                    const regionData = await dashboardAPI.fetchRegionData(isoCode);
+                    console.log('✅ 국가 데이터 로드 완료:', regionData);
+                    
+                    // region-impact API에서 contents 배열을 뉴스로 사용
+                    const newsContents = regionData.contents || [];
+                    openModal(targetCountry, { articles: newsContents });
+                } catch (error) {
+                    console.error('❌ 국가 데이터 로드 실패:', error);
+                    openModal(targetCountry, null);
+                }
+            }
         });
     });
 
     mapInstance.value = map;
 }
 
-function openModal(country) {
-    const newsList = newsData[country.key];
-    if (!newsList || newsList.length === 0) return;
-
-    const priority = { 긴급: 3, 높음: 2, 중간: 1 };
-    const sorted = [...newsList].sort(
-        (a, b) => (priority[b.level] || 0) - (priority[a.level] || 0)
-    );
-
-    selectedCountry.value = { ...country, articles: sorted };
-    currentIndex.value = 0;
+function openModal(country, newsData) {
+    console.log('국가 클릭:', country.name);
+    
+    if (newsData && newsData.articles && newsData.articles.length > 0) {
+        // source_score 기준으로 정렬 (높은 점수 순)
+        const sorted = [...newsData.articles].sort(
+            (a, b) => (b.source_score || 0) - (a.source_score || 0)
+        );
+        
+        // API 응답 구조에 맞게 데이터 변환
+        const formattedArticles = sorted.map(article => ({
+            title: article.title,
+            desc: article.summary,
+            url: article.url,
+            date: article.published_date ,
+            level: article.source_score // 백엔드 숫자 그대로 사용
+        }));
+        
+        selectedCountry.value = { ...country, articles: formattedArticles };
+        currentIndex.value = 0;
+        console.log('✅ 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);
+    } else {
+        console.log('⚠️ 뉴스 데이터 없음:', country.name);
+        selectedCountry.value = { ...country, articles: [] };
+        currentIndex.value = 0;
+    }
 }
 
 function closeModal() {

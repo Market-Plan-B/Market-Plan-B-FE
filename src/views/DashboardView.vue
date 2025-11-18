@@ -36,6 +36,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
+import { dashboardAPI } from "@/router/api";
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
@@ -45,10 +46,25 @@ import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
 
-const todayImpact = { score: 8.3 };
+const todayImpact = ref({ score: 0 });
 const lottieContainer = ref(null);
 
-onMounted(() => {
+const loadOverallImpact = async () => {
+    try {
+        // Router에서 미리 로드된 데이터 사용
+        if (window.dashboardData?.overall) {
+            todayImpact.value.score = window.dashboardData.overall.overall_score;
+        } else {
+            const response = await dashboardAPI.getOverallImpact();
+            todayImpact.value.score = response.data.overall_score;
+        }
+    } catch (error) {
+        console.error('전체 영향도 로드 실패:', error);
+        todayImpact.value.score = 0;
+    }
+};
+
+onMounted(async () => {
     if (lottieContainer.value) {
         lottie.loadAnimation({
             container: lottieContainer.value,
@@ -58,6 +74,8 @@ onMounted(() => {
             path: "/lottie/robot.json",
         });
     }
+    
+    await loadOverallImpact();
 });
 </script>
 

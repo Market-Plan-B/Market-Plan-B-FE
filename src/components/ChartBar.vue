@@ -10,20 +10,37 @@
 <script setup lang="ts">
 import * as d3 from "d3";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { dashboardAPI } from "@/router/api";
 
 const chart = ref<HTMLElement | null>(null);
 const isRendered = ref(false);
-
-const data = [
-    { source: "뉴스", positive: 45, negative: -30 },
-    { source: "리포트", positive: 60, negative: -20 },
-    { source: "PDF", positive: 35, negative: -40 },
-    { source: "SNS", positive: 50, negative: -25 },
-    { source: "API", positive: 20, negative: -15 },
-];
+const factorData = ref({});
 
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
 let ro: ResizeObserver | null = null;
+
+const loadFactorData = async () => {
+    try {
+        // Router에서 미리 로드된 데이터 사용 (아직 없으므로 직접 호출)
+        const response = await dashboardAPI.getFactorImpact();
+        factorData.value = response.data.variable_scores;
+        console.log('요소별 데이터 로드 완료:', factorData.value);
+    } catch (error) {
+        console.error('요소별 데이터 로드 실패:', error);
+    }
+};
+
+const getChartData = () => {
+    if (Object.keys(factorData.value).length === 0) {
+        return defaultData;
+    }
+    
+    return Object.entries(factorData.value).map(([key, value]) => ({
+        source: key,
+        positive: Math.max(0, value as number),
+        negative: Math.min(0, value as number)
+    }));
+};
 
 const renderChart = async () => {
     await nextTick();
@@ -47,6 +64,8 @@ const renderChart = async () => {
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    const data = getChartData();
+    
     const maxVal = Math.max(
         Math.abs(d3.min(data, (d) => d.negative)!),
         d3.max(data, (d) => d.positive)!
@@ -160,12 +179,13 @@ const renderChart = async () => {
     isRendered.value = true;
 };
 
-onMounted(() => {
+onMounted(async () => {
+    await loadFactorData();
     renderChart();
 
-    ro = new ResizeObserver(() => {
+    ro = new ResizeObserver(async () => {
         if (chart.value && document.body.contains(chart.value)) {
-            renderChart();
+            await renderChart();
         }
     });
 

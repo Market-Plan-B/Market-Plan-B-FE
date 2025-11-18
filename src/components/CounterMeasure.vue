@@ -5,8 +5,23 @@
         <!-- 전체 간격을 넉넉하게 -->
         <div class="overflow-y-auto pr-2 text-sm leading-relaxed space-y-4">
 
+            <!-- API 데이터 -->
+            <div v-if="contentType === 'api'" class="space-y-4">
+                <div v-for="(strategy, index) in strategies" :key="strategy.id"
+                    class="border p-4 rounded-xl bg-slate-50 shadow-sm space-y-2">
+
+                    <h3 class="font-semibold text-gray-900 text-base">
+                        {{ strategy.title }}
+                    </h3>
+
+                    <p class="text-gray-700">
+                        {{ strategy.description }}
+                    </p>
+                </div>
+            </div>
+
             <!-- JSON 시나리오 -->
-            <div v-if="contentType === 'json'" class="space-y-4">
+            <div v-else-if="contentType === 'json'" class="space-y-4">
                 <div v-for="(item, index) in jsonData" :key="index"
                     class="border p-4 rounded-xl bg-slate-50 shadow-sm space-y-2">
 
@@ -28,7 +43,7 @@
 
             <!-- Empty -->
             <div v-else class="text-gray-500 text-sm italic">
-                시나리오 파일이 없습니다. (src/data/*.md 또는 *.json)
+                AI 대응책을 불러오는 중...
             </div>
         </div>
     </div>
@@ -38,6 +53,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { marked } from "marked";
+import { dashboardAPI } from "@/router/api";
 
 // /src/data/scenario/* 폴더만 탐색
 const files = import.meta.glob("../data/scenario/*", {
@@ -46,6 +62,24 @@ const files = import.meta.glob("../data/scenario/*", {
 });
 
 const rawText = ref<string | null>(null);
+const strategies = ref([]);
+
+async function loadStrategies() {
+    try {
+        // Router에서 미리 로드된 데이터 사용
+        if (window.dashboardData?.strategies) {
+            strategies.value = window.dashboardData.strategies.strategies;
+            console.log("✅ Router에서 AI 대응책 로드:", strategies.value);
+        } else {
+            console.log("🚀 직접 API 호출 시작...");
+            const response = await dashboardAPI.getStrategies();
+            strategies.value = response.data.strategies;
+            console.log("📄 직접 AI 대응책 로드 완료:", strategies.value);
+        }
+    } catch (error) {
+        console.error("AI 대응책 로드 실패:", error);
+    }
+}
 
 async function loadScenario() {
     console.log("📂 scanning scenario folder...");
@@ -80,19 +114,14 @@ async function loadScenario() {
 }
 
 onMounted(() => {
-    loadScenario();
+    loadStrategies();
 });
 
 
 // 콘텐츠 타입 분류
 const contentType = computed(() => {
-    if (!rawText.value) return "none";
-    try {
-        JSON.parse(rawText.value);
-        return "json";
-    } catch {
-        return "markdown";
-    }
+    if (strategies.value.length > 0) return "api";
+    return "none";
 });
 
 // JSON 렌더링
