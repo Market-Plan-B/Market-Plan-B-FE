@@ -36,7 +36,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
-import { dashboardAPI } from "@/router/api";
+import { dashboardAPI } from "@/api/dashboard";
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
