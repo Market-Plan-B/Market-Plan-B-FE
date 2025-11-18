@@ -40,7 +40,7 @@ import lottie from "lottie-web";
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
 import CounterMeasure from "@/components/CounterMeasure.vue";
-import ChatBotFloating from "@/components/ui/ChatBotFloating.vue"; // ← ⭐ 추가됨
+import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
