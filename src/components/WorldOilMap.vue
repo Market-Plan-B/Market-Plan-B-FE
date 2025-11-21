@@ -2,6 +2,13 @@
     <div id="map-wrapper"
         class="relative w-full h-[520px] rounded-2xl border border-slate-200 bg-gray-100 shadow-sm overflow-visible">
         <div ref="mapContainer" id="map" class="absolute inset-0 w-full h-full z-0"></div>
+        
+        <!-- 로딩 스피너 -->
+        <div v-if="isMapLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-2xl">
+            <div style="width: 48px; height: 48px; border: 4px solid #d1d5db; border-top: 4px solid #374151; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+            <p class="text-lg text-gray-800 font-semibold mb-2">세계 영향도 지도를 불러오는 중이에요! 잠시만 기다려주세요!</p>
+            <p class="text-sm text-gray-600">{{ loadingProgress }}% 완료</p>
+        </div>
 
         <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md border border-gray-200 
            rounded-xl shadow-md p-4 w-[220px] z-20">
@@ -144,6 +151,10 @@ const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
 const selectedCountry = ref<any | null>(null);
 const currentIndex = ref(0);
+const isMapLoading = ref(true);
+
+
+const loadingProgress = ref(0);
 
 const countries = [
     { name: "미국", key: "미국", iso: "USA" },
@@ -180,12 +191,14 @@ const midList = computed(() =>
 
 const loadMapData = async () => {
     try {
-        console.log('🗺️ 지도 API 호출...');
+        loadingProgress.value = 20;
+    
         const response = await dashboardAPI.getMapImpact();
         mapImpactData.value = response.data;
-        console.log('✅ 지도 데이터 로드 완료:', mapImpactData.value);
+        
+        loadingProgress.value = 50;
     } catch (error) {
-        console.error('❌ 지도 데이터 로드 실패:', error);
+        console.error('Data load failed:', error);
     }
 };
 
@@ -207,27 +220,38 @@ async function initMap() {
     });
 
     map.on("style.load", async () => {
+        loadingProgress.value = 70;
+        
         const geoData = await fetch(
             "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
         ).then((r) => r.json());
+        
+        loadingProgress.value = 85;
 
         // 백엔드 API 데이터만 사용
 
         const getColorByScore = (score: number) => {
-            if (score >= 8) return "#ff3b3b"; // 긴급
-            if (score >= 6) return "#ff9f1c"; // 높음
-            if (score >= 4) return "#ffd43b"; // 중간
-            if (score >= 2) return "#90ee90"; // 낮음
-            return "transparent";
+            if (score >= 8) return "#ff3b3b"; // 긴급 (빨강)
+            if (score >= 6) return "#ff9f1c"; // 높음 (주황)
+            if (score >= 4) return "#ffd43b"; // 중간 (노랑)
+            if (score >= 2) return "#90ee90"; // 낮음 (연두)
+            if (score >= 1) return "#a7f3d0"; // 매우 낮음 (연한 초록)
+            return "#e0f2fe"; // 최저 (연한 파랑)
         };
         
-        // 백엔드 API 데이터만 사용
-        const isoColorMatch = countries.flatMap((c) => {
-            const apiData = mapImpactData.value.find(item => item.code === c.iso);
-            if (apiData) {
-                return [c.iso, getColorByScore(apiData.region_score)];
-            }
-            return [c.iso, "transparent"];
+        const isoColorMatch: string[] = [];
+        
+        // 2자리 코드를 3자리 코드로 변환
+        const codeMap: Record<string, string> = {
+            'IE': 'IRL', 'BD': 'BGD', 'SB': 'SLB', 'ME': 'MNE', 'UG': 'UGA',
+            'MW': 'MWI', 'CG': 'COG', 'SD': 'SDN', 'WS': 'WSM', 'GD': 'GRD'
+        };
+        
+        // API에서 받은 모든 국가에 대해 색상 적용
+        mapImpactData.value.forEach(item => {
+            const color = getColorByScore(item.region_score);
+            const iso3Code = codeMap[item.code] || item.code;
+            isoColorMatch.push(iso3Code, color);
         });
 
         map.addSource("world-borders", {
@@ -235,7 +259,7 @@ async function initMap() {
             data: geoData,
             generateId: true,
         });
-
+        
         map.addLayer({
             id: "country-fill",
             type: "fill",
@@ -245,9 +269,9 @@ async function initMap() {
                     "match",
                     ["get", "ISO3166-1-Alpha-3"],
                     ...isoColorMatch,
-                    "transparent",
+                    "#f0f0f0"
                 ] as any,
-                "fill-opacity": 0.85,
+                "fill-opacity": 0.8,
             },
         });
 
@@ -315,24 +339,32 @@ async function initMap() {
             if (!e.features?.length) return;
 
             const isoCode = e.features[0].properties["ISO3166-1-Alpha-3"];
-            const targetCountry = countries.find((c) => c.iso === isoCode);
+            
+            // 모든 국가에 대해 모달 열기 
+            const countryName = e.features[0].properties["name"] || isoCode;
+            const testCountry = { name: countryName, iso: isoCode };
+            
 
-            if (targetCountry) {
-                // 국가별 영향도 및 뉴스 데이터 호출
-                try {
-                    const response = await dashboardAPI.getRegionImpact(isoCode);
-                    const regionData = response.data;
-                    console.log('✅ 국가 데이터 로드 완료:', regionData);
-                    
-                    // region-impact API에서 contents 배열을 뉴스로 사용
-                    const newsContents = regionData.contents || [];
-                    openModal(targetCountry, { articles: newsContents });
-                } catch (error) {
-                    console.error('❌ 국가 데이터 로드 실패:', error);
-                    openModal(targetCountry, null);
-                }
+            try {
+                const response = await dashboardAPI.getRegionImpact(isoCode);
+                const regionData = response.data;
+                console.log(' 국가 데이터 로드 완료:', regionData);
+                
+                const newsContents = regionData.contents || [];
+                openModal(testCountry, { articles: newsContents });
+            } catch (error) {
+                console.error('❌ 국가 데이터 로드 실패:', error);
+                // 에러 시에도 모달 열기 (빈 뉴스로)
+                openModal(testCountry, { articles: [] });
             }
         });
+        
+        // 로딩 완료
+        loadingProgress.value = 100;
+        
+        setTimeout(() => {
+            isMapLoading.value = false;
+        }, 200);
     });
 
     mapInstance.value = map;
@@ -352,13 +384,13 @@ function openModal(country: any, newsData: any) {
             title: article.title,
             desc: article.summary,
             url: article.url,
-            date: article.published_date ,
-            level: article.source_score // 백엔드 숫자 그대로 사용
+            date: article.published_date,
+            level: article.source_score
         }));
         
         selectedCountry.value = { ...country, articles: formattedArticles };
         currentIndex.value = 0;
-        console.log('✅ 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);
+        console.log(' 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);
     } else {
         console.log('⚠️ 뉴스 데이터 없음:', country.name);
         selectedCountry.value = { ...country, articles: [] };
@@ -420,5 +452,11 @@ onBeforeUnmount(() => {
 .slide-x-leave-to {
     opacity: 0;
     transform: translateX(-30%);
+}
+
+/* 로딩 스피너 애니메이션 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>
