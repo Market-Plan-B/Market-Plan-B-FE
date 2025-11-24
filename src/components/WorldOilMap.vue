@@ -47,14 +47,14 @@
 
                     <div class="p-5 relative flex items-center justify-center overflow-visible h-[360px]">
                         <!-- 뉴스가 없을 때 -->
-                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0" 
+                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0"
                             class="w-full h-full flex items-center justify-center">
                             <div class="text-center">
                                 <div class="text-4xl mb-4">📰</div>
                                 <p class="text-gray-500 text-sm">해당 국가의 뉴스가 없습니다</p>
                             </div>
                         </div>
-                        
+
                         <!-- 뉴스가 있을 때 -->
                         <transition-group v-else name="slide-x" tag="div"
                             class="w-full h-full flex justify-center items-center">
@@ -124,7 +124,7 @@
                     </div>
 
                     <!-- 뉴스가 있을 때만 인디케이터 표시 -->
-                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0" 
+                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0"
                         class="flex justify-center gap-2 pt-4">
                         <span v-for="(n, i) in selectedCountry.articles.length" :key="i"
                             class="w-2.5 h-2.5 rounded-full transition-all"
@@ -372,13 +372,13 @@ async function initMap() {
 
 function openModal(country: any, newsData: any) {
     console.log('국가 클릭:', country.name);
-    
+
     if (newsData && newsData.articles && newsData.articles.length > 0) {
         // source_score 기준으로 정렬 (높은 점수 순)
         const sorted = [...newsData.articles].sort(
             (a, b) => (b.source_score || 0) - (a.source_score || 0)
         );
-        
+
         // API 응답 구조에 맞게 데이터 변환
         const formattedArticles = sorted.map(article => ({
             title: article.title,
@@ -387,7 +387,7 @@ function openModal(country: any, newsData: any) {
             date: article.published_date,
             level: article.source_score
         }));
-        
+
         selectedCountry.value = { ...country, articles: formattedArticles };
         currentIndex.value = 0;
         console.log(' 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);

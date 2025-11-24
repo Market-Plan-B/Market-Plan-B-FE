@@ -8,8 +8,16 @@ const router = createRouter({
   routes: [
     { path: "/", redirect: "/dashboard" },
     { path: "/dashboard", component: DashboardView },
-    { path: "/reports", component: ReportsView, meta: { requiresData: 'reports' } },
-    { path: "/analysis", component: AnalysisView, meta: { requiresData: 'analysis' } },
+    {
+      path: "/reports",
+      component: ReportsView,
+      meta: { requiresData: "reports" },
+    },
+    {
+      path: "/analysis",
+      component: AnalysisView,
+      meta: { requiresData: "analysis" },
+    },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
 });
