@@ -9,7 +9,6 @@
                 <div class="text-2xl font-extrabold">
                     ${{ todayBrent.price?.toFixed(2) || "-" }}
                 </div>
-
             </div>
         </div>
         <!-- 🛢️ 글로벌 원유 대시보드 -->
@@ -39,7 +38,6 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
-import { dashboardAPI } from "@/api/dashboard";
 import { getBrentOil } from "@/api/financial";
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
@@ -50,43 +48,31 @@ import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
 
-const todayImpact = ref({ score: 0 });
 const lottieContainer = ref(null);
 
-
-const loadOverallImpact = async () => {
-    try {
-        // Router에서 미리 로드된 데이터 사용
-        if (window.dashboardData?.overall) {
-            todayImpact.value.score = window.dashboardData.overall.overall_score;
-        } else {
-            const response = await dashboardAPI.getOverallImpact();
-            todayImpact.value.score = response.data.overall_score;
-        }
-    } catch (error) {
-        console.error('전체 영향도 로드 실패:', error);
-        todayImpact.value.score = 0;
-    }
-};
-
+// 🛢 Daily Brent 상태값
 const todayBrent = ref({
     price: 0,
     change: 0,
     changePercent: 0
 });
 
+// 🛢 Daily Brent API 호출
 const loadDailyBrent = async () => {
     try {
         const data = await getBrentOil();
-        todayBrent.value.price = data.price;
-        todayBrent.value.change = data.change;
-        todayBrent.value.changePercent = data.changePercent;
+        todayBrent.value = {
+            price: data.price,
+            change: data.change,
+            changePercent: data.changePercent
+        };
     } catch (e) {
         console.error("브렌트유 가격 로드 실패:", e);
     }
 };
 
 onMounted(async () => {
+    // Lottie 로딩
     if (lottieContainer.value) {
         lottie.loadAnimation({
             container: lottieContainer.value,
@@ -97,15 +83,11 @@ onMounted(async () => {
         });
     }
 
-    await Promise.all([
-        loadDailyBrent(),     // ← 추가
-        loadOverallImpact(),  // 기존 영향도 로드
-    ]);
+    // Daily Brent 호출
+    await loadDailyBrent();
 });
-
-
-
 </script>
+
 
 <style scoped>
 .lottie-fixed {
