@@ -5,8 +5,11 @@
             <div ref="lottieContainer"></div>
 
             <div class="impact-card" @click="goToAnalysis">
-                <div class="text-xs font-medium text-white/90">Daily 영향도</div>
-                <div class="text-2xl font-extrabold">{{ todayImpact.score }}</div>
+                <div class="text-xs font-medium text-white/90">Brent Oil (Daily)</div>
+                <div class="text-2xl font-extrabold">
+                    ${{ todayBrent.price?.toFixed(2) || "-" }}
+                </div>
+
             </div>
         </div>
         <!-- 🛢️ 글로벌 원유 대시보드 -->
@@ -37,6 +40,7 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
 import { dashboardAPI } from "@/api/dashboard";
+import { getBrentOil } from "@/api/financial";
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
@@ -48,6 +52,7 @@ const goToAnalysis = () => router.push("/analysis");
 
 const todayImpact = ref({ score: 0 });
 const lottieContainer = ref(null);
+
 
 const loadOverallImpact = async () => {
     try {
@@ -64,6 +69,23 @@ const loadOverallImpact = async () => {
     }
 };
 
+const todayBrent = ref({
+    price: 0,
+    change: 0,
+    changePercent: 0
+});
+
+const loadDailyBrent = async () => {
+    try {
+        const data = await getBrentOil();
+        todayBrent.value.price = data.price;
+        todayBrent.value.change = data.change;
+        todayBrent.value.changePercent = data.changePercent;
+    } catch (e) {
+        console.error("브렌트유 가격 로드 실패:", e);
+    }
+};
+
 onMounted(async () => {
     if (lottieContainer.value) {
         lottie.loadAnimation({
@@ -74,8 +96,15 @@ onMounted(async () => {
             path: "/lottie/robot.json",
         });
     }
-    await loadOverallImpact();
+
+    await Promise.all([
+        loadDailyBrent(),     // ← 추가
+        loadOverallImpact(),  // 기존 영향도 로드
+    ]);
 });
+
+
+
 </script>
 
 <style scoped>

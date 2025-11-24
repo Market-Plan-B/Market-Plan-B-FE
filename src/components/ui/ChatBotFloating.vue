@@ -1,101 +1,112 @@
 <template>
-    <!-- 플로팅 버튼 -->
-    <button class="chat-fab" @click="toggleChat" aria-label="AI 리포트 챗봇 열기">
-        <div class="chat-fab-icon">AI</div>
-        <div class="chat-fab-text">
-            <span class="label">마리모</span>
-            <span class="sub"></span>
+    <div class="wrap">
+        <transition name="tip">
+            <div v-if="hover" class="tip">마리모일세</div>
+        </transition>
+        <div class="icon" @click="open = !open" @mouseenter="hover = true" @mouseleave="hover = false">
+            <svg viewBox="0 0 100 100">
+                <defs>
+                    <radialGradient id="g" cx="40%" cy="35%" r="60%">
+                        <stop offset="0%" stop-color="#7dd87d" />
+                        <stop offset="50%" stop-color="#4ade80" />
+                        <stop offset="100%" stop-color="#22c55e" />
+                    </radialGradient>
+                </defs>
+                <circle cx="50" cy="55" r="32" fill="url(#g)" />
+                <ellipse cx="50" cy="30" rx="28" ry="7" fill="#d4a574" />
+                <ellipse cx="50" cy="29" rx="26" ry="5" fill="#e8c49a" />
+                <path d="M32 30Q32 12 50 10Q68 12 68 30" fill="#c9956c" />
+                <path d="M34 30Q34 14 50 12Q66 14 66 30" fill="#d4a574" />
+                <rect x="34" y="24" width="32" height="4" rx="1" fill="#8b6914" />
+                <path d="M38 52Q42 48 46 52M54 52Q58 48 62 52" stroke="#1a472a" stroke-width="2.5" fill="none"
+                    stroke-linecap="round" />
+                <ellipse cx="33" cy="58" rx="4" ry="2.5" fill="#ff9999" opacity=".4" />
+                <ellipse cx="67" cy="58" rx="4" ry="2.5" fill="#ff9999" opacity=".4" />
+                <path d="M44 64Q50 70 56 64" stroke="#1a472a" stroke-width="2" fill="none" stroke-linecap="round" />
+            </svg>
         </div>
-    </button>
-
-    <!-- 챗봇 모달 -->
-    <transition name="chat-slide">
-        <div v-if="isChatOpen"
-            class="chat-overlay fixed inset-0 flex items-end justify-center md:items-center bg-black/40">
-            <div
-                class="chat-panel w-[320px] md:w-[380px] mb-4 md:mb-0 rounded-3xl bg-white shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden">
-
-                <!-- 헤더 -->
-                <div
-                    class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/80 backdrop-blur">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500">Market Plan B · Agent</p>
-                        <p class="text-sm font-bold text-slate-900">원유 리포트 챗봇</p>
-                    </div>
-                    <button @click="toggleChat"
-                        class="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200/60 transition-colors">
-                        ✕
-                    </button>
-                </div>
-
-                <!-- 메시지 영역 -->
-                <div class="flex-1 px-4 py-3 space-y-3 overflow-y-auto text-[13px] chat-scroll">
-                    <!-- 첫 안내 메시지 -->
-                    <div class="flex items-start gap-2">
-                        <div
-                            class="mt-0.5 w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-[11px] text-white font-semibold shrink-0">
-                            AI
-                        </div>
-                        <div
-                            class="px-3 py-2 rounded-2xl bg-emerald-50 text-emerald-900 shadow-sm border border-emerald-100 max-w-[230px] leading-relaxed">
-                            안녕하세요!<br />
-                            뉴스·리포트·영향도 데이터를 기반으로<br />
-                            <span class="font-semibold">요약 / 비교 / 통계 인사이트</span>를 정리해 드릴게요.
-                            먼저 한 가지 궁금하신 점을 자유롭게 적어 주세요.
-                        </div>
-                    </div>
-
-                    <!-- 대화 히스토리 -->
-                    <div v-for="(m, idx) in messages" :key="idx">
-                        <!-- 사용자 -->
-                        <div class="flex justify-end">
-                            <div class="px-3 py-2 rounded-2xl bg-emerald-600 text-white shadow max-w-[230px]">
-                                {{ m.question }}
-                            </div>
-                        </div>
-
-                        <!-- AI -->
-                        <div class="flex items-start gap-2 mt-1">
-                            <div
-                                class="mt-0.5 w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-[11px] text-white font-semibold shrink-0">
-                                AI
-                            </div>
-                            <div
-                                class="px-3 py-2 rounded-2xl bg-slate-50 text-slate-900 shadow-sm border border-slate-100 max-w-[230px] leading-relaxed whitespace-pre-line">
-                                {{ m.answer }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 입력 영역 -->
-                <form @submit.prevent="onSubmit" class="border-t border-slate-200 bg-slate-50 px-3 py-2.5 space-y-2">
-                    <!-- 추천 질문 -->
-                    <div class="flex flex-wrap gap-2 mb-1">
-                        <button v-for="(s, idx) in baseSuggestions" :key="idx" @click="onSelectSuggestion(s)"
-                            type="button"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[11px] text-slate-700 shadow-sm hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
-                            <span v-if="idx === 0">📊</span>
-                            <span v-else-if="idx === 1">⚖️</span>
-                            <span v-else>📈</span>
-                            <span>{{ s }}</span>
+    </div>
+    <transition name="modal">
+        <div v-if="open" class="overlay" @click.self="open = false">
+            <div class="modal">
+                <header>
+                    <div />
+                    <div class="btns">
+                        <button
+                            v-for="d in ['M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3', 'M3 3h18v18H3z', 'M18 6L6 18M6 6l12 12']"
+                            :key="d" @click="d.includes('18 6') && (open = false)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path :d="d" />
+                            </svg>
                         </button>
                     </div>
-
-                    <!-- 입력창 -->
-                    <div class="flex items-end gap-2">
-                        <textarea v-model="inputValue" rows="1" placeholder="처음 한 번만 자연어로 질문을 입력해 주세요."
-                            class="flex-1 resize-none text-[13px] px-3 py-2 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-emerald-200 bg-white"></textarea>
-                        <button type="submit"
-                            class="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-sm">
-                            ▶
-                        </button>
+                </header>
+                <main>
+                    <div class="avatar"><svg viewBox="0 0 100 100">
+                            <defs>
+                                <radialGradient id="gl" cx="40%" cy="35%" r="60%">
+                                    <stop offset="0%" stop-color="#7dd87d" />
+                                    <stop offset="50%" stop-color="#4ade80" />
+                                    <stop offset="100%" stop-color="#22c55e" />
+                                </radialGradient>
+                            </defs>
+                            <circle cx="50" cy="55" r="32" fill="url(#gl)" />
+                            <ellipse cx="50" cy="30" rx="28" ry="7" fill="#d4a574" />
+                            <ellipse cx="50" cy="29" rx="26" ry="5" fill="#e8c49a" />
+                            <path d="M32 30Q32 12 50 10Q68 12 68 30" fill="#c9956c" />
+                            <path d="M34 30Q34 14 50 12Q66 14 66 30" fill="#d4a574" />
+                            <rect x="34" y="24" width="32" height="4" rx="1" fill="#8b6914" />
+                            <path d="M38 52Q42 48 46 52M54 52Q58 48 62 52" stroke="#1a472a" stroke-width="2.5"
+                                fill="none" stroke-linecap="round" />
+                            <ellipse cx="33" cy="58" rx="4" ry="2.5" fill="#ff9999" opacity=".4" />
+                            <ellipse cx="67" cy="58" rx="4" ry="2.5" fill="#ff9999" opacity=".4" />
+                            <path d="M44 64Q50 70 56 64" stroke="#1a472a" stroke-width="2" fill="none"
+                                stroke-linecap="round" />
+                        </svg></div>
+                    <h2>뭐가 궁금해, 형씨?</h2>
+                    <div class="menu">
+                        <div v-for="m in menu" :key="m.t" @click="ask(m.q)"><span>{{ m.i }}</span><span>{{ m.t }}</span>
+                        </div>
                     </div>
-
-                    <p class="text-[10px] text-slate-400">
-                        이후에는 추천 질문을 눌러 빠르게 분석을 이어갈 수 있습니다.
-                    </p>
-                </form>
+                    <div v-if="msgs.length" class="history">
+                        <div v-for="(m, i) in msgs" :key="i" class="grp">
+                            <div class="msg u">{{ m.q }}</div>
+                            <div class="msg a">
+                                <div class="sm"><svg viewBox="0 0 100 100">
+                                        <circle cx="50" cy="55" r="32" fill="#4ade80" />
+                                        <path d="M38 52Q42 48 46 52M54 52Q58 48 62 52M44 64Q50 70 56 64"
+                                            stroke="#1a472a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                                    </svg></div>
+                                <div class="txt">{{ m.a }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <footer>
+                    <div class="box">
+                        <textarea v-model="input" @keydown.enter.prevent="submit" placeholder="무엇이든 물어보세요..."
+                            rows="1" />
+                        <div class="acts">
+                            <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                                </svg></button>
+                            <span>자동</span>
+                            <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path
+                                        d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                                </svg></button>
+                            <span>모든 출처</span>
+                            <button class="send" @click="submit" :disabled="!input.trim()"><svg viewBox="0 0 24 24"
+                                    fill="currentColor">
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                                </svg></button>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </div>
     </transition>
@@ -103,151 +114,336 @@
 
 <script setup>
 import { ref } from "vue";
-
-// 상태
-const isChatOpen = ref(false);
-const inputValue = ref("");
-const messages = ref([]);
-
-// 추천 질문
-const baseSuggestions = [
-    "오늘 가장 영향도가 높은 이슈만 정리해서 알려줘",
-    "사우디·미국·중국 관련 리스크를 비교해서 설명해줘",
-    "이번 주 유가 시나리오(상승/하락)를 확률과 함께 정리해줘",
+const open = ref(false), hover = ref(false), input = ref(""), msgs = ref([]);
+const menu = [
+    { i: '🔍', t: '무엇이든 검색', q: '오늘의 주요 원유 뉴스 검색' },
+    { i: '📊', t: '리포트 요약', q: '이번 주 원유 리포트 요약' },
+    { i: '📈', t: '영향도 분석', q: '유가 영향 주요 이슈 분석' },
+    { i: '⚖️', t: '리스크 비교', q: '사우디·미국·중국 리스크 비교' }
 ];
-
-// 챗봇 열기/닫기
-const toggleChat = () => {
-    isChatOpen.value = !isChatOpen.value;
-};
-
-// 임시 AI 응답
-const pushMockAnswer = (question) => {
-    const answer =
-        `질문: "${question}" 에 대해 데모 응답입니다.\n\n` +
-        "- 실제 서비스 연동 시 뉴스·리포트·영향도 데이터를 기반으로 분석을 생성합니다.\n" +
-        "- 핵심 이슈 요약, 국가 비교, 시나리오 분석 등이 자동 제공됩니다.";
-
-    messages.value.push({ question, answer });
-};
-
-// 직접 입력 제출
-const onSubmit = () => {
-    const q = inputValue.value.trim();
-    if (!q) return;
-    pushMockAnswer(q);
-    inputValue.value = "";
-};
-
-// 추천 질문 처리
-const onSelectSuggestion = (q) => {
-    pushMockAnswer(q);
-};
+const ask = (q) => msgs.value.push({ q, a: `"${q}"에 대한 마리모 응답입니다.\n실제 API 연동 시 분석 결과가 표시됩니다.` });
+const submit = () => { if (input.value.trim()) { ask(input.value.trim()); input.value = ""; } };
 </script>
 
 <style scoped>
-/* 💬 챗봇 플로팅 버튼 */
-.chat-fab {
+.wrap {
     position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    z-index: 60;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9999;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(to right, #0f172a, #1e293b);
-    color: #f9fafb;
-    padding: 0.45rem 0.9rem;
-    border-radius: 9999px;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(148, 163, 184, 0.7);
+    gap: 8px;
+}
+
+.tip {
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tip-enter-active,
+.tip-leave-active {
+    transition: .2s;
+}
+
+.tip-enter-from,
+.tip-leave-to {
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.icon {
+    width: 52px;
+    height: 52px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition: .2s;
+    padding: 4px;
 }
 
-.chat-fab:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.9);
-    background: linear-gradient(to right, #020617, #0f172a);
+.icon:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
 }
 
-.chat-fab-icon {
-    width: 1.9rem;
-    height: 1.9rem;
-    border-radius: 9999px;
-    background: radial-gradient(circle at 30% 0%, #38bdf8, #0f172a);
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .3);
+    backdrop-filter: blur(2px);
+    z-index: 9998;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
 }
 
-.chat-fab-text {
+.modal {
+    width: 480px;
+    max-width: 95vw;
+    max-height: 85vh;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .25);
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    overflow: hidden;
 }
 
-.chat-fab-text .label {
-    font-size: 0.75rem;
-    font-weight: 600;
+.modal-enter-active,
+.modal-leave-active {
+    transition: .25s;
 }
 
-.chat-fab-text .sub {
-    font-size: 0.65rem;
-    color: #cbd5f5;
+.modal-enter-from {
+    opacity: 0;
+    transform: scale(.95) translateY(10px);
 }
 
-/* 챗봇 패널 스크롤바 숨김 */
-.chat-scroll::-webkit-scrollbar {
-    display: none;
+.modal-leave-to {
+    opacity: 0;
+    transform: scale(.98) translateY(5px);
 }
 
-.chat-scroll {
-    -ms-overflow-style: none;
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid #e8e8e6;
+}
+
+.btns {
+    display: flex;
+    gap: 4px;
+}
+
+.btns button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #9b9a97;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btns button:hover {
+    background: #f1f1ef;
+    color: #37352f;
+}
+
+.btns svg {
+    width: 16px;
+    height: 16px;
+}
+
+main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px 16px;
     scrollbar-width: none;
 }
 
-/* 챗봇 오버레이/패널 z-index */
-.chat-overlay {
-    z-index: 9998;
+main::-webkit-scrollbar {
+    display: none;
 }
 
-.chat-panel {
-    z-index: 9999;
-    /* 오버레이 위 */
+.avatar {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
 }
 
-/* 챗봇 슬라이드 애니메이션 */
-.chat-slide-enter-active,
-.chat-slide-leave-active {
-    transition: all 0.25s ease-out;
+.avatar svg {
+    width: 100%;
+    height: 100%;
 }
 
-.chat-slide-enter-from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.96);
+h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #37352f;
+    margin: 0 0 24px;
 }
 
-.chat-slide-leave-to {
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 24px;
 }
 
-@media (max-width: 768px) {
-    .chat-fab {
-        right: 0.75rem;
-        bottom: 0.75rem;
-        padding: 0.4rem 0.8rem;
-    }
+.menu>div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
 
-    .chat-panel {
-        right: 0.75rem;
-        left: 0.75rem;
-        width: auto;
-        bottom: 3.5rem;
-    }
+.menu>div:hover {
+    background: #f7f6f3;
+}
+
+.menu span:first-child {
+    width: 24px;
+    text-align: center;
+}
+
+.menu span:last-child {
+    font-size: 15px;
+    color: #37352f;
+}
+
+.history {
+    border-top: 1px solid #e8e8e6;
+    padding-top: 16px;
+}
+
+.grp {
+    margin-bottom: 16px;
+}
+
+.msg {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.msg.u {
+    background: #37352f;
+    color: #fff;
+    margin-left: 40px;
+    margin-bottom: 8px;
+}
+
+.msg.a {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: transparent;
+    padding: 0;
+}
+
+.sm {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.sm svg {
+    width: 100%;
+    height: 100%;
+}
+
+.txt {
+    background: #f7f6f3;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: #37352f;
+    white-space: pre-line;
+    flex: 1;
+}
+
+footer {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #e8e8e6;
+}
+
+.box {
+    border: 2px solid #2383e2;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 15px;
+    color: #37352f;
+    background: transparent;
+    font-family: inherit;
+}
+
+textarea::placeholder {
+    color: #9b9a97;
+}
+
+.acts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e8e8e6;
+}
+
+.acts span {
+    font-size: 13px;
+    color: #787774;
+}
+
+.act-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #9b9a97;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.act-btn:hover {
+    background: #f1f1ef;
+    color: #37352f;
+}
+
+.act-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.send {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    background: #f1f1ef;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #9b9a97;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send:hover:not(:disabled) {
+    background: #2383e2;
+    color: #fff;
+}
+
+.send:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.send svg {
+    width: 18px;
+    height: 18px;
 }
 </style>
