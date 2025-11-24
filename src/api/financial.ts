@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const TWELVEDATA_KEY = "f9f78f2306e34f24878fdd8bbf01488d";
+// 🔥 .env에서 API 키 불러오기
+const TWELVE_KEY = import.meta.env.VITE_TWELVEDATA_KEY;
 
 // 공통 타입
 interface BaseQuote {
@@ -14,15 +15,15 @@ interface OilPrice extends BaseQuote {
   prevClose: number;
 }
 
-// TwelveData 기본 fetch
+// TwelveData fetch 공통 함수
 const fetchTwelve = async (symbol: string) => {
-  const url = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
+  const url = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${TWELVE_KEY}`;
   const { data } = await axios.get(url);
   return data;
 };
 
 const fetchTwelvePrice = async (symbol: string) => {
-  const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
+  const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVE_KEY}`;
   const { data } = await axios.get(url);
   return Number(data.price) || 0;
 };
@@ -31,7 +32,9 @@ const fetchTwelvePrice = async (symbol: string) => {
 const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
   fn().catch(() => fallback);
 
-// 🛢️ Brent / WTI
+// ------------------------------------
+// 🛢 Brent / WTI
+// ------------------------------------
 export const getBrentOil = () =>
   safe(
     async (): Promise<OilPrice> => {
@@ -64,7 +67,9 @@ export const getWTI = () =>
     { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 }
   );
 
-// Crack Spread (Gasoline - WTI) * 42갤런
+// ------------------------------------
+// Crack Spread
+// ------------------------------------
 export const getCrackSpread = () =>
   safe(
     async () => {
@@ -79,7 +84,9 @@ export const getCrackSpread = () =>
     { value: 0 }
   );
 
+// ------------------------------------
 // 천연가스
+// ------------------------------------
 export const getNaturalGas = () =>
   safe(
     async () => {
@@ -92,7 +99,9 @@ export const getNaturalGas = () =>
     { value: 0, change: 0 }
   );
 
-// 💵 환율 / 금리
+// ------------------------------------
+// 환율/금리
+// ------------------------------------
 export const getUSDKRW = () =>
   safe(async () => ({ price: await fetchTwelvePrice("USD/KRW") }), {
     price: 0,
@@ -124,18 +133,18 @@ export const getUS10Y = () =>
     { rate: 0 }
   );
 
-// ⚠ 미국 2년물은 TWELVE DATA에서 TVX, TYX, TNX가 아닐 수 있음
-// 보통 US2Y, US5Y 같은 포맷 사용 가능
 export const getUS2Y = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("US2Y");
+      const d = await fetchTwelve("US2Y"); // 혹은 "UST2Y"
       return { rate: Number(d.close) || 0 };
     },
     { rate: 0 }
   );
 
-// 📈 주요 지수
+// ------------------------------------
+// 주요 지수
+// ------------------------------------
 export const getSP500 = () =>
   safe(
     async () => {
@@ -184,7 +193,9 @@ export const getCopper = () =>
     { value: 0, change: 0 }
   );
 
-// 전체 패키지 로더
+// ------------------------------------
+// 전체 로더
+// ------------------------------------
 export interface FinancialData {
   brent: Awaited<ReturnType<typeof getBrentOil>>;
   wti: Awaited<ReturnType<typeof getWTI>>;
