@@ -28,6 +28,7 @@ body {
     background: #f9fafc;
     display: block;
     min-height: 100vh;
+    font-family: "SUIT", sans-serif;
 }
 
 html {

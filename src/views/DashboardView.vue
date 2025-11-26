@@ -1,27 +1,26 @@
+<!-- DashboardView.vue -->
 <template>
     <div class="relative space-y-8">
-        <!-- ✅ Daily 영향도 -->
+        <!-- ✅ Daily 영향도 (Brent Oil) -->
         <div class="lottie-fixed">
             <div ref="lottieContainer"></div>
-
             <div class="impact-card" @click="goToAnalysis">
-                <div class="text-xs font-medium text-white/90">Brent Oil (Daily)</div>
-                <div class="text-2xl font-extrabold">
-                    ${{ todayBrent.price?.toFixed(2) || "-" }}
-                </div>
+                <div class="text-xs font-medium text-white/90">Brent Oil</div>
+                <div class="text-2xl font-extrabold">{{ todayImpact.score }}</div>
             </div>
         </div>
-        <!-- 🛢️ 글로벌 원유 대시보드 -->
+
+        <!-- 🛢 글로벌 원유 지도 -->
         <section class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
             <h2 class="font-bold text-2xl mb-2 text-gray-900">글로벌 원유 대시보드</h2>
             <WorldOilMap />
         </section>
 
-        <!-- 📊 하단 Daily Feature & Counter -->
+        <!-- 📊 Daily Feature & Counter -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <h3 class="font-semibold mb-3 text-gray-700">Daily feature</h3>
-                <ChartBar />
+                <h3 class="font-semibold mb-3 text-gray-700">Daily Feature 영향도</h3>
+                <ChartBar :apiData="apiData" :loading="loading" :limit="5" />
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <h3 class="font-semibold mb-3 text-gray-700">Daily 추천 대응책</h3>
@@ -29,7 +28,6 @@
             </div>
         </section>
 
-        <!-- 💬 공통 챗봇 플로팅 버튼 -->
         <ChatBotFloating />
     </div>
 </template>
@@ -38,7 +36,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
-import { getBrentOil } from "@/api/financial";
+import { dashboardAPI } from "@/api/dashboard";
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
@@ -48,31 +46,39 @@ import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
 
+const todayImpact = ref({ score: 0 });
+const apiData = ref(null);
 const lottieContainer = ref(null);
+const loading = ref(true);
 
-// 🛢 Daily Brent 상태값
-const todayBrent = ref({
-    price: 0,
-    change: 0,
-    changePercent: 0
-});
-
-// 🛢 Daily Brent API 호출
-const loadDailyBrent = async () => {
+const loadOverallImpact = async () => {
     try {
-        const data = await getBrentOil();
-        todayBrent.value = {
-            price: data.price,
-            change: data.change,
-            changePercent: data.changePercent
-        };
-    } catch (e) {
-        console.error("브렌트유 가격 로드 실패:", e);
+        if (window.dashboardData?.overall) {
+            todayImpact.value.score = window.dashboardData.overall.overall_score;
+        } else {
+            const response = await dashboardAPI.getOverallImpact();
+            todayImpact.value.score = response.data.overall_score;
+        }
+    } catch (error) {
+        console.error("전체 영향도 로드 실패:", error);
+        todayImpact.value.score = 0;
+    }
+};
+
+const loadDailyFactor = async () => {
+    loading.value = true;
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await dashboardAPI.getImpactAnalysis(today); //  동일한 API
+        apiData.value = response.data;
+    } catch (err) {
+        console.error("Daily Feature 로드 실패:", err);
+    } finally {
+        loading.value = false;
     }
 };
 
 onMounted(async () => {
-    // Lottie 로딩
     if (lottieContainer.value) {
         lottie.loadAnimation({
             container: lottieContainer.value,
@@ -83,11 +89,10 @@ onMounted(async () => {
         });
     }
 
-    // Daily Brent 호출
-    await loadDailyBrent();
+    await loadOverallImpact();
+    await loadDailyFactor();
 });
 </script>
-
 
 <style scoped>
 .lottie-fixed {

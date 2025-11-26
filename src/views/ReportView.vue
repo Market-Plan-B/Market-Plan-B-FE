@@ -30,9 +30,6 @@
         <!-- 📌 데일리 뉴스 카드 (Daily 모드에서만) -->
         <section v-if="mode === 'daily'" class="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Daily News</h2>
-            <!-- <Transition name="cards" mode="out-in">
-                <ReportCards :key="mode + selectedDate" :cards="cards" />
-            </Transition> -->
             <div class="relative">
                 <!-- 카드 캐러셀 -->
                 <div class="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
@@ -61,7 +58,7 @@
                 <p class="text-sm text-slate-600">{{ selectedDate }}</p>
             </div>
 
-            <div v-if="reportHtml" class="prose max-w-none" v-html="reportHtml"></div>
+            <div v-if="reportHtml" class="report-content" v-html="reportHtml"></div>
             <div v-else class="text-slate-400 text-center py-10">리포트가 없습니다.</div>
         </section>
     </div>
@@ -90,10 +87,11 @@ import { reportsAPI } from "@/api/reports";
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 import ReportCards from "@/components/ReportCards.vue";
 
-import CardNews1 from "@/data/images/CardNews_sample1.jpg";
-import CardNews2 from "@/data/images/CardNews_sample2.jpg";
+import CardNews1 from "@/data/images/CardNews_Sample01.png";
+import CardNews2 from "@/data/images/CardNews_Sample02.png";
+import CardNews3 from "@/data/images/CardNews_Sample03.png";
 
-const dummyImages = [CardNews1, CardNews2];
+const dummyImages = [CardNews1, CardNews2, CardNews3];
 const currentIndex = ref(0);
 const isModalOpen = ref(false);
 
@@ -153,5 +151,162 @@ watch([mode, selectedDate], () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* HTML 보고서 스타일링 */
+.report-content {
+    max-width: none;
+    line-height: 1.6;
+    color: #374151;
+}
+
+/* 제목 스타일 */
+.report-content :deep(h1) {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dbeafe;
+}
+
+.report-content :deep(h2) {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.report-content :deep(h3) {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+/* 문단 스타일 */
+.report-content :deep(p) {
+    color: #374151;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+/* 리스트 스타일 */
+.report-content :deep(ul) {
+    list-style-type: disc;
+    list-style-position: inside;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.report-content :deep(ol) {
+    list-style-type: decimal;
+    list-style-position: inside;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.report-content :deep(li) {
+    color: #374151;
+    line-height: 1.75;
+    margin-bottom: 0.5rem;
+}
+
+/* 테이블 스타일 */
+.report-content :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #d1d5db;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-content :deep(th) {
+    background-color: #eff6ff;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.report-content :deep(td) {
+    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem;
+    color: #374151;
+}
+
+.report-content :deep(tr:nth-child(even)) {
+    background-color: #f9fafb;
+}
+
+/* 강조 텍스트 */
+.report-content :deep(strong) {
+    font-weight: 600;
+    color: #111827;
+}
+
+.report-content :deep(em) {
+    font-style: italic;
+    color: #2563eb;
+}
+
+/* 인용문 */
+.report-content :deep(blockquote) {
+    border-left: 4px solid #60a5fa;
+    padding-left: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: #eff6ff;
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin-bottom: 1rem;
+    font-style: italic;
+    color: #374151;
+}
+
+/* 코드 블록 */
+.report-content :deep(pre) {
+    background-color: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+}
+
+.report-content :deep(code) {
+    background-color: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+    color: #1f2937;
+}
+
+/* 링크 */
+.report-content :deep(a) {
+    color: #2563eb;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.report-content :deep(a:hover) {
+    color: #1d4ed8;
+}
+
+/* 이미지 */
+.report-content :deep(img) {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    max-width: 100%;
+    height: auto;
 }
 </style>

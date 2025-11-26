@@ -3,10 +3,10 @@
         class="relative w-full h-[520px] rounded-2xl border border-slate-200 bg-gray-100 shadow-sm overflow-visible">
         <div ref="mapContainer" id="map" class="absolute inset-0 w-full h-full z-0"></div>
 
-        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md border border-gray-200 
+        <!-- 좌측 하단: 영향도 박스 -->
+        <div class="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-gray-200 
            rounded-xl shadow-md p-4 w-[220px] z-20">
-
-            <h3 class="text-sm font-bold text-gray-700 mb-2">국가별 위험도 요약</h3>
+            <h3 class="text-sm font-bold text-gray-700 mb-2">국가별 영향도 요약</h3>
 
             <div v-if="urgentList.length" class="mb-2">
                 <div class="text-xs font-semibold mb-1">🟥 긴급</div>
@@ -24,23 +24,108 @@
             </div>
         </div>
 
+        <!-- 우측 하단: 정보 박스 (내용만 전환) -->
+        <div class="absolute bottom-4 right-4 
+                   bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl shadow-md 
+                   p-4 w-[280px] h-[200px] z-20 flex flex-col">
+
+            <transition name="fade" mode="out-in">
+                <!-- 평소: 시장 지표 -->
+                <div v-if="!hoveredCountry" key="market-info" class="flex flex-col h-full">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">
+                        실시간 시장 지표
+                    </h3>
+
+                    <div class="flex-1 space-y-2 overflow-hidden">
+                        <div v-for="indicator in marketIndicators" :key="indicator.name"
+                            class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-800">{{ indicator.name }}</p>
+                                <p class="text-[10px] text-gray-500">{{ indicator.symbol }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold"
+                                    :class="indicator.change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                    ${{ indicator.price }}
+                                </p>
+                                <p class="text-[10px]"
+                                    :class="indicator.change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                    {{ indicator.change >= 0 ? '▲' : '▼' }} {{ Math.abs(indicator.change).toFixed(2) }}%
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-[9px] text-gray-500 text-center">
+                            마지막 업데이트: {{ lastUpdateTime }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 호버 시: 국가 정보 -->
+                <div v-else key="country-info" class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-gray-900">{{ hoveredCountry.name }}</h3>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold" :style="{
+                            backgroundColor: getScoreBgColor(hoveredCountry.score),
+                            color: getScoreTextColor(hoveredCountry.score)
+                        }">
+                            {{ hoveredCountry.score }}
+                        </span>
+                    </div>
+
+                    <div class="flex-1 space-y-2 overflow-hidden">
+                        <!-- 뉴스 있을 때 -->
+                        <div v-if="hoveredCountry.hasNews" class="h-full flex flex-col space-y-1.5">
+                            <div v-for="(news, idx) in hoveredCountry.recentNews" :key="idx"
+                                class="flex items-start gap-1.5">
+                                <span class="text-orange-600 text-[10px] mt-0.5">•</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[10px] text-gray-700 leading-tight line-clamp-2">{{ news.title }}</p>
+                                    <span class="text-[9px] text-gray-400">{{ news.timeAgo }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 뉴스 없을 때 -->
+                        <div v-else class="h-full flex items-center justify-center">
+                            <div class="text-center">
+                                <p class="text-xl mb-1">📭</p>
+                                <p class="text-xs text-gray-500">관련 뉴스가 없습니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <button @click="openModal(hoveredCountry)" class="w-full py-1.5 bg-orange-500 hover:bg-orange-600 text-white 
+                                   rounded-lg text-xs font-semibold transition-colors">
+                            전체 뉴스 보기 →
+                        </button>
+                    </div>
+                </div>
+            </transition>
+        </div>
+
+        <!-- 모달 -->
         <transition name="fade-zoom">
             <div v-if="selectedCountry">
                 <div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
                     bg-white rounded-3xl shadow-2xl border border-gray-200
-                    w-[420px] h-[500px] p-6 flex flex-col justify-between items-center
+                    w-[900px] h-[650px] p-6 flex flex-col
                     backdrop-blur-md z-50">
-                    <button @click="closeModal" class="absolute top-3 right-4
-                        text-gray-500 hover:text-gray-800 text-lg font-bold
-                        transition cursor-pointer">✕</button>
 
-                    <h2 class="font-extrabold text-2xl mb-3 text-gray-900 text-center">
+                    <button @click="closeModal"
+                        class="absolute top-3 right-4 text-gray-500 hover:text-gray-800 text-xl font-bold cursor-pointer">
+                        ✕
+                    </button>
+
+                    <h2 class="font-extrabold text-2xl mb-4 text-gray-900 text-center">
                         {{ selectedCountry.name }} 주요 뉴스
                     </h2>
 
-                    <div class="p-5 relative flex items-center justify-center overflow-visible h-[360px]">
-                        <!-- 뉴스가 없을 때 -->
-                        <div v-if="!selectedCountry.articles || selectedCountry.articles.length === 0"
+                    <div class="flex-1 overflow-hidden">
+                        <div v-if="!selectedCountry.articles.length"
                             class="w-full h-full flex items-center justify-center">
                             <div class="text-center">
                                 <div class="text-4xl mb-4">📰</div>
@@ -48,80 +133,54 @@
                             </div>
                         </div>
 
-                        <!-- 뉴스가 있을 때 -->
-                        <transition-group v-else name="slide-x" tag="div"
-                            class="w-full h-full flex justify-center items-center">
-                            <div v-for="(news, i) in [selectedCountry.articles[currentIndex]]" :key="i"
-                                class="w-full h-[460px] bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-inner overflow-y-auto">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h3 class="text-[16px] font-semibold text-gray-900 text-left leading-snug">
-                                        {{ news.title }}
-                                    </h3>
+                        <div v-else class="h-full flex flex-col">
+                            <div class="flex-1 grid grid-cols-3 gap-4 overflow-hidden">
+                                <div v-for="(news, idx) in currentPageNews" :key="idx"
+                                    class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col">
 
-                                    <span
-                                        class="text-xs px-2 py-0.5 rounded-full border font-semibold inline-flex items-center justify-center"
-                                        :style="{
-                                            borderColor: news.level >= 7
-                                                ? '#ff3b3b'
-                                                : news.level >= 4
-                                                    ? '#ff9f1c'
-                                                    : '#ffd43b',
-                                            color: news.level >= 7
-                                                ? '#ff3b3b'
-                                                : news.level >= 4
-                                                    ? '#ff9f1c'
-                                                    : '#f59e0b',
-                                            backgroundColor: news.level >= 7
-                                                ? '#fef2f2'
-                                                : news.level >= 4
-                                                    ? '#fff7ed'
-                                                    : '#fffbeb'
-                                        }">
-                                        {{ news.level }}
-                                    </span>
-                                </div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3
+                                            class="text-sm font-semibold text-gray-900 leading-tight flex-1 line-clamp-2">
+                                            {{ news.title }}
+                                        </h3>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold ml-2 flex-shrink-0
+                                                     bg-orange-100 text-orange-600">
+                                            {{ news.level }}
+                                        </span>
+                                    </div>
 
-                                <p class="text-[13px] text-gray-700 mb-3 leading-snug text-left">
-                                    {{ news.desc }}
-                                </p>
-
-                                <div class="flex justify-between items-center mt-4">
-                                    <a :href="news.url" target="_blank" rel="noopener noreferrer"
-                                        class="text-[7px] text-orange-600 hover:underline text-left">
-                                        원본 Link →
-                                    </a>
-                                    <p class="text-xs text-gray-500 text-right">
-                                        📅 {{ news.date }}
+                                    <p class="text-xs text-gray-700 mb-3 leading-relaxed flex-1 overflow-y-auto">
+                                        {{ news.desc }}
                                     </p>
+
+                                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                                        <a :href="news.url" target="_blank" rel="noopener noreferrer"
+                                            class="text-xs text-orange-600 hover:underline">
+                                            원본 Link →
+                                        </a>
+                                        <p class="text-xs text-gray-500">{{ news.date }}</p>
+                                    </div>
                                 </div>
                             </div>
 
-                        </transition-group>
+                            <div v-if="totalPages > 1" class="flex justify-center items-center gap-3 mt-4">
+                                <button @click="prevPage" :disabled="currentPage === 0" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed
+                                           flex items-center justify-center transition-colors">
+                                    ‹
+                                </button>
 
-                        <!-- 뉴스가 있을 때만 네비게이션 버튼 표시 -->
-                        <template v-if="selectedCountry.articles && selectedCountry.articles.length > 1">
-                            <button @click="prevSlide" class="absolute left-1 top-1/2 -translate-y-1/2
-                                bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                                border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                                shadow-sm text-gray-700 hover:text-orange-500 transition-all">
-                                ‹
-                            </button>
+                                <div class="flex gap-2">
+                                    <span v-for="page in totalPages" :key="page"
+                                        class="w-2.5 h-2.5 rounded-full transition-all"
+                                        :class="page - 1 === currentPage ? 'bg-orange-500' : 'bg-gray-300'"></span>
+                                </div>
 
-                            <button @click="nextSlide" class="absolute right-1 top-1/2 -translate-y-1/2
-                                bg-white/30 hover:bg-white/60 backdrop-blur-[2px]
-                                border border-white/40 rounded-full w-8 h-8 flex items-center justify-center
-                                shadow-sm text-gray-700 hover:text-orange-500 transition-all">
-                                ›
-                            </button>
-                        </template>
-                    </div>
-
-                    <!-- 뉴스가 있을 때만 인디케이터 표시 -->
-                    <div v-if="selectedCountry.articles && selectedCountry.articles.length > 0"
-                        class="flex justify-center gap-2 pt-4">
-                        <span v-for="(n, i) in selectedCountry.articles.length" :key="i"
-                            class="w-2.5 h-2.5 rounded-full transition-all"
-                            :class="i === currentIndex ? 'bg-orange-500' : 'bg-gray-300'"></span>
+                                <button @click="nextPage" :disabled="currentPage === totalPages - 1" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed
+                                           flex items-center justify-center transition-colors">
+                                    ›
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,70 +188,152 @@
     </div>
 </template>
 
-
 <script setup lang="ts">
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ref, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import maplibregl from "maplibre-gl";
 import { dashboardAPI, MapImpact } from "@/api/dashboard";
+import { getBrentOil, getWTI, getDXY, getCrackSpread } from "@/api/financial";
 
-const newsLevelMap = ref<Record<string, string | null>>({});
 const MAPTILER_KEY = (import.meta as any).env.VITE_MAPTILER_KEY;
 const mapImpactData = ref<MapImpact[]>([]);
 
+interface SelectedCountry {
+    name: string;
+    code: string;
+    region_score: number;
+    articles: {
+        title: string;
+        desc: string;
+        url: string;
+        date: string;
+        level: number;
+    }[];
+}
+
+interface HoveredCountry {
+    name: string;
+    code: string;
+    score: number;
+    hasNews: boolean;
+    recentNews: { title: string; timeAgo: string }[];
+}
+
+interface MarketIndicator {
+    name: string;
+    symbol: string;
+    price: string;
+    change: number;
+}
+
+const selectedCountry = ref<SelectedCountry | null>(null);
+const hoveredCountry = ref<HoveredCountry | null>(null);
+const currentPage = ref(0);
+
 const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
-const selectedCountry = ref<any | null>(null);
-const currentIndex = ref(0);
 
-const countries = [
-    { name: "미국", key: "미국", iso: "USA" },
-    { name: "중국", key: "중국", iso: "CHN" },
-    { name: "인도", key: "인도", iso: "IND" },
-    { name: "이란", key: "이란", iso: "IRN" },
-    { name: "독일", key: "독일", iso: "DEU" },
-    { name: "러시아", key: "러시아", iso: "RUS" },
-    { name: "사우디아라비아", key: "사우디아라비아", iso: "SAU" },
-    { name: "영국", key: "영국", iso: "GBR" },
-    { name: "한국", key: "한국", iso: "KOR" }
-];
+const marketIndicators = ref<MarketIndicator[]>([
+    { name: 'Brent Crude', symbol: 'BZ=F', price: '0.00', change: 0 },
+    { name: 'WTI Crude', symbol: 'CL=F', price: '0.00', change: 0 },
+    { name: 'Brent-WTI 스프레드', symbol: 'SPREAD', price: '0.00', change: 0 },
+    { name: '달러인덱스', symbol: 'DXY', price: '0.00', change: 0 },
+]);
+
+const lastUpdateTime = ref('');
+
+const currentPageNews = computed(() => {
+    if (!selectedCountry.value) return [];
+    const start = currentPage.value * 3;
+    return selectedCountry.value.articles.slice(start, start + 3);
+});
+
+const totalPages = computed(() => {
+    if (!selectedCountry.value) return 0;
+    return Math.ceil(selectedCountry.value.articles.length / 3);
+});
 
 const urgentList = computed(() =>
-    countries.filter(c => {
-        const apiData = mapImpactData.value.find(item => item.code === c.iso);
-        return apiData && apiData.region_score >= 8;
-    }).map(c => c.name)
+    mapImpactData.value.filter(item => item.region_score >= 8).map(item => item.name)
 );
-
 const highList = computed(() =>
-    countries.filter(c => {
-        const apiData = mapImpactData.value.find(item => item.code === c.iso);
-        return apiData && apiData.region_score >= 6 && apiData.region_score < 8;
-    }).map(c => c.name)
+    mapImpactData.value.filter(item => item.region_score >= 6 && item.region_score < 8).map(item => item.name)
+);
+const midList = computed(() =>
+    mapImpactData.value.filter(item => item.region_score >= 4 && item.region_score < 6).map(item => item.name)
 );
 
-const midList = computed(() =>
-    countries.filter(c => {
-        const apiData = mapImpactData.value.find(item => item.code === c.iso);
-        return apiData && apiData.region_score >= 4 && apiData.region_score < 6;
-    }).map(c => c.name)
-);
+function getScoreBgColor(score: number) {
+    if (score >= 8) return '#fef2f2';
+    if (score >= 6) return '#fff7ed';
+    return '#fffbeb';
+}
+
+function getScoreTextColor(score: number) {
+    if (score >= 8) return '#ff3b3b';
+    if (score >= 6) return '#ff9f1c';
+    return '#f59e0b';
+}
 
 const loadMapData = async () => {
     try {
-        console.log('🗺️ 지도 API 호출...');
         const response = await dashboardAPI.getMapImpact();
         mapImpactData.value = response.data;
-        console.log('✅ 지도 데이터 로드 완료:', mapImpactData.value);
     } catch (error) {
-        console.error('❌ 지도 데이터 로드 실패:', error);
+        console.error("❌ 지도 데이터 로드 실패:", error);
     }
 };
+
+async function loadMarketIndicators() {
+    try {
+        const [brent, wti, dxy, spread] = await Promise.all([
+            getBrentOil(),
+            getWTI(),
+            getDXY(),
+            getCrackSpread()
+        ]);
+
+        marketIndicators.value = [
+            {
+                name: 'Brent Crude',
+                symbol: 'BZ=F',
+                price: brent.price.toFixed(2),
+                change: brent.changePercent || 0
+            },
+            {
+                name: 'WTI Crude',
+                symbol: 'CL=F',
+                price: wti.price.toFixed(2),
+                change: wti.changePercent || 0
+            },
+            {
+                name: 'Brent-WTI 스프레드',
+                symbol: 'SPREAD',
+                price: spread.value.toFixed(2),
+                change: 0
+            },
+            {
+                name: '달러인덱스',
+                symbol: 'DXY',
+                price: dxy.index.toFixed(2),
+                change: dxy.change || 0
+            }
+        ];
+
+        lastUpdateTime.value = new Date().toLocaleTimeString('ko-KR');
+        console.log('✅ 시장 지표 업데이트 완료:', marketIndicators.value);
+    } catch (error) {
+        console.error('❌ 시장 지표 로드 실패:', error);
+    }
+}
 
 onMounted(async () => {
     await nextTick();
     await loadMapData();
+    await loadMarketIndicators();
     initMap();
+
+    setInterval(loadMarketIndicators, 300000);
 });
 
 async function initMap() {
@@ -209,26 +350,20 @@ async function initMap() {
     map.on("style.load", async () => {
         const geoData = await fetch(
             "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-        ).then((r) => r.json());
-
-        // 백엔드 API 데이터만 사용
+        ).then(r => r.json());
 
         const getColorByScore = (score: number) => {
-            if (score >= 8) return "#ff3b3b"; // 긴급
-            if (score >= 6) return "#ff9f1c"; // 높음
-            if (score >= 4) return "#ffd43b"; // 중간
-            if (score >= 2) return "#90ee90"; // 낮음
+            if (score >= 8) return "#ff3b3b";
+            if (score >= 6) return "#ff9f1c";
+            if (score >= 4) return "#ffd43b";
+            if (score >= 2) return "#90ee90";
             return "transparent";
         };
 
-        // 백엔드 API 데이터만 사용
-        const isoColorMatch = countries.flatMap((c) => {
-            const apiData = mapImpactData.value.find(item => item.code === c.iso);
-            if (apiData) {
-                return [c.iso, getColorByScore(apiData.region_score)];
-            }
-            return [c.iso, "transparent"];
-        });
+        const colorMatch = mapImpactData.value.flatMap(item => [
+            item.code,
+            getColorByScore(item.region_score),
+        ]);
 
         map.addSource("world-borders", {
             type: "geojson",
@@ -244,9 +379,9 @@ async function initMap() {
                 "fill-color": [
                     "match",
                     ["get", "ISO3166-1-Alpha-3"],
-                    ...isoColorMatch,
+                    ...colorMatch,
                     "transparent",
-                ] as any,
+                ],
                 "fill-opacity": 0.85,
             },
         });
@@ -288,18 +423,46 @@ async function initMap() {
             },
         });
 
-        let hoveredId: string | number | null = null;
-        map.on("mousemove", "country-fill", (e) => {
-            if (e.features?.length) {
-                const f = e.features[0];
-                if (hoveredId !== null) {
-                    map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: false });
+        let hoveredId: number | null = null;
+
+        map.on("mousemove", "country-fill", async (e) => {
+            if (hoveredId !== null) {
+                map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: false });
+            }
+
+            const feature = e.features?.[0];
+            if (!feature) return;
+
+            hoveredId = feature.id;
+            map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: true });
+            map.getCanvas().style.cursor = "pointer";
+
+            const isoCode = feature.properties["ISO3166-1-Alpha-3"];
+            const countryData = mapImpactData.value.find(item => item.code === isoCode);
+
+            if (countryData) {
+                try {
+                    const response = await dashboardAPI.getRegionImpact(isoCode);
+                    const regionData = response.data;
+
+                    const hasNews = regionData.contents && regionData.contents.length > 0;
+                    const recentNews = hasNews
+                        ? regionData.contents.slice(0, 3).map((article: any) => ({
+                            title: article.title,
+                            timeAgo: getTimeAgo(article.published_date)
+                        }))
+                        : [];
+
+                    hoveredCountry.value = {
+                        name: countryData.name,
+                        code: countryData.code,
+                        score: countryData.region_score,
+                        hasNews,
+                        recentNews
+                    };
+                } catch (error) {
+                    console.error("국가 정보 로드 실패:", error);
                 }
-                hoveredId = f.id ?? null;
-                if (hoveredId !== null) {
-                    map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: true });
-                }
-                map.getCanvas().style.cursor = "pointer";
             }
         });
 
@@ -308,6 +471,7 @@ async function initMap() {
                 map.setFeatureState({ source: "world-borders", id: hoveredId }, { hover: false });
             }
             hoveredId = null;
+            hoveredCountry.value = null;
             map.getCanvas().style.cursor = "";
         });
 
@@ -315,22 +479,14 @@ async function initMap() {
             if (!e.features?.length) return;
 
             const isoCode = e.features[0].properties["ISO3166-1-Alpha-3"];
-            const targetCountry = countries.find((c) => c.iso === isoCode);
 
-            if (targetCountry) {
-                // 국가별 영향도 및 뉴스 데이터 호출
-                try {
-                    const response = await dashboardAPI.getRegionImpact(isoCode);
-                    const regionData = response.data;
-                    console.log('✅ 국가 데이터 로드 완료:', regionData);
+            try {
+                const response = await dashboardAPI.getRegionImpact(isoCode);
+                const regionData = response.data;
 
-                    // region-impact API에서 contents 배열을 뉴스로 사용
-                    const newsContents = regionData.contents || [];
-                    openModal(targetCountry, { articles: newsContents });
-                } catch (error) {
-                    console.error('❌ 국가 데이터 로드 실패:', error);
-                    openModal(targetCountry, null);
-                }
+                openModalFromRegion(regionData.region, { articles: regionData.contents });
+            } catch (error) {
+                console.error("❌ 국가 데이터 로드 실패:", error);
             }
         });
     });
@@ -338,55 +494,73 @@ async function initMap() {
     mapInstance.value = map;
 }
 
-function openModal(country: any, newsData: any) {
-    console.log('국가 클릭:', country.name);
+function getTimeAgo(dateString: string) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
 
-    if (newsData && newsData.articles && newsData.articles.length > 0) {
-        // source_score 기준으로 정렬 (높은 점수 순)
-        const sorted = [...newsData.articles].sort(
-            (a, b) => (b.source_score || 0) - (a.source_score || 0)
-        );
+    if (hours < 1) return '방금 전';
+    if (hours < 24) return `${hours}시간 전`;
+    return `${Math.floor(hours / 24)}일 전`;
+}
 
-        // API 응답 구조에 맞게 데이터 변환
-        const formattedArticles = sorted.map(article => ({
-            title: article.title,
-            desc: article.summary,
-            url: article.url,
-            date: article.published_date,
-            level: article.source_score // 백엔드 숫자 그대로 사용
-        }));
+function openModal(country: HoveredCountry) {
+    dashboardAPI.getRegionImpact(country.code).then(response => {
+        const regionData = response.data;
+        openModalFromRegion(regionData.region, { articles: regionData.contents });
+    });
+}
 
-        selectedCountry.value = { ...country, articles: formattedArticles };
-        currentIndex.value = 0;
-        console.log('✅ 모달 열기:', country.name, '뉴스 개수:', formattedArticles.length);
-    } else {
-        console.log('⚠️ 뉴스 데이터 없음:', country.name);
-        selectedCountry.value = { ...country, articles: [] };
-        currentIndex.value = 0;
+function openModalFromRegion(
+    region: { name: string; code: string; region_score: number },
+    newsData: { articles?: any[] } | null
+) {
+    let articles: SelectedCountry["articles"] = [];
+
+    if (newsData && newsData.articles && Array.isArray(newsData.articles) && newsData.articles.length > 0) {
+        articles = [...newsData.articles]
+            .sort((a, b) => (b.source_score || 0) - (a.source_score || 0))
+            .map(article => ({
+                title: article.title,
+                desc: article.summary,
+                url: article.url,
+                date: article.published_date,
+                level: article.source_score,
+            }));
     }
+
+    selectedCountry.value = {
+        name: region.name,
+        code: region.code,
+        region_score: region.region_score,
+        articles,
+    };
+
+    currentPage.value = 0;
 }
 
 function closeModal() {
     selectedCountry.value = null;
+    currentPage.value = 0;
 }
 
-function nextSlide() {
-    if (!selectedCountry.value) return;
-    const len = selectedCountry.value.articles.length;
-    currentIndex.value = (currentIndex.value + 1) % len;
+function nextPage() {
+    if (currentPage.value < totalPages.value - 1) {
+        currentPage.value++;
+    }
 }
 
-function prevSlide() {
-    if (!selectedCountry.value) return;
-    const len = selectedCountry.value.articles.length;
-    currentIndex.value = (currentIndex.value - 1 + len) % len;
+function prevPage() {
+    if (currentPage.value > 0) {
+        currentPage.value--;
+    }
 }
 
 onBeforeUnmount(() => {
     mapInstance.value?.remove();
 });
 </script>
-
 
 <style>
 #map-wrapper {
@@ -396,7 +570,16 @@ onBeforeUnmount(() => {
     background-color: #e5ebf2;
 }
 
-/* 모달 애니메이션 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
 .fade-zoom-enter-active,
 .fade-zoom-leave-active {
     transition: opacity 0.25s ease;
@@ -405,20 +588,5 @@ onBeforeUnmount(() => {
 .fade-zoom-enter-from,
 .fade-zoom-leave-to {
     opacity: 0;
-}
-
-.slide-x-enter-active,
-.slide-x-leave-active {
-    transition: transform 0.4s ease, opacity 0.4s ease;
-}
-
-.slide-x-enter-from {
-    opacity: 0;
-    transform: translateX(30%);
-}
-
-.slide-x-leave-to {
-    opacity: 0;
-    transform: translateX(-30%);
 }
 </style>

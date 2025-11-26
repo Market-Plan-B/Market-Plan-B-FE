@@ -1,224 +1,142 @@
+<!-- ChartBar.vue - limit 기능 추가 -->
 <template>
-    <div ref="chart" v-once
-        class="relative w-full h-[280px] rounded-xl bg-gradient-to-b from-white to-orange-50/10 border border-slate-100 shadow-inner">
-        <div v-if="!isRendered" class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-            데이터 렌더링 중...
+    <div>
+        <div v-if="loading" class="flex justify-center items-center h-64">
+            <div class="text-gray-500">데이터를 불러오는 중...</div>
         </div>
+        <div v-else ref="chartContainer" class="w-full"></div>
     </div>
 </template>
 
 <script setup lang="ts">
-import * as d3 from "d3";
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { dashboardAPI } from "@/api/dashboard";
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import * as d3 from 'd3';
 
-const chart = ref<HTMLElement | null>(null);
-const isRendered = ref(false);
-const factorData = ref({});
+const props = defineProps<{
+    apiData: any;
+    loading: boolean;
+    compact?: boolean;
+    limit?: number; // limit prop 추가
+}>();
 
-let svg: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
-let ro: ResizeObserver | null = null;
+const chartContainer = ref<HTMLElement | null>(null);
 
-const loadFactorData = async () => {
-    try {
-        // Router에서 미리 로드된 데이터 사용 (아직 없으므로 직접 호출)
-        const response = await dashboardAPI.getFactorImpact();
-        factorData.value = response.data.variable_scores;
-        console.log('요소별 데이터 로드 완료:', factorData.value);
-    } catch (error) {
-        console.error('요소별 데이터 로드 실패:', error);
-    }
-};
+const chartHeight = computed(() => props.compact ? '280px' : '600px');
 
-const getChartData = () => {
-    if (Object.keys(factorData.value).length === 0) {
-        return [];
-    }
+const featureImportance = computed(() => {
+    const data = props.apiData?.features || props.apiData?.variable_scores;
+    if (!data) return [];
 
-    return Object.entries(factorData.value).map(([key, value]) => ({
-        source: key,
-        positive: Math.max(0, value as number),
-        negative: Math.min(0, value as number)
-    }));
-};
-
-const renderChart = async () => {
-    await nextTick();
-    if (!chart.value) return;
-
-    if (!document.body.contains(chart.value)) return;
-
-    d3.select(chart.value).selectAll("*").remove();
-
-    const fullWidth = chart.value.clientWidth || 500;
-    const fullHeight = chart.value.clientHeight || 280;
-    const margin = { top: 20, right: 40, bottom: 20, left: 120 };
-    const width = fullWidth - margin.left - margin.right;
-    const height = fullHeight - margin.top - margin.bottom;
-
-    svg = d3
-        .select(chart.value)
-        .append("svg")
-        .attr("width", fullWidth)
-        .attr("height", fullHeight)
-        .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const data = getChartData();
-
-    if (data.length === 0) {
-        isRendered.value = true;
-        return;
-    }
-
-    const maxVal = Math.max(
-        Math.abs(d3.min(data, (d) => d.negative) || 0),
-        d3.max(data, (d) => d.positive) || 0
-    );
-
-    const x = d3.scaleLinear().domain([-maxVal, maxVal]).range([0, width]);
-    const y = d3
-        .scaleBand()
-        .domain(data.map((d) => d.source))
-        .range([0, height])
-        .padding(0.35);
-
-    if (!svg) return;
-
-    svg
-        .append("line")
-        .attr("x1", x(0))
-        .attr("x2", x(0))
-        .attr("y1", 0)
-        .attr("y2", height)
-        .attr("stroke", "#cbd5e1")
-        .attr("stroke-width", 1.2)
-        .attr("stroke-dasharray", "4,3");
-
-    svg
-        .append("g")
-        .call(d3.axisLeft(y).tickSize(0))
-        .selectAll("text")
-        .style("font-size", "13px")
-        .style("font-weight", "600")
-        .style("fill", "#334155");
-
-    svg
-        .selectAll(".bar-neg")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("x", (d) => x(d.negative))
-        .attr("y", (d) => y(d.source)!)
-        .attr("width", (d) => x(0) - x(d.negative))
-        .attr("height", y.bandwidth())
-        .attr("rx", 5)
-        .attr("fill", "url(#negGradient)")
-        .attr("opacity", 0.9);
-
-    svg
-        .selectAll(".bar-pos")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("x", x(0))
-        .attr("y", (d) => y(d.source)!)
-        .attr("width", (d) => x(d.positive) - x(0))
-        .attr("height", y.bandwidth())
-        .attr("rx", 5)
-        .attr("fill", "url(#posGradient)")
-        .attr("opacity", 0.9);
-
-    svg
-        .selectAll(".val-pos")
-        .data(data)
-        .enter()
-        .append("text")
-        .attr("x", (d) => x(d.positive) + 5)
-        .attr("y", (d) => y(d.source)! + y.bandwidth() / 1.6)
-        .attr("fill", "#1e3a8a")
-        .attr("font-size", "12px")
-        .text((d) => d.positive);
-
-    svg
-        .selectAll(".val-neg")
-        .data(data)
-        .enter()
-        .append("text")
-        .attr("x", (d) => x(d.negative) - 5)
-        .attr("y", (d) => y(d.source)! + y.bandwidth() / 1.6)
-        .attr("fill", "#b91c1c")
-        .attr("font-size", "12px")
-        .attr("text-anchor", "end")
-        .text((d) => Math.abs(d.negative));
-
-    const defs = svg.append("defs");
-    defs
-        .append("linearGradient")
-        .attr("id", "posGradient")
-        .attr("x1", "0%")
-        .attr("x2", "100%")
-        .selectAll("stop")
-        .data([
-            { offset: "0%", color: "#60a5fa" },
-            { offset: "100%", color: "#2563eb" },
-        ])
-        .enter()
-        .append("stop")
-        .attr("offset", (d) => d.offset)
-        .attr("stop-color", (d) => d.color);
-
-    defs
-        .append("linearGradient")
-        .attr("id", "negGradient")
-        .attr("x1", "100%")
-        .attr("x2", "0%")
-        .selectAll("stop")
-        .data([
-            { offset: "0%", color: "#f87171" },
-            { offset: "100%", color: "#dc2626" },
-        ])
-        .enter()
-        .append("stop")
-        .attr("offset", (d) => d.offset)
-        .attr("stop-color", (d) => d.color);
-
-    isRendered.value = true;
-};
-
-onMounted(async () => {
-    await loadFactorData();
-    renderChart();
-
-    ro = new ResizeObserver(async () => {
-        if (chart.value && document.body.contains(chart.value)) {
-            await renderChart();
-        }
+    let features = Object.entries(data).map(([key, value]) => {
+        const v = Number(value);
+        return {
+            name: key,
+            negative: v < 0 ? Math.abs(v) : 0,
+            positive: v > 0 ? v : 0,
+            absValue: Math.abs(v) // 절대값 추가 (정렬용)
+        };
     });
 
-    if (chart.value) ro.observe(chart.value);
+    // limit이 있으면 절대값 기준 상위 N개만 선택
+    if (props.limit && props.limit > 0) {
+        features = features
+            .sort((a, b) => b.absValue - a.absValue)
+            .slice(0, props.limit);
+    }
+
+    return features;
+});
+
+const drawChart = () => {
+    if (!chartContainer.value || !featureImportance.value.length) return;
+    d3.select(chartContainer.value).selectAll('*').remove();
+
+    const margin = props.compact
+        ? { top: 10, right: 10, bottom: 35, left: 40 }
+        : { top: 20, right: 20, bottom: 60, left: 80 };
+
+    const fullHeight = props.compact ? 200 : 400;
+    const width = chartContainer.value.clientWidth - margin.left - margin.right;
+    const height = fullHeight - margin.top - margin.bottom;
+
+    const svg = d3.select(chartContainer.value).append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', fullHeight)
+        .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleLinear().domain([-1, 1]).range([0, width]);
+
+    const yScale = d3.scaleBand()
+        .domain(featureImportance.value.map(d => d.name))
+        .range([0, height])
+        .padding(0.1);
+
+    const tooltip = d3.select("body").append("div")
+        .style("position", "absolute").style("visibility", "hidden")
+        .style("background", "rgba(0,0,0,0.85)").style("color", "white")
+        .style("padding", "8px 12px").style("border-radius", "6px")
+        .style("font-size", "11px").style("pointer-events", "none").style("z-index", "9999");
+
+    svg.append('line').attr('x1', xScale(0)).attr('x2', xScale(0))
+        .attr('y1', 0).attr('y2', height).attr('stroke', '#64748b')
+        .attr('stroke-width', 1.5).attr('stroke-dasharray', '3,3');
+
+    const defs = svg.append('defs');
+    ['blue', 'red'].forEach((c, i) => {
+        const g = defs.append('linearGradient').attr('id', `gradient-${c}`).attr('x1', '0%').attr('x2', '100%');
+        const colors = i === 0 ? ['#3b82f6', '#60a5fa'] : ['#ef4444', '#f87171'];
+        g.append('stop').attr('offset', '0%').attr('stop-color', colors[0]);
+        g.append('stop').attr('offset', '100%').attr('stop-color', colors[1]);
+    });
+
+    const addBars = (cls: string, xFn: (d: any) => number, wFn: (d: any) => number, fill: string, html: (d: any) => string) => {
+        svg.selectAll(cls).data(featureImportance.value).enter().append('rect')
+            .attr('class', cls.slice(1)).attr('x', xFn).attr('y', d => yScale(d.name)!)
+            .attr('width', wFn).attr('height', yScale.bandwidth()).attr('fill', fill).attr('rx', 3)
+            .on('mouseover', (e, d) => tooltip.html(html(d)).style('visibility', 'visible'))
+            .on('mousemove', e => tooltip.style('top', `${e.pageY - 40}px`).style('left', `${e.pageX + 10}px`))
+            .on('mouseout', () => tooltip.style('visibility', 'hidden'));
+    };
+
+    addBars('.bar-negative', d => xScale(-d.negative), d => xScale(0) - xScale(-d.negative), 'url(#gradient-blue)',
+        d => `<b>${d.name}</b><br/><span style="color:#60a5fa">하방: ${(d.negative * 100).toFixed(2)}%</span>`);
+    addBars('.bar-positive', () => xScale(0), d => xScale(d.positive) - xScale(0), 'url(#gradient-red)',
+        d => `<b>${d.name}</b><br/><span style="color:#f87171">상승: +${(d.positive * 100).toFixed(2)}%</span>`);
+
+    const fontSize = props.compact ? '9px' : '12px';
+    const labelSize = props.compact ? '11px' : '14px';
+    const tickCount = props.compact ? 6 : 10;
+
+    svg.append('g').attr('transform', `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).tickFormat(d => `${(+d * 100).toFixed(0)}%`).ticks(tickCount))
+        .selectAll('text').style('font-size', fontSize).style('fill', '#475569');
+
+    svg.append('g').call(d3.axisLeft(yScale))
+        .selectAll('text').style('font-weight', '600').style('font-size', labelSize);
+};
+
+watch(() => props.apiData, () => nextTick(drawChart), { deep: true });
+
+onMounted(() => {
+    nextTick(drawChart);
+    window.addEventListener('resize', drawChart);
 });
 
 onBeforeUnmount(() => {
-    if (ro) ro.disconnect();
-    d3.select(chart.value).selectAll("*").remove();
+    window.removeEventListener('resize', drawChart);
+    d3.selectAll("body > div[style*='position: absolute']").remove();
 });
 </script>
 
 <style scoped>
-svg {
-    animation: fadeIn 0.4s ease-out both;
+:deep(.bar-negative),
+:deep(.bar-positive) {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+:deep(.bar-negative):hover,
+:deep(.bar-positive):hover {
+    opacity: 0.8;
 }
 </style>

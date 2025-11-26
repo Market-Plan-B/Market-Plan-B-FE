@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from "axios";
 
 // API 응답 타입 정의
 export interface OverallImpact {
@@ -6,6 +6,7 @@ export interface OverallImpact {
 }
 
 export interface MapImpact {
+  name: string;
   code: string;
   region_score: number;
 }
@@ -28,7 +29,7 @@ export interface RegionData {
 }
 
 export interface FactorImpact {
-  variable_scores: Record<string, number>;
+  features: Record<string, number>;
 }
 
 export interface Strategies {
@@ -39,21 +40,41 @@ export interface Strategies {
   }>;
 }
 
-const API_BASE_URL = 'http://localhost:8000';
+// 🔥 영향도 분석 API 타입 추가
+export interface ImpactAnalysisResponse {
+  date: string;
+  impact_score: string;
+  change_score: string;
+  features: {
+    [key: string]: [number, number];
+  };
+}
+
+const API_BASE_URL = "http://localhost:8000";
 
 export const dashboardAPI = {
-  getOverallImpact: (): Promise<AxiosResponse<OverallImpact>> => 
+  getOverallImpact: (): Promise<AxiosResponse<OverallImpact>> =>
     axios.get(`${API_BASE_URL}/api/dashboard/impact-overall`),
-  
-  getMapImpact: (): Promise<AxiosResponse<MapImpact[]>> => 
+
+  getMapImpact: (): Promise<AxiosResponse<MapImpact[]>> =>
     axios.get(`${API_BASE_URL}/api/dashboard/map-impact`),
-  
-  getRegionImpact: (regionCode: string): Promise<AxiosResponse<RegionData>> => 
-    axios.get(`${API_BASE_URL}/api/dashboard/region-impact?region_code=${regionCode}`),
-  
-  getFactorImpact: (): Promise<AxiosResponse<FactorImpact>> => 
+
+  getRegionImpact: (regionCode: string): Promise<AxiosResponse<RegionData>> =>
+    axios.get(
+      `${API_BASE_URL}/api/dashboard/region-impact?region_code=${regionCode}`
+    ),
+
+  getFactorImpact: (): Promise<AxiosResponse<FactorImpact>> =>
     axios.get(`${API_BASE_URL}/api/dashboard/factor-impact`),
-  
-  getStrategies: (): Promise<AxiosResponse<Strategies>> => 
-    axios.get(`${API_BASE_URL}/api/dashboard/strategies`)
+
+  getStrategies: (): Promise<AxiosResponse<Strategies>> =>
+    axios.get(`${API_BASE_URL}/api/dashboard/strategies`),
+
+  //  영향도 분석 API 추가
+  getImpactAnalysis: (
+    queryDate: string
+  ): Promise<AxiosResponse<ImpactAnalysisResponse>> =>
+    axios.get(`${API_BASE_URL}/api/analytics/impact`, {
+      params: { query_date: queryDate },
+    }),
 };

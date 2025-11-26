@@ -117,10 +117,7 @@
                 <h3 class="font-bold text-xl text-gray-900">피처 중요도 분석</h3>
                 <span class="text-xs text-gray-500 ml-2">(AI 모델이 영향도 평가 시 활용한 주요 지표)</span>
             </div>
-            <div v-if="loading" class="flex justify-center items-center h-96">
-                <div class="text-gray-500">데이터를 불러오는 중...</div>
-            </div>
-            <div v-else ref="chartContainer" class="w-full" style="min-height: 600px;"></div>
+            <ChartBar :apiData="apiData" :loading="loading" />
         </section>
 
         <ChatBotFloating />
@@ -128,9 +125,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import * as d3 from 'd3';
+import { ref, computed, onMounted, watch } from 'vue';
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
+import ChartBar from "@/components/ChartBar.vue";
 import { getImpactAnalysis } from '@/api/analysisApi';
 import { loadAllFinancialData, type FinancialData } from '@/api/financial';
 
@@ -201,71 +198,6 @@ async function loadFinancialData() {
     lastUpdated.value = new Date().toLocaleString('ko-KR');
 }
 
-// 차트 관련
-const chartContainer = ref<HTMLElement | null>(null);
-const featureImportance = computed(() => {
-    if (!apiData.value?.features) return [];
-    return Object.entries(apiData.value.features).map(([key, value]) => {
-        const v = Number(value);
-        return { name: key, negative: v < 0 ? Math.abs(v) : 0, positive: v > 0 ? v : 0 };
-    });
-});
-
-const drawChart = () => {
-    if (!chartContainer.value || !featureImportance.value.length) return;
-    d3.select(chartContainer.value).selectAll('*').remove();
-
-    const margin = { top: 20, right: 60, bottom: 60, left: 200 };
-    const width = chartContainer.value.clientWidth - margin.left - margin.right;
-    const height = 600 - margin.top - margin.bottom;
-
-    const svg = d3.select(chartContainer.value).append('svg')
-        .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
-        .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-    const xScale = d3.scaleLinear().domain([-1, 1]).range([0, width]);
-    const yScale = d3.scaleBand().domain(featureImportance.value.map(d => d.name)).range([0, height]).padding(0.2);
-
-    const tooltip = d3.select("body").append("div")
-        .style("position", "absolute").style("visibility", "hidden")
-        .style("background", "rgba(0,0,0,0.85)").style("color", "white")
-        .style("padding", "10px 14px").style("border-radius", "8px")
-        .style("font-size", "12px").style("pointer-events", "none").style("z-index", "9999");
-
-    svg.append('line').attr('x1', xScale(0)).attr('x2', xScale(0))
-        .attr('y1', 0).attr('y2', height).attr('stroke', '#64748b')
-        .attr('stroke-width', 2).attr('stroke-dasharray', '4,4');
-
-    const defs = svg.append('defs');
-    ['blue', 'red'].forEach((c, i) => {
-        const g = defs.append('linearGradient').attr('id', `gradient-${c}`).attr('x1', '0%').attr('x2', '100%');
-        const colors = i === 0 ? ['#3b82f6', '#60a5fa'] : ['#ef4444', '#f87171'];
-        g.append('stop').attr('offset', '0%').attr('stop-color', colors[0]);
-        g.append('stop').attr('offset', '100%').attr('stop-color', colors[1]);
-    });
-
-    const addBars = (cls: string, xFn: (d: any) => number, wFn: (d: any) => number, fill: string, html: (d: any) => string) => {
-        svg.selectAll(cls).data(featureImportance.value).enter().append('rect')
-            .attr('class', cls.slice(1)).attr('x', xFn).attr('y', d => yScale(d.name)!)
-            .attr('width', wFn).attr('height', yScale.bandwidth()).attr('fill', fill).attr('rx', 4)
-            .on('mouseover', (e, d) => tooltip.html(html(d)).style('visibility', 'visible'))
-            .on('mousemove', e => tooltip.style('top', `${e.pageY - 40}px`).style('left', `${e.pageX + 10}px`))
-            .on('mouseout', () => tooltip.style('visibility', 'hidden'));
-    };
-
-    addBars('.bar-negative', d => xScale(-d.negative), d => xScale(0) - xScale(-d.negative), 'url(#gradient-blue)',
-        d => `<b>${d.name}</b><br/><span style="color:#60a5fa">하방: ${(d.negative * 100).toFixed(2)}%</span>`);
-    addBars('.bar-positive', () => xScale(0), d => xScale(d.positive) - xScale(0), 'url(#gradient-red)',
-        d => `<b>${d.name}</b><br/><span style="color:#f87171">상승: +${(d.positive * 100).toFixed(2)}%</span>`);
-
-    svg.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(xScale).tickFormat(d => `${(+d * 100).toFixed(0)}%`).ticks(10))
-        .selectAll('text').style('font-size', '12px').style('fill', '#475569');
-    svg.append('g').call(d3.axisLeft(yScale)).selectAll('text').style('font-weight', '600').style('font-size', '14px');
-
-    svg.append('text').attr('x', xScale(-0.6)).attr('y', -5).style('font-size', '12px').style('fill', '#3b82f6').style('font-weight', 'bold').text('← 하방 압력');
-    svg.append('text').attr('x', xScale(0.3)).attr('y', -5).style('font-size', '12px').style('fill', '#ef4444').style('font-weight', 'bold').text('상승 모멘텀 →');
-};
 
 const fetchData = async () => {
     loading.value = true;
@@ -277,11 +209,9 @@ const fetchData = async () => {
 onMounted(() => {
     fetchData();
     loadFinancialData();
-    window.addEventListener('resize', drawChart);
 });
 
 watch(selectedDate, fetchData);
-watch(apiData, () => nextTick(drawChart));
 </script>
 
 <style scoped>
