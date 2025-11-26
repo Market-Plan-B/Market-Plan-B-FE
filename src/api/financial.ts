@@ -1,51 +1,63 @@
 import axios from "axios";
 
-// 🔥 .env에서 API 키 불러오기
-const TWELVE_KEY = import.meta.env.VITE_TWELVEDATA_KEY;
-
 // 공통 타입
 interface BaseQuote {
   value: number;
   change?: number;
   changePercent?: number;
 }
-
 interface OilPrice extends BaseQuote {
   price: number;
   prevClose: number;
 }
 
-// TwelveData fetch 공통 함수
-const fetchTwelve = async (symbol: string) => {
-  const url = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${TWELVE_KEY}`;
-  const { data } = await axios.get(url);
-  return data;
+// Yahoo Finance fetch (Vite 프록시 경유)
+const fetchYahoo = async (symbol: string, retries = 3): Promise<any> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      // Vite 프록시를 통해 호출 (/yahoo-finance -> https://query1.finance.yahoo.com/v8/finance/chart)
+      const url = `/yahoo-finance/${symbol}`;
+      const { data } = await axios.get(url, { timeout: 5000 });
+      const quote = data.chart.result[0];
+      const meta = quote.meta;
+      return {
+        price: meta.regularMarketPrice || 0,
+        prevClose: meta.previousClose || meta.chartPreviousClose || 0,
+        change:
+          (meta.regularMarketPrice || 0) -
+          (meta.previousClose || meta.chartPreviousClose || 0),
+        changePercent: meta.previousClose
+          ? (((meta.regularMarketPrice || 0) - (meta.previousClose || 0)) /
+              (meta.previousClose || 1)) *
+            100
+          : 0,
+      };
+    } catch (err) {
+      console.warn(`Retry ${i + 1}/${retries} for ${symbol}:`, err);
+      if (i === retries - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  throw new Error(`Failed after ${retries} retries`);
 };
 
-const fetchTwelvePrice = async (symbol: string) => {
-  const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVE_KEY}`;
-  const { data } = await axios.get(url);
-  return Number(data.price) || 0;
-};
+const safe = <T>(fn: () => Promise<T>, fallback: T) =>
+  fn().catch((e) => {
+    console.error("API Error:", e);
+    return fallback;
+  });
 
-// 안전 실행 래퍼
-const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
-  fn().catch(() => fallback);
-
-// ------------------------------------
-// 🛢 Brent / WTI
-// ------------------------------------
+// 🛢️ 원유 가격
 export const getBrentOil = () =>
   safe(
     async (): Promise<OilPrice> => {
-      const d = await fetchTwelve("BZ");
-
+      const d = await fetchYahoo("BZ=F");
       return {
-        price: Number(d.close) || 0,
-        value: Number(d.close) || 0,
-        prevClose: Number(d.previous_close) || 0,
-        change: Number(d.change) || 0,
-        changePercent: Number(d.percent_change) || 0,
+        price: d.price,
+        value: d.price,
+        prevClose: d.prevClose,
+        change: d.change,
+        changePercent: d.changePercent,
       };
     },
     { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 }
@@ -54,72 +66,62 @@ export const getBrentOil = () =>
 export const getWTI = () =>
   safe(
     async (): Promise<OilPrice> => {
-      const d = await fetchTwelve("CL");
-
+      const d = await fetchYahoo("CL=F");
       return {
-        price: Number(d.close) || 0,
-        value: Number(d.close) || 0,
-        prevClose: Number(d.previous_close) || 0,
-        change: Number(d.change) || 0,
-        changePercent: Number(d.percent_change) || 0,
+        price: d.price,
+        value: d.price,
+        prevClose: d.prevClose,
+        change: d.change,
+        changePercent: d.changePercent,
       };
     },
     { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 }
   );
 
-// ------------------------------------
-// Crack Spread
-// ------------------------------------
-export const getCrackSpread = () =>
-  safe(
-    async () => {
-      const rb = await fetchTwelve("RB");
-      const cl = await fetchTwelve("CL");
+export const getCrackSpread = async () => {
+  try {
+    const [rb, cl] = await Promise.all([
+      fetchYahoo("RB=F"),
+      fetchYahoo("CL=F"),
+    ]);
+    return { value: rb.price * 42 - cl.price };
+  } catch {
+    return { value: 0 };
+  }
+};
 
-      const gasoline = Number(rb.close) || 0;
-      const wti = Number(cl.close) || 0;
-
-      return { value: gasoline * 42 - wti };
-    },
-    { value: 0 }
-  );
-
-// ------------------------------------
-// 천연가스
-// ------------------------------------
 export const getNaturalGas = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("NG");
-      return {
-        value: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("NG=F");
+      return { value: d.price, change: d.changePercent };
     },
     { value: 0, change: 0 }
   );
 
-// ------------------------------------
-// 환율/금리
-// ------------------------------------
 export const getUSDKRW = () =>
-  safe(async () => ({ price: await fetchTwelvePrice("USD/KRW") }), {
-    price: 0,
-  });
+  safe(
+    async () => {
+      const d = await fetchYahoo("KRW=X");
+      return { price: d.price };
+    },
+    { price: 0 }
+  );
 
 export const getCNYUSD = () =>
-  safe(async () => ({ price: await fetchTwelvePrice("CNY/USD") }), {
-    price: 0,
-  });
+  safe(
+    async () => {
+      const d = await fetchYahoo("CNYUSD=X");
+      return { price: d.price };
+    },
+    { price: 0 }
+  );
 
 export const getDXY = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("DXY");
-      return {
-        index: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("DX-Y.NYB");
+      return { index: d.price, change: d.changePercent };
     },
     { index: 0, change: 0 }
   );
@@ -127,8 +129,8 @@ export const getDXY = () =>
 export const getUS10Y = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("TNX");
-      return { rate: Number(d.close) || 0 };
+      const d = await fetchYahoo("^TNX");
+      return { rate: d.price };
     },
     { rate: 0 }
   );
@@ -136,23 +138,17 @@ export const getUS10Y = () =>
 export const getUS2Y = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("US2Y"); // 혹은 "UST2Y"
-      return { rate: Number(d.close) || 0 };
+      const d = await fetchYahoo("^IRX");
+      return { rate: d.price };
     },
     { rate: 0 }
   );
 
-// ------------------------------------
-// 주요 지수
-// ------------------------------------
 export const getSP500 = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("SPX");
-      return {
-        value: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("^GSPC");
+      return { value: d.price, change: d.changePercent };
     },
     { value: 0, change: 0 }
   );
@@ -160,11 +156,8 @@ export const getSP500 = () =>
 export const getVIX = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("VIX");
-      return {
-        value: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("^VIX");
+      return { value: d.price, change: d.changePercent };
     },
     { value: 0, change: 0 }
   );
@@ -172,11 +165,8 @@ export const getVIX = () =>
 export const getGold = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("GC");
-      return {
-        value: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("GC=F");
+      return { value: d.price, change: d.changePercent };
     },
     { value: 0, change: 0 }
   );
@@ -184,18 +174,12 @@ export const getGold = () =>
 export const getCopper = () =>
   safe(
     async () => {
-      const d = await fetchTwelve("HG");
-      return {
-        value: Number(d.close) || 0,
-        change: Number(d.percent_change) || 0,
-      };
+      const d = await fetchYahoo("HG=F");
+      return { value: d.price, change: d.changePercent };
     },
     { value: 0, change: 0 }
   );
 
-// ------------------------------------
-// 전체 로더
-// ------------------------------------
 export interface FinancialData {
   brent: Awaited<ReturnType<typeof getBrentOil>>;
   wti: Awaited<ReturnType<typeof getWTI>>;
@@ -242,7 +226,6 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
     getGold(),
     getCopper(),
   ]);
-
   return {
     brent,
     wti,

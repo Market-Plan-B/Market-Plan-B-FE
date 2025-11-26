@@ -14,7 +14,7 @@
             <p class="text-slate-600 text-sm mt-2">다른 날짜를 선택해보세요</p>
         </div>
 
-        <!-- 부채꼴 카드 배치 -->
+        <!-- 카드 배치 -->
         <div v-if="cards.length > 0" class="relative w-full h-[600px] perspective-1000">
             <div v-for="(card, index) in displayCards" :key="card.id || index" ref="cardRefs" @click="selectCard(index)"
                 @mouseenter="onCardHover(index)" @mouseleave="onCardLeave(index)" class="absolute card-item"
