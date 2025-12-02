@@ -4,7 +4,6 @@
         <header class="page-header">
             <div>
                 <h2 class="font-bold text-2xl mb-2 text-gray-900">크롤링 소스 관리</h2>
-                <p v-if="errorMessage" class="text-red-500 text-sm mt-2">{{ errorMessage }}</p>
             </div>
         </header>
 
@@ -191,8 +190,7 @@
 
         <!-- Source Table -->
         <section class="table-section">
-            <div v-if="loading" class="text-center py-8 text-gray-500">로딩 중...</div>
-            <table v-else class="data-table">
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>사이트 이름</th>
@@ -294,52 +292,16 @@ import draggable from 'vuedraggable';
 import lottie from 'lottie-web';
 import type { AnimationItem } from 'lottie-web';
 import { Pencil, Trash2, X } from 'lucide-vue-next';
-import { adminAPI, type AdminKeywordItem, type CrawlingSourceItem } from '@/api/admin';
 
-// 프론트엔드에서 사용하는 타입
-interface Keyword { id: number; name: string }
-interface Source { id: number; name: string; baseUrl: string; keywords: number[]; isActive: boolean }
+interface Keyword { id: string; name: string }
+interface Source { id: number; name: string; baseUrl: string; keywords: string[]; isActive: boolean }
 
 const waveContainer = ref<HTMLElement | null>(null);
 let waveAnimation: AnimationItem | null = null;
 
 const isDragging = ref(false);
 
-// 초기 데이터 로드
-const loadData = async () => {
-    loading.value = true;
-    errorMessage.value = '';
-    try {
-        // 키워드와 소스 데이터 동시 로드
-        const [keywordsRes, sourcesRes] = await Promise.all([
-            adminAPI.getKeywords(),
-            adminAPI.getSources()
-        ]);
-
-        // 키워드 설정
-        const keywordsData = keywordsRes.data;
-        allKeywords.value = keywordsData.map(convertKeyword);
-
-        // 소스 데이터 변환
-        const sourcesData = sourcesRes.data.sources;
-        sources.value = sourcesData.map(convertSource);
-
-        // 활성 키워드 초기화 (첫 번째 소스의 categories 사용, 또는 빈 배열)
-        const initialActiveIds = sourcesData.length > 0 ? sourcesData[0].categories : [];
-        activeKeywords.value = allKeywords.value.filter((k: Keyword) => initialActiveIds.includes(k.id));
-        inactiveKeywords.value = allKeywords.value.filter((k: Keyword) => !initialActiveIds.includes(k.id));
-
-        // 통계는 API에서 받아온 값 사용 (total, active, inactive)
-    } catch (error: any) {
-        console.error('데이터 로드 실패:', error);
-        errorMessage.value = error.response?.data?.detail || '데이터를 불러오는데 실패했습니다.';
-    } finally {
-        loading.value = false;
-    }
-};
-
-onMounted(async () => {
-    // Lottie 애니메이션 초기화
+onMounted(() => {
     if (waveContainer.value) {
         waveAnimation = lottie.loadAnimation({
             container: waveContainer.value,
@@ -349,9 +311,6 @@ onMounted(async () => {
             path: '/lottie/WaterFlow.json'
         });
     }
-
-    // 데이터 로드
-    await loadData();
 });
 
 onUnmounted(() => {
@@ -370,8 +329,8 @@ const containerColors = [
     { bg: '#8B8B8B', border: '#696969' },   // Standard Gray
 ];
 
-const getContainerStyle = (id: number) => {
-    const hash = id.toString().split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+const getContainerStyle = (id: string) => {
+    const hash = id.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
     const color = containerColors[Math.abs(hash) % containerColors.length];
     return {
         background: `linear-gradient(135deg, ${color.bg} 0%, ${color.border} 100%)`,
@@ -379,30 +338,27 @@ const getContainerStyle = (id: number) => {
     };
 };
 
-// API 응답을 프론트엔드 형식으로 변환
-const convertKeyword = (apiKeyword: AdminKeywordItem): Keyword => {
-    return {
-        id: apiKeyword.id,
-        name: apiKeyword.category
-    };
-};
+const allKeywords: Keyword[] = [
+    { id: 'international_oil', name: '국제 유가 동향' },
+    { id: 'oil_country_policy', name: '산유국 정책' },
+    { id: 'supply_chain', name: '공급망 및 원유 생산' },
+    { id: 'demand_consumption', name: '수요 및 소비 동향' },
+    { id: 'geopolitics', name: '지정학 및 국제 분쟁' },
+    { id: 'policy_regulation', name: '정책, 규제, 에너지 전환' },
+    { id: 'finance_investment', name: '금융, 투자, 환율' },
+    { id: 'corporate_strategy', name: '기업, 시장 전략' },
+    { id: 'esg_environment', name: 'ESG, 환경, 기후' },
+];
 
-const convertSource = (apiSource: CrawlingSourceItem): Source => {
-    return {
-        id: apiSource.id,
-        name: apiSource.source_name,
-        baseUrl: apiSource.base_url,
-        keywords: apiSource.categories,
-        isActive: apiSource.is_active
-    };
-};
-
-const allKeywords = ref<Keyword[]>([]);
 const activeKeywords = ref<Keyword[]>([]);
-const inactiveKeywords = ref<Keyword[]>([]);
-const sources = ref<Source[]>([]);
-const loading = ref(false);
-const errorMessage = ref('');
+const inactiveKeywords = ref<Keyword[]>([...allKeywords]);
+
+const sources = ref<Source[]>([
+    { id: 1, name: 'Google', baseUrl: 'https://www.google.com/search', keywords: ['international_oil', 'oil_country_policy'], isActive: true },
+    { id: 2, name: 'Oilprice', baseUrl: 'https://oilprice.com/Latest-Energy-News', keywords: ['demand_consumption', 'finance_investment'], isActive: true },
+    { id: 3, name: 'Yahoo Finance', baseUrl: 'https://finance.yahoo.com/topic/oil', keywords: ['geopolitics', 'corporate_strategy'], isActive: true },
+    { id: 4, name: 'Investing.com', baseUrl: 'https://www.investing.com/commodities/crude-oil', keywords: ['policy_regulation'], isActive: false },
+]);
 
 const showModal = ref(false);
 const editingId = ref<number | null>(null);
@@ -411,32 +367,22 @@ const form = ref({ name: '', baseUrl: '' });
 const activeSources = computed(() => sources.value.filter((s: Source) => s.isActive).length);
 const inactiveSources = computed(() => sources.value.filter((s: Source) => !s.isActive).length);
 
-// activeKeywords가 변경될 때 모든 소스의 keywords를 자동 업데이트 및 API 호출
-watch(activeKeywords, async (newKeywords: Keyword[]) => {
+// activeKeywords가 변경될 때 모든 소스의 keywords를 자동 업데이트
+watch(activeKeywords, (newKeywords: Keyword[]) => {
     const activeIds = newKeywords.map((k: Keyword) => k.id);
-
-    // 로컬 상태 업데이트
     sources.value.forEach((source: Source) => {
         source.keywords = [...activeIds];
     });
-
-    // API 호출
-    try {
-        await adminAPI.bulkUpdateKeywords({ category_ids: activeIds });
-    } catch (error: any) {
-        console.error('키워드 업데이트 실패:', error);
-        errorMessage.value = error.response?.data?.detail || '키워드 업데이트에 실패했습니다.';
-    }
 }, { deep: true });
 
 
 const activateAll = () => {
-    activeKeywords.value = [...allKeywords.value];
+    activeKeywords.value = [...allKeywords];
     inactiveKeywords.value = [];
 };
 
 const deactivateAll = () => {
-    inactiveKeywords.value = [...allKeywords.value];
+    inactiveKeywords.value = [...allKeywords];
     activeKeywords.value = [];
 };
 
@@ -450,76 +396,32 @@ const closeModal = () => {
     showModal.value = false;
 };
 
-const saveSource = async () => {
-    if (!form.value.name || !form.value.baseUrl) {
-        errorMessage.value = '사이트 이름과 URL을 모두 입력해주세요.';
-        return;
-    }
+const saveSource = () => {
+    if (!form.value.name || !form.value.baseUrl) return;
 
     if (editingId.value) {
-        try {
-            loading.value = true;
-            errorMessage.value = '';
-
-            const updateData = {
-                source_name: form.value.name,
-                base_url: form.value.baseUrl
+        // 수정 모드: 이름과 URL 모두 변경 가능, keywords는 activeKeywords에서 가져옴
+        const idx = sources.value.findIndex((s: Source) => s.id === editingId.value);
+        if (idx !== -1) {
+            sources.value[idx] = {
+                ...sources.value[idx],
+                name: form.value.name,
+                baseUrl: form.value.baseUrl,
+                keywords: activeKeywords.value.map((k: Keyword) => k.id)
             };
-
-            const response = await adminAPI.updateSource(editingId.value, updateData);
-            const updatedSource = response.data;
-
-            // 로컬 상태 업데이트
-            const idx = sources.value.findIndex((s: Source) => s.id === editingId.value);
-            if (idx !== -1) {
-                sources.value[idx] = {
-                    ...sources.value[idx],
-                    name: updatedSource.source_name,
-                    baseUrl: updatedSource.base_url
-                };
-            }
-
-            closeModal();
-        } catch (error: any) {
-            console.error('소스 업데이트 실패:', error);
-            errorMessage.value = error.response?.data?.detail || '소스 업데이트에 실패했습니다.';
-        } finally {
-            loading.value = false;
         }
     }
+    closeModal();
 };
 
-const toggleSource = async (source: Source) => {
-    const newStatus = !source.isActive;
-
-    try {
-        loading.value = true;
-        errorMessage.value = '';
-
-        const response = await adminAPI.updateSourceStatus(source.id, {
-            is_active: newStatus
-        });
-
-        // 로컬 상태 업데이트
-        const idx = sources.value.findIndex((s: Source) => s.id === source.id);
-        if (idx !== -1) {
-            sources.value[idx].isActive = response.data.is_active;
-        }
-    } catch (error: any) {
-        console.error('상태 업데이트 실패:', error);
-        errorMessage.value = error.response?.data?.detail || '상태 업데이트에 실패했습니다.';
-        // 에러 발생 시 원래 상태로 복구
-        const idx = sources.value.findIndex((s: Source) => s.id === source.id);
-        if (idx !== -1) {
-            sources.value[idx].isActive = source.isActive;
-        }
-    } finally {
-        loading.value = false;
+const toggleSource = (source: Source) => {
+    const idx = sources.value.findIndex((s: Source) => s.id === source.id);
+    if (idx !== -1) {
+        sources.value[idx].isActive = !sources.value[idx].isActive;
     }
 };
 
 const deleteSource = (id: number) => {
-    // 삭제 기능은 API에 없으므로 로컬에서만 제거 (또는 제거)
     if (confirm('삭제하시겠습니까?')) {
         sources.value = sources.value.filter((s: Source) => s.id !== id);
     }

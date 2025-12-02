@@ -2,16 +2,13 @@ import { createRouter, createWebHistory } from "vue-router";
 import DashboardView from "@/views/DashboardView.vue";
 import ReportsView from "@/views/ReportView.vue";
 import AnalysisView from "@/views/AnalysisView.vue";
-import IntroView from "@/views/IntroView.vue";
 import LoginView from "@/views/LoginView.vue";
-import ForgotPasswordView from "@/views/ForgotPasswordView.vue";
 import CrawlingSourceView from "@/views/CrawlingSourceView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/login", component: LoginView },
-    { path: "/forgot-password", component: ForgotPasswordView },
     { path: "/", redirect: "/dashboard" },
     { path: "/dashboard", component: DashboardView },
     {
@@ -23,10 +20,6 @@ const router = createRouter({
       path: "/analysis",
       component: AnalysisView,
       meta: { requiresData: "analysis" },
-    },
-    {
-      path: "/intro",
-      component: IntroView,
     },
     {
       path: "/crawling-sources",

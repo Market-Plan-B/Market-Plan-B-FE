@@ -42,7 +42,6 @@
                         <input type="checkbox" v-model="rememberMe" class="checkbox" />
                         <span>로그인 상태 유지</span>
                     </label>
-                    <a href="#" @click.prevent="goToForgotPassword" class="forgot-password">비밀번호를 잊으셨나요?</a>
                 </div>
 
                 <!-- 에러 메시지 -->
