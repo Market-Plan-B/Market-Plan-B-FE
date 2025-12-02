@@ -2,7 +2,7 @@
     <div class="w-full max-h-[480px] flex flex-col">
         <div class="overflow-y-auto pr-2 text-sm space-y-4">
             <div v-if="strategies.length > 0" class="space-y-4">
-                <div v-for="strategy in strategies" :key="strategy.id" @click="openModal(strategy)" class="group border p-4 rounded-xl bg-slate-50 shadow-sm space-y-2 cursor-pointer 
+                <div v-for="strategy in strategies" :key="strategy.id" @click="openModal(strategy)" class="group border p-4 rounded-md bg-slate-50 shadow-sm space-y-2 cursor-pointer 
                             hover:bg-slate-100 hover:shadow-md transition-all duration-200">
                     <h3 class="font-semibold text-gray-900 text-base">
                         {{ strategy.name }}
@@ -28,7 +28,7 @@
             <div v-if="selectedStrategy"
                 class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
                 @click.self="closeModal">
-                <div class="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex flex-col"
+                <div class="relative bg-white rounded-lg shadow-2xl border border-gray-200 p-6 flex flex-col"
                     style="width: 1000px; height: 650px;">
 
                     <button @click="closeModal"
@@ -48,7 +48,7 @@
                     </div>
 
                     <div
-                        class="flex-1 w-full bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-inner overflow-y-auto">
+                        class="flex-1 w-full bg-gray-50 border border-gray-100 rounded-md p-6 shadow-inner overflow-y-auto">
 
                         <p class="text-[13px] text-gray-700 leading-snug whitespace-pre-wrap mb-4">
                             <b>전략 목표</b><br />
@@ -116,7 +116,6 @@ onMounted(() => {
 <style scoped>
 .line-clamp-3 {
     display: -webkit-box;
-    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;

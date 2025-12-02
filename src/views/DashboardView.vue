@@ -11,18 +11,18 @@
         </div>
 
         <!-- 🛢 글로벌 원유 지도 -->
-        <section class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
+        <section class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
             <h2 class="font-bold text-2xl mb-2 text-gray-900">글로벌 원유 대시보드</h2>
             <WorldOilMap />
         </section>
 
         <!-- 📊 Daily Feature & Counter -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <div class="bg-white rounded-md p-6 shadow-md border border-gray-200">
                 <h3 class="font-semibold mb-3 text-gray-700">Daily Feature 영향도</h3>
-                <ChartBar :apiData="apiData" :loading="loading" :limit="5" />
+                <ChartBar :apiData="apiData" :loading="loading" :limit="5" class="overflow-hidden" />
             </div>
-            <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <div class="bg-white rounded-md p-6 shadow-md border border-gray-200">
                 <h3 class="font-semibold mb-3 text-gray-700">Daily 추천 대응책</h3>
                 <CounterMeasure />
             </div>
@@ -114,10 +114,10 @@ onMounted(async () => {
 
 .impact-card {
     pointer-events: auto;
-    background: rgba(255, 115, 0, 0.8);
+    background: rgb(255, 115, 0);
     color: white;
     padding: 10px 16px;
-    border-radius: 12px;
+    border-radius: 6px;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.4);
     text-align: center;
     transition: all 0.3s ease;

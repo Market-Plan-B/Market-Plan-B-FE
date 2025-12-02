@@ -1,21 +1,15 @@
 <template>
     <div class="space-y-8">
         <!-- 헤더 섹션 -->
-        <section class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
-                    <h2 class="font-bold text-2xl mb-2 text-gray-900">영향도 분석</h2>
-                    <p class="text-sm text-gray-600">실시간 금융지표 기반 원유 시장 분석입니다.</p>
-                </div>
-                <input type="date" v-model="selectedDate"
-                    class="px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-700 bg-white hover:border-blue-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" />
+        <section class="bg-white p-8 rounded-lg shadow-lg border border-gray-200 mb-6">
+            <div>
+                <h2 class="font-bold text-2xl mb-2 text-gray-900">영향도 분석</h2>
             </div>
 
             <!-- 핵심 지표 카드 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div
-                    class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 border-l-4 border-orange-600 shadow-md">
-                    <div class="flex items-center justify-between mb-3">
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-md p-6 border-l-4 shadow-md">
+                    <div class=" flex items-center justify-between mb-3">
                         <span class="text-gray-700 text-sm font-semibold">브렌트유 종가</span>
                         <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -26,7 +20,7 @@
                     <div class="text-xs text-gray-600 font-medium">USD per barrel</div>
                 </div>
 
-                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border-l-4 shadow-md"
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-md p-6 border-l-4 shadow-md"
                     :class="(financial.brent?.change ?? 0) >= 0 ? 'border-green-600' : 'border-red-600'">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-gray-700 text-sm font-semibold">전일 대비 변화</span>
@@ -49,7 +43,7 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-l-4 border-blue-600 shadow-md">
+                    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-md p-6 border-l-4 border-blue-600 shadow-md">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-gray-700 text-sm font-semibold">WTI-Brent 스프레드</span>
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +58,7 @@
         </section>
 
         <!-- 금융지표 카테고리 탭 -->
-        <section class="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+        <section class="bg-white rounded-lg p-8 shadow-lg border border-gray-200 mb-6">
             <div class="flex items-center gap-2 mb-6">
                 <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -78,7 +72,7 @@
             <!-- 카테고리 탭 -->
             <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
                 <button v-for="cat in categories" :key="cat.id" @click="activeCategory = cat.id"
-                    class="px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all border-2"
+                    class="px-5 py-2.5 rounded-md font-semibold text-sm whitespace-nowrap transition-all border-2"
                     :class="[
                         activeCategory === cat.id
                             ? 'bg-indigo-600 text-black border-indigo-600 shadow-lg shadow-indigo-300 scale-[1.03]'
@@ -92,10 +86,10 @@
             <!-- 지표 그리드 - 가로 배치 -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div v-for="item in currentIndicators" :key="item.key"
-                    class="rounded-xl p-4 border transition-all hover:shadow-md" :class="item.gradient">
+                    class="rounded-md p-4 border transition-all hover:shadow-md" :class="item.gradient">
                     <div class="text-xs text-gray-600 font-medium mb-1">{{ item.label }}</div>
                     <div class="text-xl font-bold" :class="item.textColor">
-                        {{ item.prefix }}{{ formatValue(item) }}{{ item.suffix }}
+                        {{ item.prefix }}{{ formatValue(item) }}
                     </div>
                     <div v-if="item.changeKey" class="text-xs mt-1 font-medium"
                         :class="getChangeValue(item) >= 0 ? 'text-green-600' : 'text-red-600'">
@@ -108,14 +102,13 @@
         </section>
 
         <!-- 피처 중요도 분석 -->
-        <section class="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+        <section class="bg-white rounded-lg p-8 shadow-lg border border-gray-200">
             <div class="flex items-center gap-2 mb-6">
                 <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                 </svg>
                 <h3 class="font-bold text-xl text-gray-900">피처 중요도 분석</h3>
-                <span class="text-xs text-gray-500 ml-2">(AI 모델이 영향도 평가 시 활용한 주요 지표)</span>
             </div>
             <ChartBar :apiData="apiData" :loading="loading" />
         </section>
@@ -125,13 +118,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 import ChartBar from "@/components/ChartBar.vue";
-import { getImpactAnalysis } from '@/api/analysisApi';
+import { analysisAPI } from '@/api/analysis';
 import { loadAllFinancialData, type FinancialData } from '@/api/financial';
 
-const selectedDate = ref(new Date().toISOString().split('T')[0]);
+const selectedDate = ref(new Date().toISOString().split('T')[0]); // 오늘 날짜로 고정
 const apiData = ref<any>(null);
 const loading = ref(false);
 const lastUpdated = ref('-');
@@ -201,17 +194,20 @@ async function loadFinancialData() {
 
 const fetchData = async () => {
     loading.value = true;
-    try { apiData.value = await getImpactAnalysis(selectedDate.value); }
-    catch (e) { console.error(e); }
-    finally { loading.value = false; }
+    try {
+        const response = await analysisAPI.getImpactAnalysis(selectedDate.value);
+        apiData.value = response.data;
+    } catch (e) {
+        console.error(e);
+    } finally {
+        loading.value = false;
+    }
 };
 
 onMounted(() => {
     fetchData();
     loadFinancialData();
 });
-
-watch(selectedDate, fetchData);
 </script>
 
 <style scoped>

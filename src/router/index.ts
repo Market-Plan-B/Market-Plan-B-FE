@@ -2,10 +2,16 @@ import { createRouter, createWebHistory } from "vue-router";
 import DashboardView from "@/views/DashboardView.vue";
 import ReportsView from "@/views/ReportView.vue";
 import AnalysisView from "@/views/AnalysisView.vue";
+import IntroView from "@/views/IntroView.vue";
+import LoginView from "@/views/LoginView.vue";
+import ForgotPasswordView from "@/views/ForgotPasswordView.vue";
+import CrawlingSourceView from "@/views/CrawlingSourceView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: "/login", component: LoginView },
+    { path: "/forgot-password", component: ForgotPasswordView },
     { path: "/", redirect: "/dashboard" },
     { path: "/dashboard", component: DashboardView },
     {
@@ -18,8 +24,41 @@ const router = createRouter({
       component: AnalysisView,
       meta: { requiresData: "analysis" },
     },
+    {
+      path: "/intro",
+      component: IntroView,
+    },
+    {
+      path: "/crawling-sources",
+      component: CrawlingSourceView,
+      meta: { requiresAdmin: true },
+    },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
+});
+
+// 관리자 권한 체크 함수
+const isAdmin = (): boolean => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return false;
+    const user = JSON.parse(userStr);
+    return user.role === "admin" || user.isAdmin === true;
+  } catch {
+    return false;
+  }
+};
+
+// 라우터 가드: 관리자 전용 페이지 접근 제어
+router.beforeEach((to, _from, next) => {
+  if (to.meta.requiresAdmin) {
+    if (!isAdmin()) {
+      // 관리자가 아니면 대시보드로 리다이렉트
+      next("/dashboard");
+      return;
+    }
+  }
+  next();
 });
 
 export default router;

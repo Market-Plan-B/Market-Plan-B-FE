@@ -1,5 +1,11 @@
 <template>
-    <div class="min-h-screen bg-[#f9fafc] font-['Pretendard'] flex">
+    <!-- 로그인 페이지는 사이드바 없이 전체 화면 -->
+    <div v-if="isLoginPage" class="min-h-screen">
+        <router-view />
+    </div>
+
+    <!-- 일반 페이지는 사이드바 포함 -->
+    <div v-else class="min-h-screen bg-[#e5e7eb] font-['Pretendard'] flex">
         <Sidebar @sidebar-hover="handleSidebarHover" />
 
         <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
@@ -12,10 +18,27 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import Sidebar from "@/components/Sidebar.vue";
+import { ref, computed, watch } from "vue";
+import { useRoute } from "vue-router";
+import Sidebar from "@/components/ui/Sidebar.vue";
 
+const route = useRoute();
 const isExpanded = ref(false);
+
+const isLoginPage = computed(() => {
+    const path = route.path;
+    const result = path === '/login' ||
+        path === '/forgot-password' ||
+        path === '/intro';
+    return result;
+});
+
+// 디버깅용 (개발 중에만)
+if (import.meta.env.DEV) {
+    watch(() => route.path, (newPath) => {
+        console.log('Current path:', newPath, 'isLoginPage:', isLoginPage.value);
+    }, { immediate: true });
+}
 
 function handleSidebarHover(state) {
     isExpanded.value = state;
@@ -25,7 +48,7 @@ function handleSidebarHover(state) {
 <style>
 body {
     margin: 0;
-    background: #f9fafc;
+    background: #e6e7e9;
     display: block;
     min-height: 100vh;
     font-family: "SUIT", sans-serif;

@@ -60,16 +60,12 @@ export const reportsAPI = {
   },
 
   // 🟢 Weekly Report
-  async getWeeklyReport(
-    startDate: string,
-    endDate: string
-  ): Promise<ReportResponse> {
-    const res = await axios.post<ReportResponse>(
+  // 선택한 날짜(query_date)가 포함된 위클리 리포트를 조회
+  // 백엔드는 해당 날짜가 start_date와 end_date 범위에 포함되는 위클리 리포트를 반환
+  async getWeeklyReport(queryDate: string): Promise<ReportResponse> {
+    const res = await axios.get<ReportResponse>(
       `${API_BASE_URL}/api/reports/weekly/report`,
-      {
-        start_date: startDate,
-        end_date: endDate,
-      }
+      { params: { query_date: queryDate } }
     );
     return res.data; // 그대로 반환
   },

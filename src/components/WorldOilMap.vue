@@ -1,11 +1,11 @@
 <template>
     <div id="map-wrapper"
-        class="relative w-full h-[520px] rounded-2xl border border-slate-200 bg-gray-100 shadow-sm overflow-visible">
+        class="relative w-full h-[520px] rounded-md border border-slate-200 bg-gray-100 shadow-sm overflow-visible">
         <div ref="mapContainer" id="map" class="absolute inset-0 w-full h-full z-0"></div>
 
         <!-- 좌측 하단: 영향도 박스 -->
         <div class="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-gray-200 
-           rounded-xl shadow-md p-4 w-[220px] z-20">
+           rounded-md shadow-md p-4 w-[220px] z-20">
             <h3 class="text-sm font-bold text-gray-700 mb-2">국가별 영향도 요약</h3>
 
             <div v-if="urgentList.length" class="mb-2">
@@ -18,46 +18,61 @@
                 <div class="text-xs text-gray-800">{{ highList.join(', ') }}</div>
             </div>
 
-            <div v-if="midList.length">
+            <div v-if="midList.length" class="mb-2">
                 <div class="text-xs font-semibold mb-1">🟨 중간</div>
                 <div class="text-xs text-gray-800">{{ midList.join(', ') }}</div>
+            </div>
+
+            <div v-if="midList.length">
+                <div class="text-xs font-semibold mb-1">🟩 낮음</div>
+                <div class="text-xs text-gray-800">{{ lowList.join(', ') }}</div>
             </div>
         </div>
 
         <!-- 우측 하단: 정보 박스 (내용만 전환) -->
         <div class="absolute bottom-4 right-4 
-                   bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl shadow-md 
+                   bg-white/80 backdrop-blur-md border border-gray-200 rounded-md shadow-md 
                    p-4 w-[280px] h-[200px] z-20 flex flex-col">
 
             <transition name="fade" mode="out-in">
                 <!-- 평소: 시장 지표 -->
                 <div v-if="!hoveredCountry" key="market-info" class="flex flex-col h-full">
-                    <h3 class="text-sm font-bold text-gray-900 mb-3">
+                    <h3 class="text-2xs font-bold text-gray-900 mb-2 tracking-tight">
                         실시간 시장 지표
                     </h3>
 
-                    <div class="flex-1 space-y-2 overflow-hidden">
+                    <div class="flex-1 space-y-3 overflow-hidden pt-2">
+
                         <div v-for="indicator in marketIndicators" :key="indicator.name"
                             class="flex items-center justify-between">
+
+                            <!-- 명칭/심벌 -->
                             <div>
-                                <p class="text-xs font-semibold text-gray-800">{{ indicator.name }}</p>
-                                <p class="text-[10px] text-gray-500">{{ indicator.symbol }}</p>
+                                <p class="text-sm font-semibold text-gray-900 leading-tight">
+                                    {{ indicator.name }}
+                                </p>
+                                <p class="text-[10px] text-gray-600 leading-tight">
+                                    {{ indicator.symbol }}
+                                </p>
                             </div>
+
+                            <!-- 가격/변동률 -->
                             <div class="text-right">
-                                <p class="text-sm font-bold"
+                                <p class="text-base font-bold"
                                     :class="indicator.change >= 0 ? 'text-green-600' : 'text-red-600'">
                                     ${{ indicator.price }}
                                 </p>
-                                <p class="text-[10px]"
+                                <p class="text-[11px] font-semibold"
                                     :class="indicator.change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                    {{ indicator.change >= 0 ? '▲' : '▼' }} {{ Math.abs(indicator.change).toFixed(2) }}%
+                                    {{ indicator.change >= 0 ? '▲' : '▼' }}
+                                    {{ Math.abs(indicator.change).toFixed(2) }}%
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-2 pt-2 border-t border-gray-200">
-                        <p class="text-[9px] text-gray-500 text-center">
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-900 mb-3 text-center">
                             마지막 업데이트: {{ lastUpdateTime }}
                         </p>
                     </div>
@@ -91,17 +106,10 @@
                         <!-- 뉴스 없을 때 -->
                         <div v-else class="h-full flex items-center justify-center">
                             <div class="text-center">
-                                <p class="text-xl mb-1">📭</p>
-                                <p class="text-xs text-gray-500">관련 뉴스가 없습니다</p>
+                                <p class="text-xl mb-1">📰</p>
+                                <p class="text-xs text-gray-500">해당 국가의 뉴스가 없습니다</p>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="mt-2 pt-2 border-t border-gray-200">
-                        <button @click="openModal(hoveredCountry)" class="w-full py-1.5 bg-orange-500 hover:bg-orange-600 text-white 
-                                   rounded-lg text-xs font-semibold transition-colors">
-                            전체 뉴스 보기 →
-                        </button>
                     </div>
                 </div>
             </transition>
@@ -111,7 +119,7 @@
         <transition name="fade-zoom">
             <div v-if="selectedCountry">
                 <div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
-                    bg-white rounded-3xl shadow-2xl border border-gray-200
+                    bg-white rounded-lg shadow-2xl border border-gray-200
                     w-[900px] h-[650px] p-6 flex flex-col
                     backdrop-blur-md z-50">
 
@@ -129,14 +137,14 @@
                             class="w-full h-full flex items-center justify-center">
                             <div class="text-center">
                                 <div class="text-4xl mb-4">📰</div>
-                                <p class="text-gray-500 text-sm">해당 국가의 뉴스가 없습니다</p>
+                                <div class="text-xl mb-4 text-gray-900 text-center">해당 국가의 뉴스가 없습니다</div>
                             </div>
                         </div>
 
                         <div v-else class="h-full flex flex-col">
                             <div class="flex-1 grid grid-cols-3 gap-4 overflow-hidden">
                                 <div v-for="(news, idx) in currentPageNews" :key="idx"
-                                    class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col">
+                                    class="bg-gray-50 border border-gray-200 rounded-md p-4 flex flex-col">
 
                                     <div class="flex justify-between items-start mb-2">
                                         <h3
@@ -261,6 +269,9 @@ const highList = computed(() =>
 );
 const midList = computed(() =>
     mapImpactData.value.filter(item => item.region_score >= 4 && item.region_score < 6).map(item => item.name)
+);
+const lowList = computed(() =>
+    mapImpactData.value.filter(item => item.region_score < 4).map(item => item.name)
 );
 
 function getScoreBgColor(score: number) {
@@ -503,13 +514,6 @@ function getTimeAgo(dateString: string) {
     if (hours < 1) return '방금 전';
     if (hours < 24) return `${hours}시간 전`;
     return `${Math.floor(hours / 24)}일 전`;
-}
-
-function openModal(country: HoveredCountry) {
-    dashboardAPI.getRegionImpact(country.code).then(response => {
-        const regionData = response.data;
-        openModalFromRegion(regionData.region, { articles: regionData.contents });
-    });
 }
 
 function openModalFromRegion(
