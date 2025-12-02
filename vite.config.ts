@@ -22,7 +22,6 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
       // Yahoo Finance 프록시 (추가)
       "/yahoo-finance": {
