@@ -75,6 +75,7 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe } from "lucide-vue-next";
+import { isAdmin } from "@/utils/auth";
 
 const router = useRouter();
 const route = useRoute();
@@ -86,18 +87,6 @@ const isExpanded = ref(false);
 const expand = (state: boolean) => {
     isExpanded.value = state;
     emit("sidebar-hover", state);
-};
-
-// 관리자 권한 체크 함수
-const isAdmin = (): boolean => {
-    try {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return false;
-        const user = JSON.parse(userStr);
-        return user.role === 'admin' || user.isAdmin === true;
-    } catch {
-        return false;
-    }
 };
 
 // 일반 메뉴 항목

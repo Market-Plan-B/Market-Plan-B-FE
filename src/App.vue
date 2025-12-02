@@ -25,13 +25,7 @@ import Sidebar from "@/components/ui/Sidebar.vue";
 const route = useRoute();
 const isExpanded = ref(false);
 
-const isLoginPage = computed(() => {
-    const path = route.path;
-    const result = path === '/login' ||
-        path === '/forgot-password' ||
-        path === '/intro';
-    return result;
-});
+const isLoginPage = computed(() => route.path === '/login');
 
 // 디버깅용 (개발 중에만)
 if (import.meta.env.DEV) {

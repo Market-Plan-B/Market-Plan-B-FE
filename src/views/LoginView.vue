@@ -147,9 +147,6 @@ const handleLogin = async () => {
     }
 };
 
-const goToForgotPassword = () => {
-    router.push('/forgot-password');
-};
 </script>
 
 <style scoped>
@@ -411,8 +408,6 @@ const goToForgotPassword = () => {
     opacity: 0.6;
     cursor: not-allowed;
 }
-
-/* 회원가입 링크 */
 
 /* 반응형 */
 @media (max-width: 640px) {

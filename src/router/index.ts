@@ -4,6 +4,7 @@ import ReportsView from "@/views/ReportView.vue";
 import AnalysisView from "@/views/AnalysisView.vue";
 import LoginView from "@/views/LoginView.vue";
 import CrawlingSourceView from "@/views/CrawlingSourceView.vue";
+import { isAdmin } from "@/utils/auth";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -29,18 +30,6 @@ const router = createRouter({
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
 });
-
-// 관리자 권한 체크 함수
-const isAdmin = (): boolean => {
-  try {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) return false;
-    const user = JSON.parse(userStr);
-    return user.role === "admin" || user.isAdmin === true;
-  } catch {
-    return false;
-  }
-};
 
 // 라우터 가드: 관리자 전용 페이지 접근 제어
 router.beforeEach((to, _from, next) => {
