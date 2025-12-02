@@ -17,11 +17,10 @@
         <!-- 카드 배치 -->
         <div v-if="cards.length > 0" class="relative w-full h-[600px] perspective-1000">
             <div v-for="(card, index) in displayCards" :key="card.id || index" ref="cardRefs" @click="selectCard(index)"
-                @mouseenter="onCardHover(index)" @mouseleave="onCardLeave(index)" class="absolute card-item"
-                :style="getCardStyle(index)">
+                class="absolute card-item" :style="getCardStyle(index)">
                 <!-- 카드 내부 -->
                 <div
-                    class="relative w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl overflow-hidden border border-slate-700/50 shadow-2xl cursor-pointer group">
+                    class="relative w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-md overflow-hidden border border-slate-700/50 shadow-2xl cursor-pointer group">
 
                     <!-- 이미지 오버레이 -->
                     <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -121,12 +120,6 @@ function getCardStyle(index) {
 
 function selectCard(index) {
     selectedCardIndex.value = selectedCardIndex.value === index ? null : index;
-}
-
-function onCardHover(index) {
-}
-
-function onCardLeave(index) {
 }
 
 function getCardImage(index) {

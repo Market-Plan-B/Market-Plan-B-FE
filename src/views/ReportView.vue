@@ -2,33 +2,32 @@
     <div class="space-y-8">
 
         <!-- 📌 모드 선택 + 날짜 선택 -->
-        <section class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
+        <section class="bg-white p-8 rounded-lg shadow-lg border border-gray-200 mb-6">
             <div class="mb-6">
                 <h2 class="font-bold text-2xl mb-2 text-gray-900">글로벌 원유 시장 리포트</h2>
-                <p class="text-sm text-gray-600">AI가 생성한 데일리/위클리 리포트를 확인하세요.</p>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-6 justify-between items-center">
-                <div class="inline-flex rounded-2xl bg-gray-100 p-1.5 shadow-inner">
+                <div class="inline-flex rounded-md bg-gray-100 p-1.5 shadow-inner">
                     <button @click="switchMode('daily')"
-                        class="relative px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300"
+                        class="relative px-6 py-2.5 rounded-md font-semibold text-sm transition-all duration-300"
                         :class="mode === 'daily' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-600 hover:text-gray-900'">
                         Daily
                     </button>
                     <button @click="switchMode('weekly')"
-                        class="relative px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300"
+                        class="relative px-6 py-2.5 rounded-md font-semibold text-sm transition-all duration-300"
                         :class="mode === 'weekly' ? 'bg-white text-purple-600 shadow-md' : 'text-gray-600 hover:text-gray-900'">
                         Weekly
                     </button>
                 </div>
 
                 <input type="date" v-model="selectedDate"
-                    class="px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-700 bg-white hover:border-blue-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 font-medium shadow-sm" />
+                    class="px-4 py-3 border-2 border-gray-200 rounded-md text-gray-700 bg-white hover:border-blue-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 font-medium shadow-sm" />
             </div>
         </section>
 
         <!-- 📌 데일리 뉴스 카드 (Daily 모드에서만) -->
-        <section v-if="mode === 'daily'" class="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+        <section v-if="mode === 'daily'" class="bg-white rounded-lg p-8 shadow-lg border border-gray-200 mb-6">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Daily News</h2>
             <div class="relative">
                 <!-- 카드 캐러셀 -->
@@ -36,7 +35,7 @@
                     <div v-for="(img, idx) in dummyImages" :key="idx"
                         class="flex-shrink-0 w-64 snap-center cursor-pointer transition-transform hover:scale-[1.02]"
                         @click="openImage(idx)">
-                        <img :src="img" class="w-full h-80 object-cover rounded-2xl shadow-lg border border-gray-200" />
+                        <img :src="img" class="w-full h-80 object-cover rounded-md shadow-lg border border-gray-200" />
                     </div>
                 </div>
 
@@ -50,12 +49,15 @@
         </section>
 
         <!-- 📌 상세 리포트 -->
-        <section class="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+        <section class="bg-white rounded-lg p-8 shadow-lg border border-gray-200">
             <div class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900">
+                <h2 class="text-xl font-bold text-gray-900 mb-1">
                     {{ mode === 'daily' ? 'Daily Report' : 'Weekly Report' }}
                 </h2>
-                <p class="text-sm text-slate-600">{{ selectedDate }}</p>
+                <p v-if="mode === 'daily'" class="text-sm text-slate-600">{{ selectedDate }}</p>
+                <p v-else class="text-sm text-slate-600">
+                    {{ weekRange.start }} ~ {{ weekRange.end }}
+                </p>
             </div>
 
             <div v-if="reportHtml" class="report-content" v-html="reportHtml"></div>
@@ -68,8 +70,8 @@
         <Transition name="fade">
             <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
                 @click="isModalOpen = false">
-                <img :src="dummyImages[currentIndex]" class="rounded-2xl shadow-2xl"
-                    style="max-width: 400px; max-height: 500px; width: auto; height: auto;" @click.stop />
+                <img :src="dummyImages[currentIndex]" class="rounded-md shadow-2xl"
+                    style="max-width: 600px; max-height: 700px; width: auto; height: auto;" @click.stop />
                 <button @click.stop="prevImage"
                     class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white">◀</button>
                 <button @click.stop="nextImage"
@@ -85,13 +87,13 @@
 import { ref, watch } from "vue";
 import { reportsAPI } from "@/api/reports";
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
-import ReportCards from "@/components/ReportCards.vue";
 
-import CardNews1 from "@/data/images/CardNews_Sample01.png";
-import CardNews2 from "@/data/images/CardNews_Sample02.png";
-import CardNews3 from "@/data/images/CardNews_Sample03.png";
-
-const dummyImages = [CardNews1, CardNews2, CardNews3];
+// public/images 폴더에서 이미지 가져오기 (lottie와 동일한 방식)
+const dummyImages = [
+    "/images/CardNews_Sample01.png",
+    "/images/CardNews_Sample02.png",
+    "/images/CardNews_Sample03.png"
+];
 const currentIndex = ref(0);
 const isModalOpen = ref(false);
 
@@ -101,29 +103,68 @@ const prevImage = () => { currentIndex.value = (currentIndex.value - 1 + dummyIm
 
 const mode = ref("daily");
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
-const cards = ref([]);
 const reportHtml = ref("");
 
 async function loadDaily() {
-    const cardRes = await reportsAPI.getDailyCardnews(selectedDate.value);
     const reportRes = await reportsAPI.getDailyReport(selectedDate.value);
-    cards.value = cardRes.news.map(n => ({ date: n.date, title: n.title, desc: n.summary, url: n.url }));
     reportHtml.value = reportRes.html_resource ?? "";
 }
 
 function getWeekRange(dateStr) {
-    const date = new Date(dateStr);
-    const day = date.getDay() || 7;
-    date.setDate(date.getDate() + 4 - day);
-    const start = new Date(date); start.setDate(start.getDate() - 3);
-    const end = new Date(date); end.setDate(end.getDate() + 3);
-    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+    // 선택한 날짜를 기준으로 해당 주의 월요일~일요일 계산
+    // 날짜 문자열을 파싱 (YYYY-MM-DD 형식)
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // 월은 0부터 시작하므로 -1
+
+    const dayOfWeek = date.getDay(); // 0(일요일) ~ 6(토요일)
+
+    // 월요일을 주의 시작으로 설정
+    // 일요일(0)인 경우 -6일, 월요일(1)인 경우 0일, 화요일(2)인 경우 -1일, ...
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + daysToMonday);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    // YYYY-MM-DD 형식으로 변환
+    const formatDate = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
+    return {
+        start: formatDate(monday),
+        end: formatDate(sunday)
+    };
 }
 
+const weekRange = ref({ start: '', end: '' });
+
 async function loadWeekly() {
-    const { start, end } = getWeekRange(selectedDate.value);
-    const reportRes = await reportsAPI.getWeeklyReport(start, end);
-    reportHtml.value = reportRes.html_resource ?? "";
+    try {
+        // 선택한 날짜로 직접 조회 (백엔드가 해당 날짜가 포함된 위클리 리포트를 찾아줌)
+        const reportRes = await reportsAPI.getWeeklyReport(selectedDate.value);
+
+        if (reportRes && reportRes.html_resource) {
+            reportHtml.value = reportRes.html_resource;
+            // 실제 반환된 날짜 범위로 업데이트
+            if (reportRes.start_date && reportRes.end_date) {
+                weekRange.value = {
+                    start: reportRes.start_date,
+                    end: reportRes.end_date
+                };
+            }
+        } else {
+            reportHtml.value = "";
+        }
+    } catch (error) {
+        console.error('위클리 리포트 로드 실패:', error);
+        reportHtml.value = "";
+    }
 }
 
 function switchMode(m) { mode.value = m; }
