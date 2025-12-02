@@ -20,7 +20,7 @@ export default defineConfig({
     proxy: {
       // 기존 백엔드 API 프록시 (유지)
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://localhost:8000",
         changeOrigin: true,
       },
       // Yahoo Finance 프록시 (추가)
