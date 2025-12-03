@@ -28,10 +28,6 @@ export interface RegionData {
   }>;
 }
 
-export interface FactorImpact {
-  features: Record<string, number>;
-}
-
 export interface Strategies {
   strategies: Array<{
     id: number;
@@ -63,9 +59,6 @@ export const dashboardAPI = {
     axios.get(
       `${API_BASE_URL}/api/dashboard/region-impact?region_code=${regionCode}`
     ),
-
-  getFactorImpact: (): Promise<AxiosResponse<FactorImpact>> =>
-    axios.get(`${API_BASE_URL}/api/dashboard/factor-impact`),
 
   getStrategies: (): Promise<AxiosResponse<Strategies>> =>
     axios.get(`${API_BASE_URL}/api/dashboard/strategies`),
