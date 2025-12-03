@@ -163,6 +163,8 @@ const handleLogin = async () => {
         } else {
             router.push('/dashboard');
         }
+        
+        loading.value = false;
 
         loading.value = false;
 
