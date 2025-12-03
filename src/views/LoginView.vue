@@ -64,7 +64,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { User, Lock } from 'lucide-vue-next';
-import { authAPI } from '@/api/auth';
+import { authService } from '@/api/auth';
 
 const router = useRouter();
 const email = ref('');
@@ -98,10 +98,10 @@ const handleLogin = async () => {
 
     try {
         // 로그인 API 호출
-        const response = await authAPI.login({
-            email: email.value,
-            password: password.value
-        });
+        const { useAuthStore } = await import('@/stores/auth.js');
+        const authStore = useAuthStore();
+        
+        const response = await authService.signIn(email.value, password.value);
 
         // Remember me 처리
         if (rememberMe.value) {
@@ -112,31 +112,29 @@ const handleLogin = async () => {
             localStorage.removeItem('email');
         }
 
-        // 토큰 저장
-        localStorage.setItem('token', response.access_token);
-        if (response.refresh_token) {
-            localStorage.setItem('refresh_token', response.refresh_token);
-        }
-
-        // 사용자 정보 저장 (DB에서 받아온 role 포함)
+        // JWT 토큰에서 사용자 정보 추출
+        const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
+        const isAdmin = payload.auth?.includes('ROLE_ADMIN') || false;
+        
+        // 사용자 정보 생성
         const userData = {
-            id: response.user.id,
-            name: response.user.name,
-            email: response.user.email,
-            role: response.user.role, // 'admin' 또는 'user'
-            isAdmin: response.user.role === 'admin'
+            email: payload.sub,
+            authorities: payload.auth?.split(',').map(role => ({ authority: role.trim() })) || [],
+            role: isAdmin ? 'admin' : 'user'
         };
-        localStorage.setItem('user', JSON.stringify(userData));
-
-        // 로그인 성공 시 role에 따라 페이지 이동
-        loading.value = false;
-        if (response.user.role === 'admin') {
-            // 관리자는 크롤링 소스 관리 페이지로 이동
+        
+        // 토큰과 사용자 정보 저장
+        const responseWithUser = { ...response, user: userData };
+        authStore.setTokens(responseWithUser);
+        
+        // 역할에 따라 리다이렉트
+        if (isAdmin) {
             router.push('/crawling-sources');
         } else {
-            // 일반 사용자는 대시보드로 이동
             router.push('/dashboard');
         }
+        
+        loading.value = false;
 
     } catch (error: any) {
         loading.value = false;

@@ -121,11 +121,11 @@ const navigate = (path: string) => {
 };
 
 // 로그아웃
-const handleLogout = () => {
+const handleLogout = async () => {
     if (confirm("로그아웃 하시겠습니까?")) {
-        // 실제 로그아웃 로직 구현
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        const { useAuthStore } = await import('@/stores/auth.js');
+        const authStore = useAuthStore();
+        await authStore.logout();
         router.push("/login");
     }
 };
