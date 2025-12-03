@@ -56,7 +56,7 @@
                 </h2>
                 <p v-if="mode === 'daily'" class="text-sm text-slate-600">{{ selectedDate }}</p>
                 <p v-else class="text-sm text-slate-600">
-                    {{ weekRange.start }} ~ {{ weekRange.end }}
+                    {{ weekRange.start }} {{ weekRange.end }}
                 </p>
             </div>
 
@@ -70,12 +70,14 @@
         <Transition name="fade">
             <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
                 @click="isModalOpen = false">
-                <img :src="dummyImages[currentIndex]" class="rounded-md shadow-2xl"
-                    style="max-width: 600px; max-height: 700px; width: auto; height: auto;" @click.stop />
-                <button @click.stop="prevImage"
-                    class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white">◀</button>
-                <button @click.stop="nextImage"
-                    class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white">▶</button>
+                <div class="relative flex items-center" @click.stop>
+                    <img :src="dummyImages[currentIndex]" class="rounded-md shadow-2xl"
+                        style="max-width: 600px; max-height: 700px; width: auto; height: auto;" />
+                    <button @click.stop="prevImage"
+                        class="absolute left-0 -translate-x-full -translate-y-1/2 top-1/2 ml-4 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white transition-all">◀</button>
+                    <button @click.stop="nextImage"
+                        class="absolute right-0 translate-x-full -translate-y-1/2 top-1/2 mr-4 bg-white/90 p-3 rounded-full shadow-lg hover:bg-white transition-all">▶</button>
+                </div>
             </div>
         </Transition>
     </Teleport>
