@@ -267,6 +267,8 @@ watch([mode, selectedDate], () => {
 onMounted(() => {
     updateLastUpdateTime();
     setInterval(updateLastUpdateTime, 60000);
+    // 초기 로딩
+    loadDaily();
 });
 </script>
 
