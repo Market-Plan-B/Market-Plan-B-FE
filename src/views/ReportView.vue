@@ -9,7 +9,6 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="font-bold text-2xl text-gray-900">Market Intelligence Report</h2>
-                            <p class="text-gray-600 text-sm mt-2">글로벌 원유 시장 분석 및 전략적 인사이트</p>
                         </div>
                         <div class="update-time">
                             <span class="update-text">{{ lastUpdateTime }}</span>
@@ -115,9 +114,6 @@
                 <div class="modal-container" @click.stop>
                     <div class="modal-content">
                         <img :src="dummyImages[currentIndex]" class="modal-image" />
-                        <div class="modal-counter">
-                            {{ currentIndex + 1 }} / {{ dummyImages.length }}
-                        </div>
                     </div>
                     <button @click.stop="prevImage" class="modal-nav-button left">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -193,12 +189,17 @@ async function loadDaily() {
     try {
         const reportRes = await reportsAPI.getDailyReport(selectedDate.value);
         reportHtml.value = reportRes.html_resource ?? "";
+        if (reportRes.created_at) {
+            const date = new Date(reportRes.created_at);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
+        }
     } catch (error) {
         console.error('데일리 리포트 로드 실패:', error);
         reportHtml.value = "";
     } finally {
         isLoading.value = false;
-        updateLastUpdateTime();
     }
 }
 
@@ -218,6 +219,12 @@ async function loadWeekly() {
                     end: reportRes.end_date
                 };
             }
+            if (reportRes.created_at) {
+                const date = new Date(reportRes.created_at);
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
+            }
         } else {
             reportHtml.value = "";
         }
@@ -226,7 +233,6 @@ async function loadWeekly() {
         reportHtml.value = "";
     } finally {
         isLoading.value = false;
-        updateLastUpdateTime();
     }
 }
 
@@ -314,23 +320,12 @@ onMounted(() => {
 /* 리포트 헤더 */
 .report-header {
     padding: 32px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
     position: relative;
     overflow: hidden;
     border-bottom: 2px solid #f0f7ff;
 }
 
-.report-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(47, 128, 237, 0.06) 0%, transparent 70%);
-    border-radius: 50%;
-    animation: float 8s ease-in-out infinite;
-}
+
 
 @keyframes float {
     0%, 100% { transform: translate(0, 0); }
@@ -568,7 +563,7 @@ onMounted(() => {
     padding: 6px 14px;
     background: linear-gradient(135deg, #f0f7ff 0%, #e0f0ff 100%);
     color: #334155;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     border-radius: 20px;
     border: 1px solid #d0e7ff;
@@ -672,7 +667,7 @@ onMounted(() => {
 
 .view-text {
     color: white;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     padding: 8px 20px;
     background: rgba(51, 65, 85, 0.9);
