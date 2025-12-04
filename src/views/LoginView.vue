@@ -100,7 +100,6 @@ const handleLogin = async () => {
         // 로그인 API 호출
         const { useAuthStore } = await import('@/stores/auth.js');
         const authStore = useAuthStore();
-
         const response = await authService.signIn(email.value, password.value);
 
         // Remember me 처리
@@ -163,6 +162,8 @@ const handleLogin = async () => {
         } else {
             router.push('/dashboard');
         }
+
+        loading.value = false;
 
         loading.value = false;
 
