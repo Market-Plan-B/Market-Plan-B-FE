@@ -100,7 +100,6 @@ const handleLogin = async () => {
         // 로그인 API 호출
         const { useAuthStore } = await import('@/stores/auth.js');
         const authStore = useAuthStore();
-        
         const response = await authService.signIn(email.value, password.value);
 
         // Remember me 처리
@@ -112,28 +111,60 @@ const handleLogin = async () => {
             localStorage.removeItem('email');
         }
 
-        // JWT 토큰에서 사용자 정보 추출
-        const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
-        const isAdmin = payload.auth?.includes('ROLE_ADMIN') || false;
-        
-        // 사용자 정보 생성
-        const userData = {
-            email: payload.sub,
-            authorities: payload.auth?.split(',').map(role => ({ authority: role.trim() })) || [],
-            role: isAdmin ? 'admin' : 'user'
-        };
-        
-        // 토큰과 사용자 정보 저장
-        const responseWithUser = { ...response, user: userData };
-        authStore.setTokens(responseWithUser);
-        
+        // 토큰 저장 (사용자 정보는 API로 가져옴)
+        authStore.setTokens(response);
+
+        let isAdminUser = false;
+
+        // 사용자 정보 API 호출
+        try {
+            const userInfo = await authService.getUserInfo();
+            isAdminUser = userInfo.role === 'ADMIN' || userInfo.role === 'admin';
+
+            // 사용자 정보 생성 (DB의 name 필드를 username으로 사용)
+            const userData = {
+                id: userInfo.id,
+                username: userInfo.name, // DB의 name 필드 사용
+                email: userInfo.email,
+                authorities: isAdminUser ? [{ authority: 'ROLE_ADMIN' }] : [{ authority: 'ROLE_USER' }],
+                role: isAdminUser ? 'admin' : 'user'
+            };
+
+            // 디버깅: 저장되는 사용자 정보 확인
+            if (import.meta.env.DEV) {
+                console.log('User data from API:', userInfo);
+                console.log('User data to store:', userData);
+            }
+
+            // 사용자 정보 업데이트
+            authStore.setTokens({ ...response, user: userData });
+        } catch (error: any) {
+            // API 호출 실패 시 JWT에서 추출
+            console.warn('Failed to get user info from API, using JWT payload:', error);
+
+            const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
+            isAdminUser = payload.auth?.includes('ROLE_ADMIN') || false;
+
+            const userData = {
+                id: payload.id || 0,
+                username: payload.name || payload.username || payload.sub || '',
+                email: payload.sub,
+                authorities: payload.auth?.split(',').map((role: string) => ({ authority: role.trim() })) || [],
+                role: isAdminUser ? 'admin' : 'user'
+            };
+
+            authStore.setTokens({ ...response, user: userData });
+        }
+
         // 역할에 따라 리다이렉트
-        if (isAdmin) {
+        if (isAdminUser) {
             router.push('/crawling-sources');
         } else {
             router.push('/dashboard');
         }
-        
+
+        loading.value = false;
+
         loading.value = false;
 
     } catch (error: any) {
