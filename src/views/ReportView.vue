@@ -10,9 +10,6 @@
                         <div>
                             <h2 class="font-bold text-2xl text-gray-900">Market Intelligence Report</h2>
                         </div>
-                        <div class="update-time">
-                            <span class="update-text">{{ lastUpdateTime }}</span>
-                        </div>
                     </div>
                 </div>
             </div>
