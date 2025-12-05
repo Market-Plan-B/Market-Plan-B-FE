@@ -8,22 +8,18 @@ ARG VITE_MAPTILER_KEY
 ARG VITE_TWELVEDATA_KEY
 ENV VITE_MAPTILER_KEY=$VITE_MAPTILER_KEY
 ENV VITE_TWELVEDATA_KEY=$VITE_TWELVEDATA_KEY
-ENV NODE_ENV=production
 
 # package.json과 package-lock.json 복사
 COPY package*.json ./
 
-# 의존성 설치 (devDependencies 포함)
-RUN npm ci
+# 의존성 설치
+RUN npm install
 
 # 소스 코드 복사
 COPY . .
 
 # 빌드 실행
 RUN npm run build
-
-# 빌드 결과 확인
-RUN ls -la /app/dist && echo "Build successful" || (echo "Build failed" && exit 1)
 
 # 2단계: 배포용 Nginx
 FROM nginx:1.27-alpine
