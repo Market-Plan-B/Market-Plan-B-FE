@@ -11,15 +11,26 @@ interface OilPrice extends BaseQuote {
   prevClose: number;
 }
 
-// Yahoo Finance fetch (Vite 프록시 경유)
-const fetchYahoo = async (symbol: string, retries = 3): Promise<any> => {
-  for (let i = 0; i < retries; i++) {
+// === [ 핵심: 3개 기능 적용한 fetchYahoo ] =====================
+const fetchYahoo = async (symbol: string, retries = 5): Promise<any> => {
+  let delay = 1000; // 최초 대기 1초 (지수 백오프 시작점)
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Vite 프록시를 통해 호출 (/yahoo-finance -> https://query1.finance.yahoo.com/v8/finance/chart)
       const url = `/yahoo-finance/${symbol}`;
-      const { data } = await axios.get(url, { timeout: 5000 });
+      const { data } = await axios.get(url, {
+        timeout: 8000,
+        headers: {
+          // User-Agent 우회 ★ (봇 탐지 우회)
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      });
+
       const quote = data.chart.result[0];
       const meta = quote.meta;
+
       return {
         price: meta.regularMarketPrice || 0,
         prevClose: meta.previousClose || meta.chartPreviousClose || 0,
@@ -32,14 +43,32 @@ const fetchYahoo = async (symbol: string, retries = 3): Promise<any> => {
             100
           : 0,
       };
-    } catch (err) {
-      console.warn(`Retry ${i + 1}/${retries} for ${symbol}:`, err);
-      if (i === retries - 1) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+    } catch (err: any) {
+      // 429 또는 네트워크 오류 감지
+      if (err?.response?.status === 429) {
+        console.warn(
+          `[429] ${symbol} → ${attempt}차 재시도 예정 (대기 ${delay / 1000}s)`
+        );
+      } else {
+        console.warn(
+          `[에러] ${symbol} → ${attempt}차 재시도 (대기 ${delay / 1000}s):`,
+          err
+        );
+      }
+
+      // 마지막 시도면 실패 처리
+      if (attempt === retries) throw err;
+
+      // 지수 백오프 적용 ★
+      await new Promise((res) => setTimeout(res, delay));
+      delay *= 2; // 대기 시간을 2배씩 증가
     }
   }
-  throw new Error(`Failed after ${retries} retries`);
+
+  throw new Error(`Yahoo fetch failed: ${symbol}`);
 };
+
+// ==================================================
 
 const safe = <T>(fn: () => Promise<T>, fallback: T) =>
   fn().catch((e) => {
@@ -226,6 +255,7 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
     getGold(),
     getCopper(),
   ]);
+
   return {
     brent,
     wti,

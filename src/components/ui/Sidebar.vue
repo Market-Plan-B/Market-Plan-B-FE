@@ -50,7 +50,9 @@
                 </div>
                 <div v-if="isExpanded" class="flex-1 min-w-0">
                     <p class="text-white text-sm font-semibold">SK E&S</p>
-                    <p class="text-white text-xs text-slate-400">Market Intelligence 1팀</p>
+                    <p class="text-white text-xs text-slate-400 team-label">
+                        <span class="team-text">{{ userName }}</span>
+                    </p>
                 </div>
             </div>
 
@@ -76,9 +78,11 @@ import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe } from "lucide-vue-next";
 import { isAdmin } from "@/utils/auth";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 
 const emit = defineEmits(["sidebar-hover"]);
 
@@ -104,15 +108,27 @@ const adminNavItems = [
 // 권한에 따라 메뉴 항목 구성 (반응형)
 const navItems = computed(() => {
     if (isAdmin()) {
-        // 관리자는 일반 메뉴 + 관리자 메뉴
-        return [
-            commonNavItems[0], // 대시보드
-            adminNavItems[0],  // 크롤링 소스 관리
-            ...commonNavItems.slice(1) // 리포트, 영향 분석
-        ];
+        // 관리자는 크롤링 소스 관리 페이지만 표시
+        return adminNavItems;
     }
     // 일반 사용자는 일반 메뉴만
     return commonNavItems;
+});
+
+// 사용자 이름 표시 (DB에서 가져온 username 사용)
+const userName = computed(() => {
+    // 디버깅: 사용자 정보 확인
+    if (import.meta.env.DEV) {
+        console.log('User data:', authStore.user);
+    }
+
+    // username이 있으면 사용
+    if (authStore.user?.username) {
+        return authStore.user.username;
+    }
+
+    // 사용자 이름이 없을 경우 기본값 (이 경우는 로그인 시 username이 제대로 저장되지 않은 경우)
+    return isAdmin() ? '관리자' : 'Market Intelligence 1팀';
 });
 
 const isActive = (path: string) => route.path === path;
@@ -123,8 +139,6 @@ const navigate = (path: string) => {
 // 로그아웃
 const handleLogout = async () => {
     if (confirm("로그아웃 하시겠습니까?")) {
-        const { useAuthStore } = await import('@/stores/auth.js');
-        const authStore = useAuthStore();
         await authStore.logout();
         router.push("/login");
     }
@@ -140,5 +154,26 @@ const handleLogout = async () => {
 
 .MarketPlanB-logo {
     color: #ea580c;
+}
+
+.team-label {
+    display: inline-block;
+    width: 100%;
+}
+
+.team-label::before {
+    content: 'Market Intelligence 1팀';
+    visibility: hidden;
+    display: block;
+    height: 0;
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.team-text {
+    display: block;
+    white-space: nowrap;
 }
 </style>
