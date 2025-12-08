@@ -97,7 +97,7 @@ const expand = (state: boolean) => {
 const commonNavItems = [
     { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { to: "/reports", label: "리포트", icon: FileText },
-    { to: "/analysis", label: "영향 분석", icon: TrendingUp },
+    { to: "/analysis", label: "영향도 분석", icon: TrendingUp },
 ];
 
 // 관리자 전용 메뉴 항목

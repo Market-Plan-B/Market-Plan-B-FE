@@ -26,12 +26,22 @@ export default defineConfig({
         target: "http://localhost:8000",
         changeOrigin: true,
       },
-      // Yahoo Finance 프록시 (추가)
       "/yahoo-finance": {
         target: "https://query1.finance.yahoo.com",
         changeOrigin: true,
         rewrite: (path) =>
           path.replace(/^\/yahoo-finance/, "/v8/finance/chart"),
+        secure: false,
+      },
+      // NOAA 태풍/허리케인 데이터
+      "/noaa-tropical": {
+        target: "https://mapservices.weather.noaa.gov",
+        changeOrigin: true,
+        rewrite: (path) =>
+          path.replace(
+            /^\/noaa-tropical/,
+            "/tropical/rest/services/tropical/NHC_tropical_weather/MapServer"
+          ),
         secure: false,
       },
     },

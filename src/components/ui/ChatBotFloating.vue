@@ -321,7 +321,7 @@ const delay = (ms) => new Promise(r => setTimeout(r, ms))
     height: 60px;
     border: none;
     border-radius: 20px;
-    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    background: linear-gradient(135deg, #ea580c, #f7931e);
     cursor: pointer;
     box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4);
     transition: all 0.3s ease;

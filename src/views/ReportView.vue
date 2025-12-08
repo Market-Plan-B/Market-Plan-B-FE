@@ -22,13 +22,11 @@
                 <div class="flex justify-between items-center">
                     <div class="tab-container">
                         <div class="tab-wrapper">
-                            <button @click="switchMode('daily')"
-                                class="tab-button"
+                            <button @click="switchMode('daily')" class="tab-button"
                                 :class="{ 'active': mode === 'daily' }">
                                 Daily
                             </button>
-                            <button @click="switchMode('weekly')"
-                                class="tab-button"
+                            <button @click="switchMode('weekly')" class="tab-button"
                                 :class="{ 'active': mode === 'weekly' }">
                                 Weekly
                             </button>
@@ -37,8 +35,7 @@
                         </div>
                     </div>
                     <div class="flex-shrink-0">
-                        <input type="date" v-model="selectedDate"
-                            class="date-input" />
+                        <input type="date" v-model="selectedDate" class="date-input" />
                     </div>
                 </div>
             </div>
@@ -62,10 +59,8 @@
                         </div>
                     </div>
                     <div class="card-news-container">
-                        <div v-for="(img, idx) in dummyImages" :key="idx"
-                            class="card-news-item"
-                            :style="{ animationDelay: `${idx * 0.1}s` }"
-                            @click="openImage(idx)">
+                        <div v-for="(img, idx) in dummyImages" :key="idx" class="card-news-item"
+                            :style="{ animationDelay: `${idx * 0.1}s` }" @click="openImage(idx)">
                             <div class="card-news-wrapper">
                                 <img :src="img" class="card-news-image" />
                                 <div class="card-overlay">
@@ -94,7 +89,8 @@
                         </div>
                         <p class="loading-percentage">{{ loadingProgress }}%</p>
                     </div>
-                    <div v-else-if="reportHtml" class="report-content" v-html="reportHtml"></div>
+                    <div v-else-if="reportHtml" class="report-content report-html-wrapper" v-html="sanitizedReportHtml">
+                    </div>
                     <div v-else class="empty-state">
                         <p class="empty-title">리포트가 없습니다</p>
                         <p class="empty-subtitle">선택한 날짜의 리포트를 찾을 수 없습니다</p>
@@ -109,24 +105,22 @@
     <!-- 이미지 모달 -->
     <Teleport to="body">
         <Transition name="modal-fade">
-            <div v-if="isModalOpen" class="modal-backdrop"
-                @click="isModalOpen = false">
+            <div v-if="isModalOpen" class="modal-backdrop" @click="isModalOpen = false">
                 <div class="modal-container" @click.stop>
                     <div class="modal-content">
                         <img :src="dummyImages[currentIndex]" class="modal-image" />
                     </div>
                     <button @click.stop="prevImage" class="modal-nav-button left">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M15 18l-6-6 6-6"/>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M15 18l-6-6 6-6" />
                         </svg>
                     </button>
                     <button @click.stop="nextImage" class="modal-nav-button right">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 18l6-6-6-6"/>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
                         </svg>
-                    </button>
-                    <button @click="isModalOpen = false" class="modal-close-button">
-                        ✕
                     </button>
                 </div>
             </div>
@@ -137,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import { reportsAPI } from "@/api/reports";
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 
@@ -151,7 +145,6 @@ const dummyImages = [
 const currentIndex = ref(0);
 const isModalOpen = ref(false);
 const isLoading = ref(false);
-const isRefreshing = ref(false);
 const loadingProgress = ref(0);
 const lastUpdateTime = ref('');
 
@@ -159,22 +152,26 @@ const mode = ref("daily");
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const reportHtml = ref("");
 
+// 리포트 HTML에서 스타일 태그를 제거하고 스코프를 제한
+const sanitizedReportHtml = computed(() => {
+    if (!reportHtml.value) return "";
+
+    let html = reportHtml.value;
+
+    // <style> 태그 제거 (전역 스타일 방지)
+    html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+    // 인라인 스타일에서 font-family 제거 (리포트 콘텐츠에만 폰트 적용)
+    html = html.replace(/style="[^"]*font-family[^"]*"/gi, (match) => {
+        return match.replace(/font-family[^;]*;?/gi, '');
+    });
+
+    return html;
+});
+
 const openImage = (idx) => { currentIndex.value = idx; isModalOpen.value = true; };
 const nextImage = () => { currentIndex.value = (currentIndex.value + 1) % dummyImages.length; };
 const prevImage = () => { currentIndex.value = (currentIndex.value - 1 + dummyImages.length) % dummyImages.length; };
-
-function simulateLoading() {
-    loadingProgress.value = 0;
-    const interval = setInterval(() => {
-        if (loadingProgress.value < 90) {
-            loadingProgress.value += Math.random() * 15;
-        }
-        if (loadingProgress.value >= 90) {
-            loadingProgress.value = 100;
-            clearInterval(interval);
-        }
-    }, 200);
-}
 
 function updateLastUpdateTime() {
     const now = new Date();
@@ -185,7 +182,7 @@ function updateLastUpdateTime() {
 
 async function loadDaily() {
     isLoading.value = true;
-    
+
     try {
         const reportRes = await reportsAPI.getDailyReport(selectedDate.value);
         reportHtml.value = reportRes.html_resource ?? "";
@@ -203,22 +200,14 @@ async function loadDaily() {
     }
 }
 
-const weekRange = ref({ start: '', end: '' });
-
 async function loadWeekly() {
     isLoading.value = true;
-    
+
     try {
         const reportRes = await reportsAPI.getWeeklyReport(selectedDate.value);
 
         if (reportRes && reportRes.html_resource) {
             reportHtml.value = reportRes.html_resource;
-            if (reportRes.start_date && reportRes.end_date) {
-                weekRange.value = {
-                    start: reportRes.start_date,
-                    end: reportRes.end_date
-                };
-            }
             if (reportRes.created_at) {
                 const date = new Date(reportRes.created_at);
                 const hours = String(date.getHours()).padStart(2, '0');
@@ -236,34 +225,8 @@ async function loadWeekly() {
     }
 }
 
-function switchMode(m) { 
+function switchMode(m) {
     mode.value = m;
-}
-
-async function refreshData() {
-    if (mode.value === 'daily') {
-        await loadDaily();
-    } else {
-        await loadWeekly();
-    }
-}
-
-function formatReportDate(dateStr) {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
-
-function downloadReport() {
-    console.log('PDF 다운로드');
-}
-
-function shareReport() {
-    console.log('리포트 공유');
 }
 
 watch([mode, selectedDate], () => {
@@ -280,40 +243,52 @@ onMounted(() => {
 
 <style scoped>
 /* 기본 애니메이션 */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
     transition: opacity 0.3s ease;
 }
-.fade-enter-from, .fade-leave-to {
+
+.fade-enter-from,
+.fade-leave-to {
     opacity: 0;
 }
 
 .fade-slide-enter-active {
     transition: all 0.4s ease;
 }
+
 .fade-slide-leave-active {
     transition: all 0.3s ease;
 }
+
 .fade-slide-enter-from {
     opacity: 0;
     transform: translateY(-20px);
 }
+
 .fade-slide-leave-to {
     opacity: 0;
     transform: translateY(20px);
 }
 
-.slide-down-enter-active, .slide-down-leave-active {
+.slide-down-enter-active,
+.slide-down-leave-active {
     transition: all 0.3s ease;
 }
-.slide-down-enter-from, .slide-down-leave-to {
+
+.slide-down-enter-from,
+.slide-down-leave-to {
     opacity: 0;
     transform: translateY(-100%);
 }
 
-.modal-fade-enter-active, .modal-fade-leave-active {
+.modal-fade-enter-active,
+.modal-fade-leave-active {
     transition: opacity 0.3s ease;
 }
-.modal-fade-enter-from, .modal-fade-leave-to {
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
     opacity: 0;
 }
 
@@ -322,56 +297,14 @@ onMounted(() => {
     padding: 32px;
     position: relative;
     overflow: hidden;
-    border-bottom: 2px solid #f0f7ff;
+    border-bottom: 1px solid #cbd5e1;
 }
 
 
-
-@keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(-20px, -20px); }
-}
 
 .header-content {
     position: relative;
     z-index: 1;
-}
-
-.beta-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, #2F80ED 0%, #1e5bb8 100%);
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 12px;
-    letter-spacing: 0.5px;
-}
-
-.live-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 12px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.live-dot {
-    width: 6px;
-    height: 6px;
-    background: #dc2626;
-    border-radius: 50%;
-    animation: pulse-dot 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
 }
 
 .update-time {
@@ -384,10 +317,6 @@ onMounted(() => {
     border: 1px solid rgba(47, 128, 237, 0.15);
 }
 
-.update-icon {
-    font-size: 16px;
-}
-
 .update-text {
     font-size: 12px;
     color: #334155;
@@ -398,7 +327,7 @@ onMounted(() => {
 .content-tab-header {
     padding: 16px 32px;
     background: white;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #cbd5e1;
 }
 
 /* Daily/Weekly 탭바 스타일 */
@@ -411,7 +340,7 @@ onMounted(() => {
     position: relative;
     display: flex;
     background: transparent;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #cbd5e1;
     min-width: 200px;
 }
 
@@ -453,42 +382,6 @@ onMounted(() => {
     transform: translateX(100%);
 }
 
-/* 새로고침 버튼 */
-.refresh-button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 18px;
-    background: white;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 8px;
-    color: #475569;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.refresh-button:hover {
-    background: #f8fafc;
-    border-color: #2F80ED;
-    color: #2F80ED;
-}
-
-.refresh-button.spinning .refresh-icon {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.refresh-icon {
-    font-size: 16px;
-    display: inline-block;
-}
-
 /* 날짜 입력 */
 .date-input {
     padding: 10px 16px;
@@ -525,8 +418,13 @@ onMounted(() => {
 }
 
 @keyframes gradient-move {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
 }
 
 .loading-bar {
@@ -540,7 +438,9 @@ onMounted(() => {
 }
 
 @keyframes loading-slide {
-    to { left: 100%; }
+    to {
+        left: 100%;
+    }
 }
 
 /* Daily News 섹션 */
@@ -591,6 +491,7 @@ onMounted(() => {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -644,21 +545,6 @@ onMounted(() => {
     opacity: 1;
 }
 
-.card-number {
-    align-self: flex-start;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #2F80ED;
-    font-size: 14px;
-    font-weight: 700;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
 .overlay-content {
     display: flex;
     justify-content: center;
@@ -673,66 +559,6 @@ onMounted(() => {
     background: rgba(51, 65, 85, 0.9);
     border-radius: 20px;
     backdrop-filter: blur(4px);
-}
-
-.card-new-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-}
-
-/* 리포트 헤더 */
-.report-date-header {
-    padding: 24px 32px;
-    background: linear-gradient(135deg, #2F80ED 0%, #1e5bb8 100%);
-    color: white;
-}
-
-.report-date-text {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.report-type-text {
-    font-size: 12px;
-    opacity: 0.9;
-}
-
-.report-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    animation: pulse-status 2s ease-in-out infinite;
-}
-
-@keyframes pulse-status {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.status-text {
-    color: white;
-    font-size: 13px;
-    font-weight: 500;
 }
 
 /* 리포트 본문 */
@@ -804,12 +630,6 @@ onMounted(() => {
     padding: 80px 0;
 }
 
-.empty-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.6;
-}
-
 .empty-title {
     font-size: 18px;
     font-weight: 600;
@@ -820,75 +640,6 @@ onMounted(() => {
 .empty-subtitle {
     font-size: 14px;
     color: #64748b;
-    margin-bottom: 24px;
-}
-
-.retry-button {
-    padding: 10px 24px;
-    background: linear-gradient(135deg, #2F80ED 0%, #1e5bb8 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.retry-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(47, 128, 237, 0.3);
-}
-
-/* 푸터 */
-.report-footer {
-    padding: 24px 32px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-    border-top: 1px solid #e2e8f0;
-}
-
-.footer-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.footer-text {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #64748b;
-    font-size: 13px;
-}
-
-.footer-icon {
-    font-size: 16px;
-}
-
-.footer-right {
-    display: flex;
-    gap: 12px;
-}
-
-.footer-button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    color: #475569;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.footer-button:hover {
-    background: #f8fafc;
-    border-color: #2F80ED;
-    color: #2F80ED;
 }
 
 /* 모달 */
@@ -924,20 +675,6 @@ onMounted(() => {
     display: block;
 }
 
-.modal-counter {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 20px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
-}
-
 .modal-nav-button {
     position: absolute;
     padding: 16px;
@@ -963,26 +700,6 @@ onMounted(() => {
     right: -80px;
 }
 
-.modal-close-button {
-    position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 50%;
-    color: #1a202c;
-    font-size: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.modal-close-button:hover {
-    background: white;
-    transform: rotate(90deg);
-}
-
 /* 반응형 */
 @media (max-width: 1280px) {
     .card-news-container {
@@ -1000,31 +717,26 @@ onMounted(() => {
     .report-header {
         padding: 24px;
     }
-    
+
     .content-tab-header {
         flex-direction: column;
         gap: 16px;
         padding: 16px 24px;
     }
-    
+
     .daily-news-section {
         padding: 24px;
     }
-    
+
     .card-news-container {
         grid-template-columns: repeat(2, minmax(0, 160px));
         gap: 12px;
     }
-    
+
     .report-body {
         padding: 32px 24px;
     }
-    
-    .footer-content {
-        flex-direction: column;
-        gap: 16px;
-        align-items: flex-start;
-    }
+
 }
 
 @media (max-width: 640px) {
@@ -1033,23 +745,19 @@ onMounted(() => {
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .update-time {
         align-self: flex-start;
     }
-    
+
     .tab-wrapper {
         width: 100%;
     }
-    
+
     .card-news-container {
         grid-template-columns: 1fr;
         max-width: 300px;
         margin: 0 auto;
-    }
-    
-    .refresh-button span:last-child {
-        display: none;
     }
 }
 
@@ -1058,9 +766,19 @@ onMounted(() => {
     max-width: none;
     line-height: 1.7;
     color: #2d3748;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
     font-size: 15px;
     letter-spacing: -0.005em;
+}
+
+/* 리포트 HTML 래퍼 - 폰트 격리 */
+.report-html-wrapper {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif !important;
+    isolation: isolate;
+}
+
+/* 리포트 HTML 내부의 모든 요소에 폰트 강제 적용 */
+.report-html-wrapper * {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif !important;
 }
 
 .report-content :deep(h1) {
@@ -1286,20 +1004,20 @@ onMounted(() => {
     .report-content :deep(table) {
         font-size: 12px;
     }
-    
+
     .report-content :deep(th),
     .report-content :deep(td) {
         padding: 8px 10px;
     }
-    
+
     .report-content :deep(h1) {
         font-size: 24px;
     }
-    
+
     .report-content :deep(h2) {
         font-size: 20px;
     }
-    
+
     .report-content :deep(h3) {
         font-size: 16px;
     }

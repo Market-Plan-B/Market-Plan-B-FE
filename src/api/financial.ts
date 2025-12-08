@@ -1,36 +1,24 @@
 import axios from "axios";
 
-// 공통 타입
 interface BaseQuote {
   value: number;
   change?: number;
   changePercent?: number;
 }
+
 interface OilPrice extends BaseQuote {
   price: number;
   prevClose: number;
 }
 
-// === [ 핵심: 3개 기능 적용한 fetchYahoo ] =====================
-const fetchYahoo = async (symbol: string, retries = 5): Promise<any> => {
-  let delay = 1000; // 최초 대기 1초 (지수 백오프 시작점)
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
+// Yahoo Finance 현재가 fetch
+const fetchYahoo = async (symbol: string, retries = 3): Promise<any> => {
+  for (let i = 0; i < retries; i++) {
     try {
       const url = `/yahoo-finance/${symbol}`;
-      const { data } = await axios.get(url, {
-        timeout: 8000,
-        headers: {
-          // User-Agent 우회 ★ (봇 탐지 우회)
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9",
-        },
-      });
-
+      const { data } = await axios.get(url, { timeout: 5000 });
       const quote = data.chart.result[0];
       const meta = quote.meta;
-
       return {
         price: meta.regularMarketPrice || 0,
         prevClose: meta.previousClose || meta.chartPreviousClose || 0,
@@ -43,32 +31,31 @@ const fetchYahoo = async (symbol: string, retries = 5): Promise<any> => {
             100
           : 0,
       };
-    } catch (err: any) {
-      // 429 또는 네트워크 오류 감지
-      if (err?.response?.status === 429) {
-        console.warn(
-          `[429] ${symbol} → ${attempt}차 재시도 예정 (대기 ${delay / 1000}s)`
-        );
-      } else {
-        console.warn(
-          `[에러] ${symbol} → ${attempt}차 재시도 (대기 ${delay / 1000}s):`,
-          err
-        );
-      }
-
-      // 마지막 시도면 실패 처리
-      if (attempt === retries) throw err;
-
-      // 지수 백오프 적용 ★
-      await new Promise((res) => setTimeout(res, delay));
-      delay *= 2; // 대기 시간을 2배씩 증가
+    } catch (err) {
+      console.warn(`Retry ${i + 1}/${retries} for ${symbol}:`, err);
+      if (i === retries - 1) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
     }
   }
-
-  throw new Error(`Yahoo fetch failed: ${symbol}`);
+  throw new Error(`Failed after ${retries} retries`);
 };
 
-// ==================================================
+// Yahoo Finance 7일 히스토리 fetch
+const fetchYahooHistory = async (
+  symbol: string,
+  days = 7
+): Promise<number[]> => {
+  try {
+    const url = `/yahoo-finance/${symbol}?range=${days}d&interval=1d`;
+    const { data } = await axios.get(url, { timeout: 5000 });
+    const quotes = data.chart.result[0].indicators.quote[0];
+    const closes = quotes.close || [];
+    return closes.filter((v: number | null) => v !== null);
+  } catch (err) {
+    console.warn(`History fetch failed for ${symbol}:`, err);
+    return [];
+  }
+};
 
 const safe = <T>(fn: () => Promise<T>, fallback: T) =>
   fn().catch((e) => {
@@ -76,7 +63,7 @@ const safe = <T>(fn: () => Promise<T>, fallback: T) =>
     return fallback;
   });
 
-// 🛢️ 원유 가격
+// 원유 가격
 export const getBrentOil = () =>
   safe(
     async (): Promise<OilPrice> => {
@@ -225,6 +212,18 @@ export interface FinancialData {
   copper: { value: number; change: number };
 }
 
+export interface HistoryData {
+  brent: number[];
+  wti: number[];
+  naturalGas: number[];
+  dxy: number[];
+  sp500: number[];
+  vix: number[];
+  gold: number[];
+  copper: number[];
+  us10y: number[];
+}
+
 export const loadAllFinancialData = async (): Promise<FinancialData> => {
   const [
     brent,
@@ -255,7 +254,6 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
     getGold(),
     getCopper(),
   ]);
-
   return {
     brent,
     wti,
@@ -271,4 +269,20 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
     gold,
     copper,
   };
+};
+
+export const loadAllHistoryData = async (days = 7): Promise<HistoryData> => {
+  const [brent, wti, naturalGas, dxy, sp500, vix, gold, copper, us10y] =
+    await Promise.all([
+      fetchYahooHistory("BZ=F", days),
+      fetchYahooHistory("CL=F", days),
+      fetchYahooHistory("NG=F", days),
+      fetchYahooHistory("DX-Y.NYB", days),
+      fetchYahooHistory("^GSPC", days),
+      fetchYahooHistory("^VIX", days),
+      fetchYahooHistory("GC=F", days),
+      fetchYahooHistory("HG=F", days),
+      fetchYahooHistory("^TNX", days),
+    ]);
+  return { brent, wti, naturalGas, dxy, sp500, vix, gold, copper, us10y };
 };
