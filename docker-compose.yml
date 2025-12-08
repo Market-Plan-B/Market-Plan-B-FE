@@ -17,7 +17,7 @@ services:
     networks:
       - app-network
 
-  backend-service:
+  oil-backend-service:
     image: your-backend-image:latest
     ports:
       - "8000:8000"
