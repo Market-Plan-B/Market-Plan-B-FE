@@ -10,7 +10,7 @@ import CrawlingSourceView from "@/views/CrawlingSourceView.vue";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: "/login", component: LoginView },
+    { path: "/login", redirect: "/dashboard" },
     {
       path: "/",
       redirect: "/dashboard",
