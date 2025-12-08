@@ -5,7 +5,6 @@
                 <h2 class="section-title">영향도 분석</h2>
             </div>
 
-            <!-- 핵심 지표 카드 -->
             <div class="key-indicators-section">
                 <div class="key-indicators-grid">
                     <div class="key-indicator-card">
@@ -54,14 +53,9 @@
                 </div>
             </div>
 
-            <!-- 핵심 변수 지표 (5개 카테고리, 20개 지표) -->
             <div class="core-indicators-section">
                 <div class="section-header">
-                    <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <h3 class="section-subtitle">핵심 변수 지표</h3>
+                    <h3 class="section-subtitle">핵심 시장 지표</h3>
                 </div>
 
                 <div class="category-tabs">
@@ -75,20 +69,23 @@
                     <div v-for="item in currentCoreIndicators" :key="item.key" class="indicator-card">
                         <div class="indicator-header">
                             <span class="indicator-label">{{ item.label }}</span>
-                            <span
-                                :class="['indicator-trend', item.trend > 0 ? 'trend-up' : item.trend < 0 ? 'trend-down' : 'trend-neutral']">
-                                {{ item.trend > 0 ? '+' : '' }}{{ item.trend.toFixed(2) }}%
+                            <span :class="['indicator-trend', getTrendClass(item.trend)]">
+                                <span class="trend-period">당일</span>
+                                {{ formatTrend(item.trend) }}
                             </span>
                         </div>
                         <div class="indicator-body">
                             <div class="indicator-value" :style="{ color: item.color }">
-                                {{ item.prefix || '' }}{{ formatIndicatorValue(item) }}{{ item.suffix || '' }}
+                                {{ item.prefix || '' }}{{ formatValue(item.value) }}{{ item.suffix || '' }}
                             </div>
-                            <svg class="sparkline" viewBox="0 0 60 24">
-                                <polyline :points="getSparklinePath(item.history, item.color)" fill="none"
-                                    :stroke="item.color" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" />
-                            </svg>
+                            <div v-if="hasValidHistory(item.history)" class="sparkline-wrap">
+                                <svg class="sparkline" viewBox="0 0 60 24">
+                                    <polyline :points="getSparklinePath(item.history)" fill="none" :stroke="item.color"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <span class="sparkline-label">7D</span>
+                            </div>
+                            <div v-else class="no-chart">-</div>
                         </div>
                         <div class="indicator-meta">
                             <span class="indicator-description">{{ item.description }}</span>
@@ -99,13 +96,8 @@
                 <div class="last-updated">마지막 업데이트: {{ lastUpdated }}</div>
             </div>
 
-            <!-- 피처 중요도 분석 -->
             <div class="feature-importance-section">
                 <div class="section-header">
-                    <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
                     <h3 class="section-subtitle">피처 중요도 분석</h3>
                 </div>
                 <ChartBar :apiData="apiData" :loading="loading" />
@@ -117,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 import ChartBar from "@/components/ChartBar.vue";
 import { analysisAPI } from '@/api/analysis';
@@ -141,15 +133,17 @@ const apiData = ref<any>(null);
 const loading = ref(false);
 const lastUpdated = ref('-');
 const activeCoreCategory = ref('supply');
-const predictedBrentPrice = ref<number>(0);
+const predictedBrentPrice = ref(0);
 
 const financial = ref<FinancialData>({
     brent: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
     wti: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
     crack: { value: 0 },
     naturalGas: { value: 0, change: 0 },
+    heatingOil: { value: 0, change: 0 },
     usdkrw: { price: 0 },
     cnyusd: { price: 0 },
+    eurusd: { price: 0, change: 0 },
     dxy: { index: 0, change: 0 },
     us10y: { rate: 0 },
     us2y: { rate: 0 },
@@ -159,66 +153,32 @@ const financial = ref<FinancialData>({
     copper: { value: 0, change: 0 },
 });
 
+const history = ref<HistoryData>({
+    brent: [], wti: [], naturalGas: [], heatingOil: [],
+    dxy: [], sp500: [], vix: [], gold: [], copper: [],
+    us10y: [], us2y: [], eurusd: [],
+});
+
 const coreCategories = [
     { id: 'supply', name: '원유 수급' },
     { id: 'macro', name: '거시경제' },
-    { id: 'logistics', name: '물류/수송' },
-    { id: 'financial', name: '금융심리' },
+    { id: 'commodity', name: '원자재' },
+    { id: 'sentiment', name: '시장심리' },
     { id: 'technical', name: '기술지표' },
 ];
 
-const history = ref<HistoryData>({
-    brent: [], wti: [], naturalGas: [], dxy: [], sp500: [], vix: [], gold: [], copper: [], us10y: [],
-});
+const spread = computed(() => (financial.value.brent?.price ?? 0) - (financial.value.wti?.price ?? 0));
 
-const coreIndicators = computed(() => {
-    const f = financial.value;
-    const h = history.value;
-    const calcTrend = (arr: number[]) => {
-        if (arr.length < 2) return 0;
-        const first = arr[0], last = arr[arr.length - 1];
-        return first ? +((last - first) / first * 100).toFixed(1) : 0;
-    };
-
-    return {
-        supply: [
-            { key: 'brent', label: 'Brent Crude', value: f.brent.price, trend: f.brent.changePercent || 0, prefix: '$', color: '#f97316', description: '북해산 원유 현물가', history: h.brent },
-            { key: 'wti', label: 'WTI Crude', value: f.wti.price, trend: f.wti.changePercent || 0, prefix: '$', color: '#64748b', description: '서부 텍사스산 원유', history: h.wti },
-            { key: 'spread', label: 'WTI-Brent Spread', value: spread.value, trend: 0, prefix: '$', color: '#3b82f6', description: '지역 프리미엄/공급 병목', history: calcSpreadHistory() },
-            { key: 'gas', label: 'Natural Gas', value: f.naturalGas.value, trend: f.naturalGas.change || 0, prefix: '$', color: '#10b981', description: '천연가스 선물', history: h.naturalGas },
-        ],
-        macro: [
-            { key: 'dxy', label: 'Dollar Index', value: f.dxy.index, trend: f.dxy.change || 0, color: '#8b5cf6', description: 'USD 강세 = 유가 하락 압력', history: h.dxy },
-            { key: 'us10y', label: 'US 10Y Yield', value: f.us10y.rate, trend: calcTrend(h.us10y), suffix: '%', color: '#0ea5e9', description: '미국 10년물 국채 금리', history: h.us10y },
-            { key: 'usdkrw', label: 'USD/KRW', value: f.usdkrw.price, trend: 0, prefix: '\u20A9', color: '#22c55e', description: '원달러 환율', history: [] },
-            { key: 'gold', label: 'Gold', value: f.gold.value, trend: f.gold.change || 0, prefix: '$', color: '#eab308', description: '금 선물 가격', history: h.gold },
-        ],
-        logistics: [
-            { key: 'copper', label: 'Copper', value: f.copper.value, trend: f.copper.change || 0, prefix: '$', color: '#b45309', description: '구리 (경기 선행지표)', history: h.copper },
-            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: 0, prefix: '$', color: '#f43f5e', description: '정제 마진', history: [] },
-            { key: 'freight', label: 'Tanker Freight', value: 45.2, trend: 0, suffix: 'WS', color: '#f97316', description: '원유 수송 운임', history: [] },
-            { key: 'hormuz', label: '호르무즈 리스크', value: 35, trend: 0, suffix: '%', color: '#dc2626', description: '지정학적 위험도', history: [] },
-        ],
-        financial: [
-            { key: 'sp500', label: 'S&P 500', value: f.sp500.value, trend: f.sp500.change || 0, color: '#16a34a', description: '미국 대형주 지수', history: h.sp500 },
-            { key: 'vix', label: 'VIX', value: f.vix.value, trend: f.vix.change || 0, color: '#ef4444', description: '공포지수', history: h.vix },
-            { key: 'oi', label: 'Open Interest', value: 2.45, trend: 0, suffix: 'M', color: '#a855f7', description: '선물 미결제약정', history: [] },
-            { key: 'etf_flow', label: 'Oil ETF Flow', value: 125, trend: 0, prefix: '$', suffix: 'M', color: '#6366f1', description: '주간 자금 유입', history: [] },
-        ],
-        technical: [
-            { key: 'ma5', label: 'Brent MA(5)', value: calcMA(h.brent, 5), trend: 0, prefix: '$', color: '#06b6d4', description: '5일 이동평균', history: h.brent.slice(-5) },
-            { key: 'ma20', label: 'Brent MA(20)', value: calcMA(h.brent, 7), trend: 0, prefix: '$', color: '#0891b2', description: '7일 이동평균', history: h.brent },
-            { key: 'volatility', label: 'High-Low Range', value: calcVolatility(h.brent), trend: 0, prefix: '$', color: '#c026d3', description: '7일 변동폭', history: [] },
-            { key: 'momentum', label: 'Price Momentum', value: calcMomentum(h.brent), trend: 0, suffix: '%', color: '#7c3aed', description: '7일 모멘텀', history: h.brent },
-        ],
-    };
-});
+const calcTrend = (arr: number[]) => {
+    if (arr.length < 2) return 0;
+    const [first, last] = [arr[0], arr[arr.length - 1]];
+    return first ? +((last - first) / first * 100).toFixed(1) : 0;
+};
 
 const calcSpreadHistory = () => {
-    const b = history.value.brent, w = history.value.wti;
+    const { brent: b, wti: w } = history.value;
     if (!b.length || !w.length) return [];
-    const len = Math.min(b.length, w.length);
-    return Array.from({ length: len }, (_, i) => b[i] - w[i]);
+    return Array.from({ length: Math.min(b.length, w.length) }, (_, i) => b[i] - w[i]);
 };
 
 const calcMA = (arr: number[], period: number) => {
@@ -227,44 +187,45 @@ const calcMA = (arr: number[], period: number) => {
     return +(slice.reduce((a, b) => a + b, 0) / slice.length).toFixed(2);
 };
 
-const calcVolatility = (arr: number[]) => {
-    if (arr.length < 2) return 0;
-    return +(Math.max(...arr) - Math.min(...arr)).toFixed(2);
-};
+const calcVolatility = (arr: number[]) => arr.length < 2 ? 0 : +(Math.max(...arr) - Math.min(...arr)).toFixed(2);
 
-const calcMomentum = (arr: number[]) => {
-    if (arr.length < 2) return 0;
-    const first = arr[0], last = arr[arr.length - 1];
-    return first ? +((last - first) / first * 100).toFixed(1) : 0;
-};
+const coreIndicators = computed(() => {
+    const f = financial.value;
+    const h = history.value;
 
-const currentCoreIndicators = computed(() => coreIndicators.value[activeCoreCategory.value] || []);
-const spread = computed(() => (financial.value.brent?.price ?? 0) - (financial.value.wti?.price ?? 0));
+    return {
+        supply: [
+            { key: 'brent', label: 'Brent Crude', value: f.brent.price, trend: f.brent.changePercent || 0, prefix: '$', color: '#f97316', description: '북해산 원유 현물가', history: h.brent },
+            { key: 'wti', label: 'WTI Crude', value: f.wti.price, trend: f.wti.changePercent || 0, prefix: '$', color: '#64748b', description: '서부 텍사스산 원유', history: h.wti },
+            { key: 'spread', label: 'Brent-WTI Spread', value: spread.value, trend: calcTrend(calcSpreadHistory()), prefix: '$', color: '#3b82f6', description: '지역 프리미엄/공급 병목', history: calcSpreadHistory() },
+            { key: 'gas', label: 'Natural Gas', value: f.naturalGas.value, trend: f.naturalGas.change || 0, prefix: '$', color: '#10b981', description: '천연가스 선물', history: h.naturalGas },
+        ],
+        macro: [
+            { key: 'dxy', label: 'Dollar Index', value: f.dxy.index, trend: f.dxy.change || 0, color: '#8b5cf6', description: 'USD 강세 = 유가 하락 압력', history: h.dxy },
+            { key: 'us10y', label: 'US 10Y Yield', value: f.us10y.rate, trend: calcTrend(h.us10y), suffix: '%', color: '#0ea5e9', description: '장기 금리 (경기 전망)', history: h.us10y },
+            { key: 'us2y', label: 'US 2Y Yield', value: f.us2y.rate, trend: calcTrend(h.us2y), suffix: '%', color: '#06b6d4', description: '단기 금리 (Fed 정책)', history: h.us2y },
+            { key: 'eurusd', label: 'EUR/USD', value: f.eurusd.price, trend: f.eurusd.change || 0, prefix: '$', color: '#22c55e', description: '유로/달러 환율', history: h.eurusd },
+        ],
+        commodity: [
+            { key: 'heating', label: 'Heating Oil', value: f.heatingOil.value, trend: f.heatingOil.change || 0, prefix: '$', color: '#f43f5e', description: '난방유 선물', history: h.heatingOil },
+            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: 0, prefix: '$', color: '#ec4899', description: '정제 마진', history: [] },
+            { key: 'copper', label: 'Copper', value: f.copper.value, trend: f.copper.change || 0, prefix: '$', color: '#b45309', description: '구리 (경기 선행지표)', history: h.copper },
+            { key: 'gold', label: 'Gold', value: f.gold.value, trend: f.gold.change || 0, prefix: '$', color: '#eab308', description: '금 (인플레 헤지)', history: h.gold },
+        ],
+        sentiment: [
+            { key: 'sp500', label: 'S&P 500', value: f.sp500.value, trend: f.sp500.change || 0, color: '#16a34a', description: '미국 대형주 지수', history: h.sp500 },
+            { key: 'vix', label: 'VIX', value: f.vix.value, trend: f.vix.change || 0, color: '#ef4444', description: '변동성 지수 (공포지수)', history: h.vix },
+        ],
+        technical: [
+            { key: 'ma5', label: 'Brent MA(5)', value: calcMA(h.brent, 5), trend: 0, prefix: '$', color: '#06b6d4', description: '5일 이동평균', history: h.brent.slice(-5) },
+            { key: 'ma7', label: 'Brent MA(7)', value: calcMA(h.brent, 7), trend: 0, prefix: '$', color: '#0891b2', description: '7일 이동평균', history: h.brent },
+            { key: 'volatility', label: 'High-Low Range', value: calcVolatility(h.brent), trend: 0, prefix: '$', color: '#c026d3', description: '7일 변동폭', history: [] },
+            { key: 'momentum', label: 'Price Momentum', value: calcTrend(h.brent), trend: 0, suffix: '%', color: '#7c3aed', description: '7일 모멘텀', history: h.brent },
+        ],
+    };
+});
 
-const fmt = (v?: number, decimals = 2) => v?.toFixed(decimals) ?? '-';
-
-const formatIndicatorValue = (item: CoreIndicator) => {
-    if (item.value == null) return '-';
-    return Number.isInteger(item.value) ? item.value : item.value.toFixed(2);
-};
-
-const getSparklinePath = (history: number[], color: string) => {
-    if (!history || history.length < 2) return '';
-    const min = Math.min(...history);
-    const max = Math.max(...history);
-    const range = max - min || 1;
-    const width = 60;
-    const height = 24;
-    const padding = 2;
-
-    const points = history.map((v, i) => {
-        const x = (i / (history.length - 1)) * width;
-        const y = padding + (1 - (v - min) / range) * (height - padding * 2);
-        return `${x},${y}`;
-    });
-
-    return points.join(' ');
-};
+const currentCoreIndicators = computed(() => coreIndicators.value[activeCoreCategory.value as keyof typeof coreIndicators.value] || []);
 
 const predictedChange = computed(() => {
     if (!predictedBrentPrice.value || !financial.value.brent?.price) return 0;
@@ -272,9 +233,27 @@ const predictedChange = computed(() => {
 });
 
 const predictedChangePercent = computed(() => {
-    if (!predictedBrentPrice.value || predictedBrentPrice.value === 0) return 0;
+    if (!predictedBrentPrice.value) return 0;
     return (predictedChange.value / predictedBrentPrice.value) * 100;
 });
+
+const fmt = (v?: number, decimals = 2) => v?.toFixed(decimals) ?? '-';
+const formatValue = (v: number) => v == null ? '-' : Number.isInteger(v) ? v : v.toFixed(2);
+const formatTrend = (t: number) => `${t > 0 ? '+' : ''}${t.toFixed(2)}%`;
+const getTrendClass = (t: number) => t > 0 ? 'trend-up' : t < 0 ? 'trend-down' : 'trend-neutral';
+const hasValidHistory = (h: number[]) => h && h.length >= 2;
+
+const getSparklinePath = (history: number[]) => {
+    if (!hasValidHistory(history)) return '';
+    const min = Math.min(...history);
+    const max = Math.max(...history);
+    const range = max - min || 1;
+    return history.map((v, i) => {
+        const x = (i / (history.length - 1)) * 60;
+        const y = 2 + (1 - (v - min) / range) * 20;
+        return `${x},${y}`;
+    }).join(' ');
+};
 
 async function loadFinancialData() {
     const [fin, hist] = await Promise.all([loadAllFinancialData(), loadAllHistoryData(7)]);
@@ -286,12 +265,7 @@ async function loadFinancialData() {
 async function loadPredictedBrentPrice() {
     try {
         const windowData = (window as any).dashboardData?.overall;
-        if (windowData) {
-            predictedBrentPrice.value = windowData.overall_score;
-        } else {
-            const response = await dashboardAPI.getOverallImpact();
-            predictedBrentPrice.value = response.data.overall_score;
-        }
+        predictedBrentPrice.value = windowData?.overall_score ?? (await dashboardAPI.getOverallImpact()).data.overall_score;
     } catch {
         predictedBrentPrice.value = 0;
     }
@@ -300,8 +274,7 @@ async function loadPredictedBrentPrice() {
 async function fetchData() {
     loading.value = true;
     try {
-        const response = await analysisAPI.getImpactAnalysis(selectedDate.value);
-        apiData.value = response.data;
+        apiData.value = (await analysisAPI.getImpactAnalysis(selectedDate.value)).data;
     } catch {
         apiData.value = null;
     } finally {
@@ -373,7 +346,6 @@ onMounted(() => {
     margin: 0;
 }
 
-/* Key Indicators */
 .key-indicators-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -409,7 +381,7 @@ onMounted(() => {
 
 .key-indicator-label {
     color: #374151;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -435,7 +407,7 @@ onMounted(() => {
 }
 
 .key-indicator-value {
-    font-size: 32px;
+    font-size: 33px;
     font-weight: 700;
     margin-bottom: 6px;
     color: #111827;
@@ -454,7 +426,7 @@ onMounted(() => {
 }
 
 .key-indicator-unit {
-    font-size: 12px;
+    font-size: 13px;
     color: #4b5563;
     font-weight: 500;
 }
@@ -481,7 +453,6 @@ onMounted(() => {
     color: #991b1b;
 }
 
-/* Category Tabs */
 .category-tabs {
     display: flex;
     gap: 8px;
@@ -516,7 +487,6 @@ onMounted(() => {
     background: #fff7ed;
 }
 
-/* Core Indicators Grid */
 .indicators-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -562,10 +532,19 @@ onMounted(() => {
 }
 
 .indicator-trend {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     padding: 2px 6px;
     border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trend-period {
+    font-size: 9px;
+    font-weight: 500;
+    opacity: 0.7;
 }
 
 .trend-up {
@@ -583,15 +562,29 @@ onMounted(() => {
     background: #f3f4f6;
 }
 
+.sparkline-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.sparkline-label {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
 .indicator-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    min-height: 32px;
 }
 
 .indicator-value {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
 }
 
@@ -599,6 +592,16 @@ onMounted(() => {
     width: 60px;
     height: 24px;
     flex-shrink: 0;
+}
+
+.no-chart {
+    width: 60px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d1d5db;
+    font-size: 14px;
 }
 
 .indicator-meta {
