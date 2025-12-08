@@ -10,9 +10,6 @@
                         <div>
                             <h2 class="font-bold text-2xl text-gray-900">Market Intelligence Report</h2>
                         </div>
-                        <div class="update-time">
-                            <span class="update-text">{{ lastUpdateTime }}</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -56,13 +53,13 @@
                     <div class="news-header">
                         <div class="flex items-center gap-3">
                             <h2 class="text-xl font-bold text-gray-900">Daily News</h2>
-                            <span class="news-count-badge">
-                                {{ dummyImages.length }} 개의 카드뉴스
+                            <span v-if="cardNewsImages.length > 0" class="news-count-badge">
+                                {{ cardNewsImages.length }} 개의 카드뉴스
                             </span>
                         </div>
                     </div>
-                    <div class="card-news-container">
-                        <div v-for="(img, idx) in dummyImages" :key="idx"
+                    <div v-if="cardNewsImages.length > 0" class="card-news-container">
+                        <div v-for="(img, idx) in cardNewsImages" :key="idx"
                             class="card-news-item"
                             :style="{ animationDelay: `${idx * 0.1}s` }"
                             @click="openImage(idx)">
@@ -73,9 +70,11 @@
                                         <span class="view-text">자세히 보기</span>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
+                    </div>
+                    <div v-else class="empty-state">
+                        <p class="empty-title"> 선택하신 날짜에는 카드뉴스가 제공되지 않습니다.</p>
                     </div>
                 </div>
             </Transition>
@@ -113,7 +112,7 @@
                 @click="isModalOpen = false">
                 <div class="modal-container" @click.stop>
                     <div class="modal-content">
-                        <img :src="dummyImages[currentIndex]" class="modal-image" />
+                        <img :src="cardNewsImages[currentIndex]" class="modal-image" />
                     </div>
                     <button @click.stop="prevImage" class="modal-nav-button left">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -141,12 +140,7 @@ import { ref, watch, onMounted } from "vue";
 import { reportsAPI } from "@/api/reports";
 import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 
-const dummyImages = [
-    "/images/CardNews_Sample01.png",
-    "/images/CardNews_Sample02.png",
-    "/images/CardNews_Sample03.png",
-    "/images/CardNews_Sample01.png"
-];
+const cardNewsImages = ref([]);
 
 const currentIndex = ref(0);
 const isModalOpen = ref(false);
@@ -160,8 +154,8 @@ const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const reportHtml = ref("");
 
 const openImage = (idx) => { currentIndex.value = idx; isModalOpen.value = true; };
-const nextImage = () => { currentIndex.value = (currentIndex.value + 1) % dummyImages.length; };
-const prevImage = () => { currentIndex.value = (currentIndex.value - 1 + dummyImages.length) % dummyImages.length; };
+const nextImage = () => { currentIndex.value = (currentIndex.value + 1) % cardNewsImages.value.length; };
+const prevImage = () => { currentIndex.value = (currentIndex.value - 1 + cardNewsImages.value.length) % cardNewsImages.value.length; };
 
 function simulateLoading() {
     loadingProgress.value = 0;
@@ -187,8 +181,18 @@ async function loadDaily() {
     isLoading.value = true;
     
     try {
-        const reportRes = await reportsAPI.getDailyReport(selectedDate.value);
+        const [reportRes, cardNewsRes] = await Promise.all([
+            reportsAPI.getDailyReport(selectedDate.value),
+            reportsAPI.getDailyCardnews()
+        ]);
+        
         reportHtml.value = reportRes.html_resource ?? "";
+        cardNewsImages.value = cardNewsRes.images.map(base64 => {
+            const cleanBase64 = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
+            return cleanBase64;
+        });
+        console.log('카드뉴스 이미지:', cardNewsImages.value.length, '개 로드됨');
+        
         if (reportRes.created_at) {
             const date = new Date(reportRes.created_at);
             const hours = String(date.getHours()).padStart(2, '0');
@@ -198,6 +202,7 @@ async function loadDaily() {
     } catch (error) {
         console.error('데일리 리포트 로드 실패:', error);
         reportHtml.value = "";
+        cardNewsImages.value = [];
     } finally {
         isLoading.value = false;
     }
@@ -813,7 +818,7 @@ onMounted(() => {
 .empty-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: #64748b;
     margin-bottom: 8px;
 }
 
