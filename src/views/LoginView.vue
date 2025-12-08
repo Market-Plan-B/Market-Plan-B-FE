@@ -21,7 +21,7 @@
         <!-- 로그인 폼 -->
         <div class="login-form-container">
             <div class="login-form">
-                <h1 class="login-title">Login</h1>
+                <h1 class="login-title">Login1</h1>
 
                 <!-- 이메일 입력 -->
                 <div class="input-group">
