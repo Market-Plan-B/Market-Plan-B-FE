@@ -5,15 +5,8 @@ const API_BASE_URL = "http://localhost:8000";
 // ==============================
 // 📌 백엔드 스키마 기반 타입
 // ==============================
-export interface NewsItem {
-  date: string;
-  title: string;
-  summary: string;
-  url: string;
-}
-
-export interface CardNewsResponse {
-  news: NewsItem[];
+export interface CardNewsImagesResponse {
+  images: string[];
 }
 
 export interface ReportResponse {
@@ -22,52 +15,34 @@ export interface ReportResponse {
   html_resource: string; // HTML 그대로 들어옴
 }
 
-// ==============================
-// 📌 reportsAPI (변환 없음)
-// ==============================
 export const reportsAPI = {
-  // 🔵 Daily Cardnews
-  async getDailyCardnews(queryDate: string): Promise<CardNewsResponse> {
-    const res = await axios.get<CardNewsResponse>(
-      `${API_BASE_URL}/api/reports/daily/cardnews`,
-      { params: { query_date: queryDate } }
+  // Daily Cardnews
+  async getDailyCardnews(): Promise<CardNewsImagesResponse> {
+    const res = await axios.get<CardNewsImagesResponse>(
+      `${API_BASE_URL}/api/reports/daily/cardnews`
     );
-    return res.data; // 그대로 반환
+    return res.data;
   },
 
-  // 🔵 Daily Report
+  // Daily Report
   async getDailyReport(queryDate: string): Promise<ReportResponse> {
     const res = await axios.get<ReportResponse>(
       `${API_BASE_URL}/api/reports/daily/report`,
       { params: { query_date: queryDate } }
     );
-    return res.data; // 그대로 반환
+    return res.data; 
   },
 
-  // 🟢 Weekly Cardnews
-  async getWeeklyCardnews(
-    startDate: string,
-    endDate: string
-  ): Promise<CardNewsResponse> {
-    const res = await axios.post<CardNewsResponse>(
-      `${API_BASE_URL}/api/reports/weekly/cardnews`,
-      {
-        start_date: startDate,
-        end_date: endDate,
-      }
-    );
-    return res.data; // 그대로 반환
-  },
 
-  // 🟢 Weekly Report
-  // 선택한 날짜(query_date)가 포함된 위클리 리포트를 조회
+
+  // Weekly Report
   // 백엔드는 해당 날짜가 start_date와 end_date 범위에 포함되는 위클리 리포트를 반환
   async getWeeklyReport(queryDate: string): Promise<ReportResponse> {
     const res = await axios.get<ReportResponse>(
       `${API_BASE_URL}/api/reports/weekly/report`,
       { params: { query_date: queryDate } }
     );
-    return res.data; // 그대로 반환
+    return res.data;
   },
 };
 
