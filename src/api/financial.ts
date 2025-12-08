@@ -1,52 +1,63 @@
 import axios from "axios";
 
-// ================================
-//  백엔드 API 기반 현재가 조회
-// ================================
 const BACKEND_API = "http://localhost:8000/api/financial";
 
-// 공통 타입
-interface BaseQuote {
+interface OilPrice {
+  price: number;
   value: number;
+  prevClose: number;
   change?: number;
   changePercent?: number;
 }
 
-interface OilPrice extends BaseQuote {
-  price: number;
-  prevClose: number;
+export interface FinancialData {
+  brent: any;
+  wti: any;
+  crack: { value: number };
+  naturalGas: { value: number; change: number };
+  heatingOil: { value: number; change: number };
+  usdkrw: { price: number };
+  cnyusd: { price: number };
+  eurusd: { price: number; change: number };
+  dxy: { index: number; change: number };
+  us10y: { rate: number };
+  us2y: { rate: number };
+  sp500: { value: number; change: number };
+  vix: { value: number; change: number };
+  gold: { value: number; change: number };
+  copper: { value: number; change: number };
 }
 
-// --------------------------------
-// 현재가 조회 - 백엔드 API 호출
-// --------------------------------
-const fetchYahoo = async (symbol: string): Promise<any> => {
-  try {
-    const { data } = await axios.get(`${BACKEND_API}/${symbol}`, {
-      timeout: 10000,
-    });
+export interface HistoryData {
+  brent: number[];
+  wti: number[];
+  naturalGas: number[];
+  heatingOil: number[];
+  dxy: number[];
+  sp500: number[];
+  vix: number[];
+  gold: number[];
+  copper: number[];
+  us10y: number[];
+  us2y: number[];
+  eurusd: number[];
+}
 
-    return {
-      price: data.price || 0,
-      prevClose: data.prevClose || 0,
-      change: data.change || 0,
-      changePercent: data.changePercent || 0,
-    };
-  } catch (err: any) {
-    console.error(`Backend API error for ${symbol}:`, err);
-    throw err;
-  }
+const fetchYahoo = async (symbol: string): Promise<any> => {
+  const { data } = await axios.get(`${BACKEND_API}/${symbol}`, {
+    timeout: 10000,
+  });
+  return {
+    price: data.price ?? 0,
+    prevClose: data.prevClose ?? 0,
+    change: data.change ?? 0,
+    changePercent: data.changePercent ?? 0,
+  };
 };
 
 const safe = <T>(fn: () => Promise<T>, fallback: T) =>
-  fn().catch((e) => {
-    console.error("API Error:", e);
-    return fallback;
-  });
+  fn().catch(() => fallback);
 
-// --------------------------------
-// 원유, 환율, 금리 등 현재가 API
-// --------------------------------
 export const getBrentOil = () =>
   safe(
     async (): Promise<OilPrice> => {
@@ -99,22 +110,14 @@ export const getNaturalGas = () =>
   );
 
 export const getUSDKRW = () =>
-  safe(
-    async () => {
-      const d = await fetchYahoo("KRW=X");
-      return { price: d.price };
-    },
-    { price: 0 }
-  );
+  safe(async () => ({ price: (await fetchYahoo("KRW=X")).price }), {
+    price: 0,
+  });
 
 export const getCNYUSD = () =>
-  safe(
-    async () => {
-      const d = await fetchYahoo("CNYUSD=X");
-      return { price: d.price };
-    },
-    { price: 0 }
-  );
+  safe(async () => ({ price: (await fetchYahoo("CNYUSD=X")).price }), {
+    price: 0,
+  });
 
 export const getDXY = () =>
   safe(
@@ -126,22 +129,10 @@ export const getDXY = () =>
   );
 
 export const getUS10Y = () =>
-  safe(
-    async () => {
-      const d = await fetchYahoo("^TNX");
-      return { rate: d.price };
-    },
-    { rate: 0 }
-  );
+  safe(async () => ({ rate: (await fetchYahoo("^TNX")).price }), { rate: 0 });
 
 export const getUS2Y = () =>
-  safe(
-    async () => {
-      const d = await fetchYahoo("^IRX");
-      return { rate: d.price };
-    },
-    { rate: 0 }
-  );
+  safe(async () => ({ rate: (await fetchYahoo("^IRX")).price }), { rate: 0 });
 
 export const getSP500 = () =>
   safe(
@@ -179,137 +170,137 @@ export const getCopper = () =>
     { value: 0, change: 0 }
   );
 
-// --------------------------------
-// 데이터 타입
-// --------------------------------
-export interface FinancialData {
-  brent: Awaited<ReturnType<typeof getBrentOil>>;
-  wti: Awaited<ReturnType<typeof getWTI>>;
-  crack: { value: number };
-  naturalGas: { value: number; change: number };
-  usdkrw: { price: number };
-  cnyusd: { price: number };
-  dxy: { index: number; change: number };
-  us10y: { rate: number };
-  us2y: { rate: number };
-  sp500: { value: number; change: number };
-  vix: { value: number; change: number };
-  gold: { value: number; change: number };
-  copper: { value: number; change: number };
-}
-
-// 히스토리 타입
-export interface HistoryData {
-  brent: number[];
-  wti: number[];
-  naturalGas: number[];
-  dxy: number[];
-  sp500: number[];
-  vix: number[];
-  gold: number[];
-  copper: number[];
-  us10y: number[];
-}
-
-// --------------------------------
-// 전체 현재가 로딩 (백엔드 API 기반)
-// --------------------------------
 export const loadAllFinancialData = async (): Promise<FinancialData> => {
-  try {
-    const { data } = await axios.get(`${BACKEND_API}/all`, { timeout: 30000 });
+  const response = await axios.get(`${BACKEND_API}/all`, { timeout: 30000 });
+  const d = response.data.data;
 
-    return {
-      brent: {
-        price: data["BZ=F"]?.price || 0,
-        value: data["BZ=F"]?.price || 0,
-        prevClose: data["BZ=F"]?.prevClose || 0,
-        change: data["BZ=F"]?.change || 0,
-        changePercent: data["BZ=F"]?.changePercent || 0,
-      },
-      wti: {
-        price: data["CL=F"]?.price || 0,
-        value: data["CL=F"]?.price || 0,
-        prevClose: data["CL=F"]?.prevClose || 0,
-        change: data["CL=F"]?.change || 0,
-        changePercent: data["CL=F"]?.changePercent || 0,
-      },
-      crack: {
-        value: (data["RB=F"]?.price || 0) * 42 - (data["CL=F"]?.price || 0),
-      },
-      naturalGas: {
-        value: data["NG=F"]?.price || 0,
-        change: data["NG=F"]?.changePercent || 0,
-      },
-      usdkrw: { price: data["KRW=X"]?.price || 0 },
-      cnyusd: { price: data["CNYUSD=X"]?.price || 0 },
-      dxy: {
-        index: data["DX-Y.NYB"]?.price || 0,
-        change: data["DX-Y.NYB"]?.changePercent || 0,
-      },
-      us10y: { rate: data["^TNX"]?.price || 0 },
-      us2y: { rate: data["^IRX"]?.price || 0 },
-      sp500: {
-        value: data["^GSPC"]?.price || 0,
-        change: data["^GSPC"]?.changePercent || 0,
-      },
-      vix: {
-        value: data["^VIX"]?.price || 0,
-        change: data["^VIX"]?.changePercent || 0,
-      },
-      gold: {
-        value: data["GC=F"]?.price || 0,
-        change: data["GC=F"]?.changePercent || 0,
-      },
-      copper: {
-        value: data["HG=F"]?.price || 0,
-        change: data["HG=F"]?.changePercent || 0,
-      },
-    };
-  } catch (err) {
-    console.error("Backend API 연결 실패:", err);
-    throw new Error(
-      "백엔드 서버가 실행되지 않았습니다. python backend-api-example.py 를 실행해주세요."
-    );
-  }
+  return {
+    brent: {
+      price: d["BZ=F"]?.price ?? 0,
+      value: d["BZ=F"]?.price ?? 0,
+      prevClose: d["BZ=F"]?.prevClose ?? 0,
+      change: d["BZ=F"]?.change ?? 0,
+      changePercent: d["BZ=F"]?.changePercent ?? 0,
+    },
+    wti: {
+      price: d["CL=F"]?.price ?? 0,
+      value: d["CL=F"]?.price ?? 0,
+      prevClose: d["CL=F"]?.prevClose ?? 0,
+      change: d["CL=F"]?.change ?? 0,
+      changePercent: d["CL=F"]?.changePercent ?? 0,
+    },
+    crack: { value: (d["RB=F"]?.price ?? 0) * 42 - (d["CL=F"]?.price ?? 0) },
+    naturalGas: {
+      value: d["NG=F"]?.price ?? 0,
+      change: d["NG=F"]?.changePercent ?? 0,
+    },
+    heatingOil: {
+      value: d["HO=F"]?.price ?? 0,
+      change: d["HO=F"]?.changePercent ?? 0,
+    },
+    usdkrw: { price: d["KRW=X"]?.price ?? 0 },
+    cnyusd: { price: d["CNYUSD=X"]?.price ?? 0 },
+    eurusd: {
+      price: d["EURUSD=X"]?.price ?? 0,
+      change: d["EURUSD=X"]?.changePercent ?? 0,
+    },
+    dxy: {
+      index: d["DX-Y.NYB"]?.price ?? 0,
+      change: d["DX-Y.NYB"]?.changePercent ?? 0,
+    },
+    us10y: { rate: d["^TNX"]?.price ?? 0 },
+    us2y: { rate: d["^IRX"]?.price ?? 0 },
+    sp500: {
+      value: d["^GSPC"]?.price ?? 0,
+      change: d["^GSPC"]?.changePercent ?? 0,
+    },
+    vix: {
+      value: d["^VIX"]?.price ?? 0,
+      change: d["^VIX"]?.changePercent ?? 0,
+    },
+    gold: {
+      value: d["GC=F"]?.price ?? 0,
+      change: d["GC=F"]?.changePercent ?? 0,
+    },
+    copper: {
+      value: d["HG=F"]?.price ?? 0,
+      change: d["HG=F"]?.changePercent ?? 0,
+    },
+  };
 };
 
-// ================================
-// 히스토리 조회: Yahoo 직접 호출
-// ================================
-const fetchYahooHistory = async (
+// 7일 일별 히스토리
+const fetchDailyHistory = async (
   symbol: string,
   days = 7
 ): Promise<number[]> => {
   try {
-    const url = `/yahoo-finance/${symbol}?range=${days}d&interval=1d`;
-    const { data } = await axios.get(url, { timeout: 5000 });
-
-    const quotes = data.chart.result[0].indicators.quote[0];
-    const closes = quotes.close || [];
-
-    return closes.filter((v: number | null) => v !== null);
-  } catch (err) {
-    console.warn(`History fetch failed for ${symbol}:`, err);
+    const { data } = await axios.get(
+      `/yahoo-finance/${symbol}?range=${days}d&interval=1d`,
+      { timeout: 8000 }
+    );
+    const closes = data?.chart?.result?.[0]?.indicators?.quote?.[0]?.close;
+    if (!closes) return [];
+    return closes.filter((v: number | null) => v !== null) as number[];
+  } catch {
     return [];
   }
 };
 
-// --------------------------------
-// 전체 히스토리 로딩 (Yahoo 직접 호출)
-// --------------------------------
-export const loadAllHistoryData = async (days = 7): Promise<HistoryData> => {
-  const [brent, wti, naturalGas, dxy, sp500, vix, gold, copper, us10y] =
-    await Promise.all([
-      fetchYahooHistory("BZ=F", days),
-      fetchYahooHistory("CL=F", days),
-      fetchYahooHistory("NG=F", days),
-      fetchYahooHistory("DX-Y.NYB", days),
-      fetchYahooHistory("^GSPC", days),
-      fetchYahooHistory("^VIX", days),
-      fetchYahooHistory("GC=F", days),
-      fetchYahooHistory("HG=F", days),
-      fetchYahooHistory("^TNX", days),
-    ]);
+const fetchHistoryFromBackend = async (
+  symbol: string,
+  days = 7
+): Promise<number[]> => {
+  try {
+    const { data } = await axios.get(`${BACKEND_API}/history`, {
+      params: { symbol, days },
+      timeout: 8000,
+    });
+    return Array.isArray(data?.history) ? data.history : [];
+  } catch {
+    return [];
+  }
+};
 
-  return { brent, wti, naturalGas, dxy, sp500, vix, gold, copper, us10y };
+const fetchHistory = async (symbol: string, days = 7): Promise<number[]> => {
+  const daily = await fetchDailyHistory(symbol, days);
+  if (daily.length) return daily;
+
+  const backend = await fetchHistoryFromBackend(symbol, days);
+  if (backend.length) return backend;
+
+  return [];
+};
+
+export const loadAllHistoryData = async (days = 7): Promise<HistoryData> => {
+  const symbols = [
+    "BZ=F",
+    "CL=F",
+    "NG=F",
+    "HO=F",
+    "DX-Y.NYB",
+    "^GSPC",
+    "^VIX",
+    "GC=F",
+    "HG=F",
+    "^TNX",
+    "^IRX",
+    "EURUSD=X",
+  ];
+  const results = await Promise.all(symbols.map((s) => fetchHistory(s, days)));
+
+  return {
+    brent: results[0],
+    wti: results[1],
+    naturalGas: results[2],
+    heatingOil: results[3],
+    dxy: results[4],
+    sp500: results[5],
+    vix: results[6],
+    gold: results[7],
+    copper: results[8],
+    us10y: results[9],
+    us2y: results[10],
+    eurusd: results[11],
+  };
 };
