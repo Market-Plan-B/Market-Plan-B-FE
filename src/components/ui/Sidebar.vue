@@ -22,8 +22,8 @@
                 'text-white w-full flex items-center gap-3 py-2 rounded-lg transition-all duration-200 group relative',
                 isExpanded ? 'px-3 justify-start' : 'justify-center',
                 isActive(item.to)
-                    ? 'bg-gradient-to-r from-orange-600/15 to-orange-600/5 text-slate-900 shadow-md border border-orange-600'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-gradient-to-r from-orange-600/15 to-orange-600/5 text-orange-900 shadow-md border border-orange-600'
+                    : 'text-slate-600 hover:text-orange-900 hover:bg-slate-50'
             ]">
                 <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
                     <component :is="item.icon" :class="[
@@ -97,7 +97,7 @@ const expand = (state: boolean) => {
 const commonNavItems = [
     { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { to: "/reports", label: "리포트", icon: FileText },
-    { to: "/analysis", label: "영향 분석", icon: TrendingUp },
+    { to: "/analysis", label: "영향도 분석", icon: TrendingUp },
 ];
 
 // 관리자 전용 메뉴 항목

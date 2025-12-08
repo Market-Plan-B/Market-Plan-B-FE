@@ -114,7 +114,7 @@ onMounted(async () => {
 
 .impact-card {
     pointer-events: auto;
-    background: rgb(255, 115, 0);
+    background: #ea580c;
     color: white;
     padding: 10px 16px;
     border-radius: 6px;

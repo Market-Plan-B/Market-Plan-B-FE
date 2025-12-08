@@ -4,11 +4,9 @@
             <div class="text-black-500">Loading...</div>
         </div>
         <template v-else>
-            <div class="flex justify-end mb-3 gap-2">
-                <button v-for="mode in modes" :key="mode.value" @click="viewMode = mode.value" :class="['px-3 py-1.5 text-xs font-medium rounded transition-all',
-                    viewMode === mode.value
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-700 text-black-300 hover:bg-gray-600']">
+            <div class="chart-mode-toggle">
+                <button v-for="mode in modes" :key="mode.value" @click="viewMode = mode.value" class="mode-toggle-btn"
+                    :class="{ 'mode-toggle-btn--active': viewMode === mode.value }">
                     {{ mode.label }}
                 </button>
             </div>
@@ -189,6 +187,45 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Mode Toggle Buttons */
+.chart-mode-toggle {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.mode-toggle-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    background: #ffffff;
+    color: #6b7280;
+}
+
+.mode-toggle-btn:hover {
+    background: #f8fafc;
+    border-color: #ea580c;
+    color: #ea580c;
+}
+
+.mode-toggle-btn--active {
+    background: #ea580c;
+    color: #ffffff;
+    border-color: #ea580c;
+    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+
+.mode-toggle-btn--active:hover {
+    background: #c2410c;
+    border-color: #c2410c;
+}
+
+/* Chart Styles */
 :deep(rect) {
     cursor: pointer;
     transition: opacity 0.2s;
