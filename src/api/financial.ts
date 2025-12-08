@@ -1,5 +1,8 @@
 import axios from "axios";
 
+// 백엔드 API 사용
+const BACKEND_API = 'http://localhost:8000/api/financial';
+
 // 공통 타입
 interface BaseQuote {
   value: number;
@@ -11,64 +14,24 @@ interface OilPrice extends BaseQuote {
   prevClose: number;
 }
 
-// === [ 핵심: 3개 기능 적용한 fetchYahoo ] =====================
-const fetchYahoo = async (symbol: string, retries = 5): Promise<any> => {
-  let delay = 1000; // 최초 대기 1초 (지수 백오프 시작점)
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const url = `/yahoo-finance/${symbol}`;
-      const { data } = await axios.get(url, {
-        timeout: 8000,
-        headers: {
-          // User-Agent 우회 ★ (봇 탐지 우회)
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9",
-        },
-      });
-
-      const quote = data.chart.result[0];
-      const meta = quote.meta;
-
-      return {
-        price: meta.regularMarketPrice || 0,
-        prevClose: meta.previousClose || meta.chartPreviousClose || 0,
-        change:
-          (meta.regularMarketPrice || 0) -
-          (meta.previousClose || meta.chartPreviousClose || 0),
-        changePercent: meta.previousClose
-          ? (((meta.regularMarketPrice || 0) - (meta.previousClose || 0)) /
-              (meta.previousClose || 1)) *
-            100
-          : 0,
-      };
-    } catch (err: any) {
-      // 429 또는 네트워크 오류 감지
-      if (err?.response?.status === 429) {
-        console.warn(
-          `[429] ${symbol} → ${attempt}차 재시도 예정 (대기 ${delay / 1000}s)`
-        );
-      } else {
-        console.warn(
-          `[에러] ${symbol} → ${attempt}차 재시도 (대기 ${delay / 1000}s):`,
-          err
-        );
-      }
-
-      // 마지막 시도면 실패 처리
-      if (attempt === retries) throw err;
-
-      // 지수 백오프 적용 ★
-      await new Promise((res) => setTimeout(res, delay));
-      delay *= 2; // 대기 시간을 2배씩 증가
-    }
+// 백엔드 API를 통한 데이터 fetch
+const fetchYahoo = async (symbol: string): Promise<any> => {
+  try {
+    const { data } = await axios.get(`${BACKEND_API}/${symbol}`, {
+      timeout: 10000,
+    });
+    
+    return {
+      price: data.price || 0,
+      prevClose: data.prevClose || 0,
+      change: data.change || 0,
+      changePercent: data.changePercent || 0,
+    };
+  } catch (err: any) {
+    console.error(`Backend API error for ${symbol}:`, err);
+    throw err;
   }
-
-  throw new Error(`Yahoo fetch failed: ${symbol}`);
 };
-
-// ==================================================
 
 const safe = <T>(fn: () => Promise<T>, fallback: T) =>
   fn().catch((e) => {
@@ -226,49 +189,58 @@ export interface FinancialData {
 }
 
 export const loadAllFinancialData = async (): Promise<FinancialData> => {
-  const [
-    brent,
-    wti,
-    crack,
-    naturalGas,
-    usdkrw,
-    cnyusd,
-    dxy,
-    us10y,
-    us2y,
-    sp500,
-    vix,
-    gold,
-    copper,
-  ] = await Promise.all([
-    getBrentOil(),
-    getWTI(),
-    getCrackSpread(),
-    getNaturalGas(),
-    getUSDKRW(),
-    getCNYUSD(),
-    getDXY(),
-    getUS10Y(),
-    getUS2Y(),
-    getSP500(),
-    getVIX(),
-    getGold(),
-    getCopper(),
-  ]);
-
-  return {
-    brent,
-    wti,
-    crack,
-    naturalGas,
-    usdkrw,
-    cnyusd,
-    dxy,
-    us10y,
-    us2y,
-    sp500,
-    vix,
-    gold,
-    copper,
-  };
+  try {
+    const { data } = await axios.get(`${BACKEND_API}/all`, { timeout: 30000 });
+    
+    return {
+      brent: {
+        price: data['BZ=F']?.price || 0,
+        value: data['BZ=F']?.price || 0,
+        prevClose: data['BZ=F']?.prevClose || 0,
+        change: data['BZ=F']?.change || 0,
+        changePercent: data['BZ=F']?.changePercent || 0,
+      },
+      wti: {
+        price: data['CL=F']?.price || 0,
+        value: data['CL=F']?.price || 0,
+        prevClose: data['CL=F']?.prevClose || 0,
+        change: data['CL=F']?.change || 0,
+        changePercent: data['CL=F']?.changePercent || 0,
+      },
+      crack: {
+        value: (data['RB=F']?.price || 0) * 42 - (data['CL=F']?.price || 0),
+      },
+      naturalGas: {
+        value: data['NG=F']?.price || 0,
+        change: data['NG=F']?.changePercent || 0,
+      },
+      usdkrw: { price: data['KRW=X']?.price || 0 },
+      cnyusd: { price: data['CNYUSD=X']?.price || 0 },
+      dxy: {
+        index: data['DX-Y.NYB']?.price || 0,
+        change: data['DX-Y.NYB']?.changePercent || 0,
+      },
+      us10y: { rate: data['^TNX']?.price || 0 },
+      us2y: { rate: data['^IRX']?.price || 0 },
+      sp500: {
+        value: data['^GSPC']?.price || 0,
+        change: data['^GSPC']?.changePercent || 0,
+      },
+      vix: {
+        value: data['^VIX']?.price || 0,
+        change: data['^VIX']?.changePercent || 0,
+      },
+      gold: {
+        value: data['GC=F']?.price || 0,
+        change: data['GC=F']?.changePercent || 0,
+      },
+      copper: {
+        value: data['HG=F']?.price || 0,
+        change: data['HG=F']?.changePercent || 0,
+      },
+    };
+  } catch (err) {
+    console.error('Backend API 연결 실패:', err);
+    throw new Error('백엔드 서버가 실행되지 않았습니다. python backend-api-example.py 를 실행해주세요.');
+  }
 };
