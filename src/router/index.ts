@@ -46,7 +46,7 @@ const router = createRouter({
       component: CrawlingSourceView,
       meta: { requiresAuth: true, requiresAdmin: true },
     },
-    { path: "/:pathMatch(.*)*", redirect: "/login" },
+    { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
 });
 
