@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BACKEND_API = "http://localhost:8000/api/financial";
+const BACKEND_API =
+  "https://oil-api.skala25a.project.skala-ai.com/api/financial";
 
 interface OilPrice {
   price: number;
