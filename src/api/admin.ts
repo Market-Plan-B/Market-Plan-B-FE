@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://oil-api.skala25a.project.skala-ai.com";
 
 // ======================================================
 // 🔹 타입 정의 (Swagger 기반)

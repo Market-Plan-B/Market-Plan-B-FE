@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://oil-api.skala25a.project.skala-ai.com";
 
 // ==============================
 // 📌 백엔드 스키마 기반 타입
@@ -30,10 +30,8 @@ export const reportsAPI = {
       `${API_BASE_URL}/api/reports/daily/report`,
       { params: { query_date: queryDate } }
     );
-    return res.data; 
+    return res.data;
   },
-
-
 
   // Weekly Report
   // 백엔드는 해당 날짜가 start_date와 end_date 범위에 포함되는 위클리 리포트를 반환
