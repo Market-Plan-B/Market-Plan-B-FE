@@ -18,10 +18,10 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
-      // "/api/auth": {
-      //   target: "http://localhost:8080",
-      //   changeOrigin: true,
-      // },
+      "/api/auth": {
+        target: "https://oil-auth.skala25a.project.skala-ai.com",
+        changeOrigin: true,
+      },
       "/api": {
         target: "https://oil-api.skala25a.project.skala-ai.com",
         changeOrigin: true,
