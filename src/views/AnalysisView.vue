@@ -462,7 +462,7 @@ onMounted(() => {
 
 .category-tab {
     padding: 10px 20px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 14px;
     border: 2px solid;
@@ -508,7 +508,7 @@ onMounted(() => {
 .indicator-card {
     background: #fafafa;
     border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 16px;
     transition: transform 0.2s, box-shadow 0.2s;
 }

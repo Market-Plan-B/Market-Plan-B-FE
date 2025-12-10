@@ -1,71 +1,61 @@
 <template>
-    <aside @mouseenter="expand(true)" @mouseleave="expand(false)" :class="[
-        'fixed left-0 top-0 h-screen bg-slate-700 shadow-2xl z-50 transition-all duration-300 ease-in-out flex flex-col',
-        isExpanded ? 'w-52' : 'w-16'
-    ]">
+    <aside @mouseenter="expand(true)" @mouseleave="expand(false)"
+        :class="['sidebar', isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed']">
 
         <!-- Market Plan B (구분선 유지) -->
-        <div class="p-3 flex items-center gap-2 border-b border-slate-200">
-            <div class="w-10 h-10 flex items-center justify-center">
+        <div class="sidebar-header">
+            <div class="logo-container">
                 <Droplets class="MarketPlanB-logo" :stroke-width="2" />
             </div>
-            <div v-if="isExpanded">
-                <p class="text-white text-sm font-semibold">Market Plan B</p>
+            <div v-if="isExpanded" class="sidebar-title">
+                <p>Market Plan B</p>
             </div>
         </div>
 
 
         <!-- nav-->
-        <nav class="p-2 flex-1 space-y-4 transition-all duration-300 mt-2 pt-2 overflow-y-auto">
+        <nav class="sidebar-nav">
 
             <button v-for="item in navItems" :key="item.to" @click="navigate(item.to)" :class="[
-                'text-white w-full flex items-center gap-3 py-2 rounded-lg transition-all duration-200 group relative',
-                isExpanded ? 'px-3 justify-start' : 'justify-center',
-                isActive(item.to)
-                    ? 'bg-gradient-to-r from-orange-600/15 to-orange-600/5 text-orange-900 shadow-md border border-orange-600'
-                    : 'text-slate-600 hover:text-orange-900 hover:bg-slate-50'
+                'nav-button',
+                isExpanded ? 'nav-button-expanded' : 'nav-button-collapsed',
+                isActive(item.to) ? 'nav-button-active' : 'nav-button-inactive'
             ]">
-                <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                <div class="nav-icon-wrapper">
                     <component :is="item.icon" :class="[
-                        'w-5 h-5 transition-transform duration-300',
-                        isActive(item.to) ? 'scale-110 text-orange-600' : 'group-hover:scale-105'
+                        'nav-icon',
+                        isActive(item.to) ? 'nav-icon-active' : 'nav-icon-inactive'
                     ]" />
                 </div>
-                <span v-if="isExpanded" class="text-sm font-medium whitespace-nowrap transition-all duration-200">
+                <span v-if="isExpanded" class="nav-label">
                     {{ item.label }}
                 </span>
             </button>
         </nav>
 
         <!-- 하단: SK 팀 정보 및 로그아웃 -->
-        <div class="border-t border-slate-600">
+        <div class="sidebar-footer">
             <!-- SK 팀 정보 -->
-            <div :class="[
-                'flex items-center gap-3 p-3 border-b border-slate-200',
-                isExpanded ? 'justify-start' : 'justify-center'
-            ]">
-                <div
-                    class="w-10 h-10 rounded-md bg-white flex items-center justify-center shadow-lg border border-orange-600 flex-shrink-0">
+            <div :class="['team-info', isExpanded ? 'team-info-expanded' : 'team-info-collapsed']">
+                <div class="sk-logo-container">
                     <span class="sk-logo">SK</span>
                 </div>
-                <div v-if="isExpanded" class="flex-1 min-w-0">
-                    <p class="text-white text-sm font-semibold">SK E&S</p>
-                    <p class="text-white text-xs text-slate-400 team-label">
+                <div v-if="isExpanded" class="team-details">
+                    <p class="team-name">SK E&S</p>
+                    <p class="team-label">
                         <span class="team-text">{{ userName }}</span>
                     </p>
                 </div>
             </div>
 
             <!-- 로그아웃 버튼 -->
-            <div class="p-3">
-
+            <div class="logout-container">
                 <button @click="handleLogout" :class="[
-                    'w-full flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-200',
-                    'bg-orange-600/15 hover:bg-orange-600/5 text-orange-600',
-                    isExpanded ? 'justify-start' : 'justify-center'
+                    'logout-button',
+                    isExpanded ? 'logout-button-expanded' : 'logout-button-collapsed'
                 ]" :title="isExpanded ? '' : '로그아웃'">
-                    <LogOut class="w-4 h-4 flex-shrink-0" />
-                    <span v-if="isExpanded" class="text-sm font-medium text-white">로그아웃</span>
+                    <LogOut class="logout-icon" />
+                    <span v-if="isExpanded" class="logout-text">로그아웃</span>
                 </button>
             </div>
         </div>
@@ -97,7 +87,7 @@ const expand = (state: boolean) => {
 const commonNavItems = [
     { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { to: "/reports", label: "리포트", icon: FileText },
-    { to: "/analysis", label: "영향도 분석", icon: TrendingUp },
+    { to: "/analysis", label: "영향 분석", icon: TrendingUp },
 ];
 
 // 관리자 전용 메뉴 항목
@@ -117,11 +107,6 @@ const navItems = computed(() => {
 
 // 사용자 이름 표시 (DB에서 가져온 username 사용)
 const userName = computed(() => {
-    // 디버깅: 사용자 정보 확인
-    if (import.meta.env.DEV) {
-        console.log('User data:', authStore.user);
-    }
-
     // username이 있으면 사용
     if (authStore.user?.username) {
         return authStore.user.username;
@@ -146,19 +131,218 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.sk-logo {
-    color: #E10600;
-    font-weight: bold;
-    font-size: 1rem;
+/* Sidebar Container */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background: #334155;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    z-index: 50;
+    transition: width 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-expanded {
+    width: 13rem;
+}
+
+.sidebar-collapsed {
+    width: 4rem;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+}
+
+.logo-container {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sidebar-title p {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .MarketPlanB-logo {
     color: #ea580c;
 }
 
+/* Sidebar Navigation */
+.sidebar-nav {
+    padding: 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    overflow-y: auto;
+}
+
+/* Nav Button */
+.nav-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    position: relative;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.nav-button-expanded {
+    padding-left: 0.75rem;
+    justify-content: flex-start;
+    color: white;
+}
+
+.nav-button-collapsed {
+    justify-content: center;
+    color: white;
+}
+
+.nav-button-active {
+    background: linear-gradient(to right, rgba(234, 88, 12, 0.15), rgba(234, 88, 12, 0.05));
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #ea580c;
+}
+
+.nav-button-inactive {
+    color: white;
+}
+
+.nav-button-inactive:hover {
+    color: #0f172a;
+    background: white;
+}
+
+.nav-icon-wrapper {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.nav-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    transition: transform 0.3s;
+}
+
+.nav-icon-active {
+    transform: scale(1.1);
+    color: #ea580c;
+}
+
+.nav-icon-inactive {
+    color: white;
+}
+
+.nav-button-inactive:hover .nav-icon {
+    transform: scale(1.05);
+    color: #0f172a;
+}
+
+.nav-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    border-top: 1px solid #475569;
+}
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.team-info-expanded {
+    justify-content: flex-start;
+}
+
+.team-info-collapsed {
+    justify-content: center;
+}
+
+.sk-logo-container {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.375rem;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ea580c;
+    flex-shrink: 0;
+}
+
+.sk-logo {
+    color: #E10600;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.team-details {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.team-name {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
 .team-label {
     display: inline-block;
     width: 100%;
+    color: white;
+    font-size: 0.75rem;
+    color: #94a3b8;
 }
 
 .team-label::before {
@@ -175,5 +359,50 @@ const handleLogout = async () => {
 .team-text {
     display: block;
     white-space: nowrap;
+}
+
+/* Logout Container */
+.logout-container {
+    padding: 0.75rem;
+}
+
+.logout-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    background: rgba(234, 88, 12, 0.15);
+    color: #ea580c;
+    border: none;
+    cursor: pointer;
+}
+
+.logout-button:hover {
+    background: rgba(234, 88, 12, 0.05);
+}
+
+.logout-button-expanded {
+    justify-content: flex-start;
+}
+
+.logout-button-collapsed {
+    justify-content: center;
+}
+
+.logout-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.logout-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
 }
 </style>

@@ -3,8 +3,13 @@
         <header v-if="isOpen" class="header">
             <div class="header-left">
                 <div class="avatar">
-                    <div class="avatar-ring"></div>
-                    <div class="avatar-core"></div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
+                        <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
+                        <line x1="8" y1="9" x2="16" y2="9" />
+                        <line x1="8" y1="13" x2="14" y2="13" />
+                    </svg>
                 </div>
                 <div class="header-text">
                     <h1>Oil Market AI</h1>
@@ -51,8 +56,13 @@
                     </div>
                     <div class="bot-row">
                         <div class="bot-avatar">
-                            <div class="bot-avatar-ring"></div>
-                            <div class="bot-avatar-core"></div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
+                                <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
+                                <line x1="8" y1="9" x2="16" y2="9" />
+                                <line x1="8" y1="13" x2="14" y2="13" />
+                            </svg>
                         </div>
                         <div class="bot-content">
                             <div v-if="msg.status === 'thinking'" class="status-indicator">
@@ -109,10 +119,12 @@
         </footer>
 
         <button v-if="!isOpen" class="fab-trigger" @click="isOpen = true">
-            <svg viewBox="0 0 32 32" fill="none">
-                <circle cx="16" cy="16" r="6" fill="rgba(255,255,255,0.9)" />
-                <circle cx="16" cy="16" r="10" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"
-                    class="ring" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
+                <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
+                <line x1="8" y1="9" x2="16" y2="9" />
+                <line x1="8" y1="13" x2="14" y2="13" />
             </svg>
         </button>
     </div>
@@ -269,21 +281,16 @@ const sendMessage = async (query) => {
     align-items: center;
     justify-content: center;
     color: #fff;
+    transition: transform 0.2s ease;
+}
+
+.fab-trigger:hover {
+    transform: scale(1.1);
 }
 
 .fab-trigger svg {
     width: 28px;
     height: 28px;
-}
-
-.ring {
-    animation: rotate 8s linear infinite;
-}
-
-@keyframes rotate {
-    to {
-        transform: rotate(360deg);
-    }
 }
 
 .header {
@@ -303,40 +310,16 @@ const sendMessage = async (query) => {
 .avatar {
     width: 40px;
     height: 40px;
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #ea580c;
+    flex-shrink: 0;
 }
 
-.avatar-ring {
-    position: absolute;
-    inset: 0;
-    border: 2px solid #ea580c;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-.avatar-core {
-    width: 24px;
-    height: 24px;
-    background: #ea580c;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: scale(1.1);
-        opacity: 0.3;
-    }
+.avatar svg {
+    width: 100%;
+    height: 100%;
 }
 
 .header-text h1 {
@@ -545,27 +528,16 @@ const sendMessage = async (query) => {
 .bot-avatar {
     width: 32px;
     height: 32px;
-    position: relative;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #ea580c;
 }
 
-.bot-avatar-ring {
-    position: absolute;
-    inset: 0;
-    border: 1.5px solid rgba(255, 107, 53, 0.4);
-    border-radius: 50%;
-    border-top-color: rgba(247, 147, 30, 0.6);
-    animation: rotate 4s linear infinite;
-}
-
-.bot-avatar-core {
-    width: 20px;
-    height: 20px;
-    background: #ea580c;
-    border-radius: 50%;
+.bot-avatar svg {
+    width: 100%;
+    height: 100%;
 }
 
 .bot-content {

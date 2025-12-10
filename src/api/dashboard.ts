@@ -62,6 +62,11 @@ export const dashboardAPI = {
 
   getStrategies: (): Promise<AxiosResponse<Strategies>> =>
     axios.get(`${API_BASE_URL}/api/dashboard/strategies`),
+  getUsStocks: () => axios.get(`${API_BASE_URL}/api/dashboard/us-stocks`),
+  getOecdInventory: () =>
+    axios.get(`${API_BASE_URL}/api/dashboard/oecd-inventory`),
+  getSupplyMonitor: () =>
+    axios.get(`${API_BASE_URL}/api/dashboard/supply-monitor`),
 
   //  영향도 분석 API 추가
   getImpactAnalysis: (
