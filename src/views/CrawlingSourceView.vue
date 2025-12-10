@@ -415,7 +415,11 @@ onMounted(async () => {
         });
     }
     await loadData();
-    dataPollingInterval = window.setInterval(loadData, 10000);
+    dataPollingInterval = window.setInterval(() => {
+        if (!applyingKeywords.value) {
+            loadData();
+        }
+    }, 30000);
 });
 
 onUnmounted(() => {
