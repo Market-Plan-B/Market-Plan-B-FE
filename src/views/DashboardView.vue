@@ -1,29 +1,29 @@
 <!-- DashboardView.vue -->
 <template>
-    <div class="relative space-y-8">
+    <div class="dashboard-container">
         <!-- ✅ Daily 영향도 (Brent Oil) -->
         <div class="lottie-fixed">
             <div ref="lottieContainer"></div>
             <div class="impact-card" @click="goToAnalysis">
-                <div class="text-xs font-medium text-white/90">Brent Oil</div>
-                <div class="text-2xl font-extrabold">{{ todayImpact.score }}</div>
+                <div class="impact-card-label">Brent Oil</div>
+                <div class="impact-card-score">{{ todayImpact.score }}</div>
             </div>
         </div>
 
         <!-- 🛢 글로벌 원유 지도 -->
-        <section class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
-            <h2 class="font-bold text-2xl mb-2 text-gray-900">글로벌 원유 대시보드</h2>
+        <section class="dashboard-section">
+            <h2 class="dashboard-section-title">글로벌 원유 대시보드</h2>
             <WorldOilMap />
         </section>
 
         <!-- 📊 Daily Feature & Counter -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-md p-6 shadow-md border border-gray-200">
-                <h3 class="font-semibold mb-3 text-gray-700">Daily Feature 영향도</h3>
-                <ChartBar :apiData="apiData" :loading="loading" :limit="5" class="overflow-hidden" />
+        <section class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-title">Daily Feature 영향도</h3>
+                <ChartBar :apiData="apiData" :loading="loading" :limit="5" class="chart-overflow" />
             </div>
-            <div class="bg-white rounded-md p-6 shadow-md border border-gray-200">
-                <h3 class="font-semibold mb-3 text-gray-700">Daily 추천 대응책</h3>
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-title">Daily 추천 대응책</h3>
                 <CounterMeasure />
             </div>
         </section>
@@ -85,7 +85,7 @@ onMounted(async () => {
             renderer: "svg",
             loop: true,
             autoplay: true,
-            path: "/lottie/robot.json",
+            path: "/lottie/Drop Oil.json",
         });
     }
 
@@ -95,10 +95,17 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.dashboard-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
 .lottie-fixed {
     position: absolute;
-    top: 1px;
-    right: 32px;
+    top: 36px;
+    right: 48px;
     z-index: 50;
     display: flex;
     flex-direction: column;
@@ -107,18 +114,17 @@ onMounted(async () => {
 }
 
 .lottie-fixed>div:first-child {
-    width: 90px;
-    height: 90px;
+    width: 60px;
+    height: 60px;
     pointer-events: none;
 }
 
 .impact-card {
     pointer-events: auto;
-    background: #ea580c;
-    color: white;
+    background: rgba(255, 255, 255, 0.7);
+    color: #ea770c;
     padding: 10px 16px;
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(255, 115, 0, 0.4);
     text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -127,7 +133,62 @@ onMounted(async () => {
 
 .impact-card:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(255, 115, 0, 0.5);
+}
+
+.impact-card-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(0, 0, 0);
+}
+
+.impact-card-score {
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.dashboard-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-section-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 0.375rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-card-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #374151;
+}
+
+.chart-overflow {
+    overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 1024px) {

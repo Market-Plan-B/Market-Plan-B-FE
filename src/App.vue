@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import Sidebar from "@/components/ui/Sidebar.vue";
 
@@ -26,13 +26,6 @@ const route = useRoute();
 const isExpanded = ref(false);
 
 const isLoginPage = computed(() => route.path === '/login');
-
-// 디버깅용 (개발 중에만)
-if (import.meta.env.DEV) {
-    watch(() => route.path, (newPath) => {
-        console.log('Current path:', newPath, 'isLoginPage:', isLoginPage.value);
-    }, { immediate: true });
-}
 
 function handleSidebarHover(state) {
     isExpanded.value = state;

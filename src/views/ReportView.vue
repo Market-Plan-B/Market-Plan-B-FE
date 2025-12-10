@@ -37,12 +37,7 @@
                 </div>
             </div>
 
-            <!-- 로딩 바 -->
-            <Transition name="slide-down">
-                <div v-if="isLoading" class="loading-bar-container">
-                    <div class="loading-bar"></div>
-                </div>
-            </Transition>
+            <!-- 로딩 바 제거됨 -->
 
             <!-- 데일리 뉴스 (Daily 모드에서만) -->
             <Transition name="fade-slide">
@@ -393,7 +388,7 @@ onMounted(() => {
     background: white;
     border: 1.5px solid #e2e8f0;
     border-radius: 8px;
-    color: #475569;
+    color: #000000;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -401,52 +396,15 @@ onMounted(() => {
 }
 
 .date-input:hover {
-    border-color: #2F80ED;
-    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+    border-color: #ea770c;
 }
 
 .date-input:focus {
     outline: none;
-    border-color: #2F80ED;
-    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+    border-color: #ea770c;
 }
 
-/* 로딩 바 */
-.loading-bar-container {
-    padding: 0;
-    background: linear-gradient(90deg, #2F80ED 0%, #60a5fa 50%, #2F80ED 100%);
-    background-size: 200% 100%;
-    position: relative;
-    overflow: hidden;
-    height: 3px;
-    animation: gradient-move 2s linear infinite;
-}
-
-@keyframes gradient-move {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    100% {
-        background-position: 200% 50%;
-    }
-}
-
-.loading-bar {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-    animation: loading-slide 1s ease-in-out infinite;
-}
-
-@keyframes loading-slide {
-    to {
-        left: 100%;
-    }
-}
+/* 로딩 바 제거됨 */
 
 /* Daily News 섹션 */
 .daily-news-section {
@@ -467,12 +425,11 @@ onMounted(() => {
     align-items: center;
     gap: 4px;
     padding: 6px 14px;
-    background: linear-gradient(135deg, #f0f7ff 0%, #e0f0ff 100%);
-    color: #334155;
+    color: #ea770c;
     font-size: 12px;
     font-weight: 600;
     border-radius: 20px;
-    border: 1px solid #d0e7ff;
+    border: 1px solid #ea770c;
 }
 
 /* 카드뉴스 컨테이너 */
@@ -559,12 +516,10 @@ onMounted(() => {
 
 .view-text {
     color: white;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     padding: 8px 20px;
-    background: rgba(51, 65, 85, 0.9);
     border-radius: 20px;
-    backdrop-filter: blur(4px);
 }
 
 /* 리포트 본문 */
@@ -586,7 +541,7 @@ onMounted(() => {
     width: 56px;
     height: 56px;
     border: 5px solid #f3f4f6;
-    border-top: 5px solid #2F80ED;
+    border-top: 5px solid #ea770c;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 24px;
@@ -601,7 +556,7 @@ onMounted(() => {
 
 .loading-subtitle {
     font-size: 14px;
-    color: #64748b;
+    color: #8b7964;
     margin-bottom: 32px;
 }
 
@@ -616,7 +571,7 @@ onMounted(() => {
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #2F80ED 0%, #60a5fa 100%);
+    background: linear-gradient(90deg, #ea770c 0%, #f97316 100%);
     border-radius: 10px;
     transition: width 0.3s ease;
 }
@@ -624,7 +579,13 @@ onMounted(() => {
 .loading-percentage {
     font-size: 14px;
     font-weight: 600;
-    color: #2F80ED;
+    color: #ea770c;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Empty 상태 */
@@ -639,13 +600,13 @@ onMounted(() => {
 .empty-title {
     font-size: 18px;
     font-weight: 600;
-    color: #64748b;
+    color: #000000;
     margin-bottom: 8px;
 }
 
 .empty-subtitle {
     font-size: 14px;
-    color: #64748b;
+    color: #000000;
 }
 
 /* 모달 */
@@ -945,7 +906,7 @@ onMounted(() => {
     top: 16px;
     left: -2px;
     font-size: 16px;
-    color: #2F80ED;
+    color: #ea770c;
 }
 
 .report-content :deep(pre) {
@@ -971,15 +932,15 @@ onMounted(() => {
 }
 
 .report-content :deep(a) {
-    color: #2563eb;
+    color: #ea770c;
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: all 0.2s ease;
 }
 
 .report-content :deep(a:hover) {
-    color: #1d4ed8;
-    border-bottom-color: #1d4ed8;
+    color: #ea770c;
+    border-bottom-color: #ea770c;
 }
 
 .report-content :deep(img) {

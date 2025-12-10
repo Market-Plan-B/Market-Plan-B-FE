@@ -4,78 +4,69 @@
             <div v-if="strategies.length > 0" class="strategies-grid">
                 <div v-for="strategy in strategies" :key="strategy.id" @click="openModal(strategy)"
                     class="strategy-card">
-                    <h3 class="strategy-card-title">
-                        {{ strategy.name }}
-                    </h3>
-                    <p class="strategy-card-objective">
-                        {{ strategy.objective }}
-                    </p>
-                    <div class="strategy-card-link">
-                        자세히 보기 →
-                    </div>
+                    <h3 class="strategy-card-title">{{ strategy.name }}</h3>
+                    <p class="strategy-card-objective">{{ strategy.objective }}</p>
+                    <div class="strategy-card-link">자세히 보기</div>
                 </div>
             </div>
-
-            <div v-else class="strategies-loading">
-                AI 대응책을 불러오는 중...
-            </div>
+            <div v-else class="strategies-loading">AI 대응책을 불러오는 중...</div>
         </div>
     </div>
 
     <Teleport to="body">
-        <transition name="fade-zoom">
-            <div v-if="selectedStrategy" class="modal-overlay" @click.self="closeModal">
-                <div class="modal-container">
-                    <button @click="closeModal" class="modal-close-btn">✕</button>
-
-                    <div class="modal-header">
-                        <div class="modal-title-wrapper">
-                            <h2 class="modal-title">
-                                {{ selectedStrategy.name }}
-                            </h2>
-                            <span class="modal-horizon-badge">
-                                {{ selectedStrategy.horizon }}
-                            </span>
+        <transition name="modal-fade">
+            <div v-if="selectedStrategy" class="modal-backdrop" @click.self="closeModal">
+                <div class="modal-panel">
+                    <header class="modal-header">
+                        <div class="header-content">
+                            <span class="horizon-tag">{{ selectedStrategy.horizon }}</span>
+                            <h2 class="modal-title">{{ selectedStrategy.name }}</h2>
                         </div>
-                    </div>
+                        <button @click="closeModal" class="close-btn">X</button>
+                    </header>
 
-                    <div class="modal-content">
-                        <div class="modal-detail-section">
-                            <h3 class="modal-section-title">전략 목표</h3>
-                            <p class="modal-detail-text">
-                                {{ selectedStrategy.objective }}
-                            </p>
-                        </div>
+                    <div class="modal-body">
+                        <section class="info-card highlight">
+                            <div class="card-header">
+                                <h3>전략 목표</h3>
+                            </div>
+                            <p>{{ selectedStrategy.objective }}</p>
+                        </section>
 
-                        <div class="modal-detail-section">
-                            <h3 class="modal-section-title">핵심 리스크</h3>
-                            <p class="modal-detail-text">
-                                {{ selectedStrategy.risk_note }}
-                            </p>
-                        </div>
+                        <div class="info-grid">
+                            <section class="info-card">
+                                <div class="card-header">
+                                    <h3>핵심 리스크</h3>
+                                </div>
+                                <p>{{ selectedStrategy.risk_note }}</p>
+                            </section>
 
-                        <div class="modal-detail-section">
-                            <h3 class="modal-section-title">적용 전제 조건</h3>
-                            <p class="modal-detail-text">
-                                {{ selectedStrategy.preconditions }}
-                            </p>
+                            <section class="info-card">
+                                <div class="card-header">
+                                    <h3>적용 전제 조건</h3>
+                                </div>
+                                <p>{{ selectedStrategy.preconditions }}</p>
+                            </section>
                         </div>
 
-                        <div class="modal-detail-section">
-                            <h3 class="modal-section-title">권장 실행 방안</h3>
-                            <ul class="modal-action-list">
-                                <li v-for="(a, i) in selectedStrategy.actions" :key="i" class="modal-action-item">
-                                    {{ a }}
+                        <section class="info-card">
+                            <div class="card-header">
+                                <h3>권장 실행 방안</h3>
+                            </div>
+                            <ol class="action-list">
+                                <li v-for="(a, i) in selectedStrategy.actions" :key="i">
+                                    <span class="action-number">{{ i + 1 }}</span>
+                                    <span class="action-text">{{ a }}</span>
                                 </li>
-                            </ul>
-                        </div>
+                            </ol>
+                        </section>
 
-                        <div class="modal-detail-section">
-                            <h3 class="modal-section-title">근거 데이터 및 분석</h3>
-                            <p class="modal-detail-text">
-                                {{ selectedStrategy.data_evidence }}
-                            </p>
-                        </div>
+                        <section class="info-card evidence-card">
+                            <div class="card-header">
+                                <h3>근거 데이터 및 분석</h3>
+                            </div>
+                            <p>{{ selectedStrategy.data_evidence }}</p>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -94,48 +85,38 @@ async function loadStrategies() {
     try {
         const response = await dashboardAPI.getStrategies();
         strategies.value = response.data.strategies;
-        console.log('AI 대응책 로드 완료:', strategies.value);
     } catch (error) {
         console.error('AI 대응책 로드 실패:', error);
     }
 }
 
-function openModal(strategy: Strategies['strategies'][0]) {
-    selectedStrategy.value = strategy;
-}
+const openModal = (strategy: Strategies['strategies'][0]) => selectedStrategy.value = strategy;
+const closeModal = () => selectedStrategy.value = null;
 
-function closeModal() {
-    selectedStrategy.value = null;
-}
-
-onMounted(() => {
-    loadStrategies();
-});
+onMounted(loadStrategies);
 </script>
 
 <style scoped>
-/* Container */
 .countermeasure-container {
     width: 100%;
-    max-height: 480px;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-/* Strategies List */
 .strategies-list {
+    height: 396px;
+    max-height: 396px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 8px;
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 .strategies-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .strategies-loading {
@@ -144,229 +125,283 @@ onMounted(() => {
     font-style: italic;
 }
 
-/* Strategy Card */
 .strategy-card {
-    border: 1px solid #e5e7eb;
     padding: 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #f8fafc;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    border: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    min-height: 100px;
+    flex-shrink: 0;
 }
 
 .strategy-card:hover {
     background: #f1f5f9;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .strategy-card-title {
+    font-size: 15px;
     font-weight: 600;
-    color: #111827;
-    font-size: 16px;
+    color: #1e293b;
+    margin: 0 0 8px;
 }
 
 .strategy-card-objective {
-    color: #374151;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0 0 8px;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .strategy-card-link {
     font-size: 12px;
     font-weight: 600;
-    padding-top: 4px;
+    color: #ea580c;
     opacity: 0;
     transition: opacity 0.2s;
-    color: #ea580c;
 }
 
 .strategy-card:hover .strategy-card-link {
     opacity: 1;
 }
 
-/* Modal */
-.modal-overlay {
+.modal-backdrop {
     position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-    width: 900px;
-    max-width: 90vw;
-    height: 650px;
-    max-height: 90vh;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
     padding: 24px;
-    display: flex;
-    flex-direction: column;
-    backdrop-filter: blur(12px);
-    z-index: 50;
-    border: 1px solid #e5e7eb;
+    overflow-y: auto;
 }
 
-.modal-container {
-    position: relative;
+.modal-panel {
     width: 100%;
-    height: 100%;
+    max-width: 800px;
+    max-height: calc(100vh - 48px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     display: flex;
     flex-direction: column;
-}
-
-.modal-close-btn {
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    color: #6b7280;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    transition: color 0.2s;
-}
-
-.modal-close-btn:hover {
-    color: #1f2937;
+    overflow: hidden;
+    margin: auto;
 }
 
 .modal-header {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding-right: 40px;
+    justify-content: center;
+    padding: 24px 28px;
+    background: #ffffff;
+    color: #000000;
+    position: relative;
+}
+
+.header-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.horizon-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(251, 146, 60, 0.2);
+    border: 1px solid rgba(251, 146, 60, 0.4);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fb923c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
 }
 
 .modal-title {
+    text-align: center;
+    font-size: 22px;
     font-weight: 700;
-    font-size: 26px;
-    color: #111827;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: -0.5px;
     margin: 0;
+    padding-bottom: 16px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    color: #000000;
+    width: 100%;
+    border-bottom: 2px solid #e2e8f0;
 }
 
-.modal-horizon-badge {
-    padding: 4px 12px;
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    border-radius: 6px;
-    font-size: 12px;
+.close-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    border-radius: 8px;
+    color: #000000;
+    font-size: 14px;
     font-weight: 600;
-    color: #ea580c;
+    cursor: pointer;
+    transition: background 0.2s;
     flex-shrink: 0;
+    position: absolute;
+    top: 24px;
+    right: 28px;
 }
 
-.modal-content {
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.modal-body {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-    padding: 0;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.modal-detail-section {
-    margin-bottom: 24px;
-    padding: 20px;
+.info-card {
     background: #f8fafc;
-    border-radius: 8px;
-    border-left: 3px solid #ea580c;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
 }
 
-.modal-detail-section:last-child {
-    margin-bottom: 0;
+.info-card.highlight {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: #fed7aa;
 }
 
-.modal-section-title {
-    font-weight: 600;
+.card-header {
+    margin-bottom: 12px;
+}
+
+.card-header h3 {
     font-size: 14px;
-    color: #111827;
-    margin: 0 0 12px 0;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
     letter-spacing: -0.2px;
 }
 
-.modal-detail-text {
-    font-size: 15px;
-    color: #374151;
-    line-height: 1.75;
-    white-space: pre-wrap;
+.info-card p {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.7;
     margin: 0;
-    font-weight: 400;
 }
 
-.modal-action-list {
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.action-list {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.modal-action-item {
-    font-size: 15px;
-    color: #374151;
-    line-height: 1.75;
-    padding: 6px 0;
-    padding-left: 20px;
-    position: relative;
-    font-weight: 400;
+.action-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.modal-action-item::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    color: #ea580c;
-    font-weight: 700;
-    font-size: 16px;
+.action-number {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ea580c;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    flex-shrink: 0;
 }
 
-/* Scrollbar */
-.strategies-list::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar {
-    width: 6px;
+.action-text {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    padding-top: 2px;
 }
 
-.strategies-list::-webkit-scrollbar-track,
-.modal-content::-webkit-scrollbar-track {
+.evidence-card {
     background: #f1f5f9;
 }
 
+.strategies-list::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 5px;
+}
+
+.strategies-list::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .strategies-list::-webkit-scrollbar-thumb,
-.modal-content::-webkit-scrollbar-thumb {
+.modal-body::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 3px;
 }
 
-.strategies-list::-webkit-scrollbar-thumb:hover,
-.modal-content::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-/* Transitions */
-.fade-zoom-enter-active,
-.fade-zoom-leave-active {
+.modal-fade-enter-active,
+.modal-fade-leave-active {
     transition: opacity 0.25s ease;
 }
 
-.fade-zoom-enter-from,
-.fade-zoom-leave-to {
+.modal-fade-enter-active .modal-panel,
+.modal-fade-leave-active .modal-panel {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
     opacity: 0;
+}
+
+.modal-fade-enter-from .modal-panel,
+.modal-fade-leave-to .modal-panel {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+}
+
+@media (max-width: 640px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-header {
+        padding: 20px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
 }
 </style>
