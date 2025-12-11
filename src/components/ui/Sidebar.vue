@@ -48,6 +48,25 @@
                 </div>
             </div>
 
+            <!-- 알림 버튼 -->
+            <div class="notification-entry">
+                <button @click="openNotifications" :class="[
+                    'nav-button',
+                    isExpanded ? 'nav-button-expanded' : 'nav-button-collapsed',
+                    'nav-button-inactive'
+                ]">
+                    <div class="nav-icon-wrapper">
+                        <Bell :class="['nav-icon', 'nav-icon-notification']" />
+                        <span v-if="unreadCount > 0" class="notification-badge">
+                            {{ unreadCount > 99 ? '99+' : unreadCount }}
+                        </span>
+                    </div>
+                    <span v-if="isExpanded" class="nav-label">
+                        알림 설정
+                    </span>
+                </button>
+            </div>
+
             <!-- 로그아웃 버튼 -->
             <div class="logout-container">
                 <button @click="handleLogout" :class="[
@@ -60,13 +79,17 @@
             </div>
         </div>
 
+        <!-- 알림 모달 -->
+        <NotificationModal ref="notificationModalRef" :showTrigger="false" @unread-change="handleUnreadChange" />
+
     </aside>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe } from "lucide-vue-next";
+import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe, Bell } from "lucide-vue-next";
+import NotificationModal from "@/components/ui/NotificationModal.vue";
 import { isAdmin } from "@/utils/auth";
 import { useAuthStore } from "@/stores/auth";
 
@@ -77,10 +100,20 @@ const authStore = useAuthStore();
 const emit = defineEmits(["sidebar-hover"]);
 
 const isExpanded = ref(false);
+const notificationModalRef = ref();
+const unreadCount = ref(0);
 
 const expand = (state: boolean) => {
     isExpanded.value = state;
     emit("sidebar-hover", state);
+};
+
+const openNotifications = () => {
+    notificationModalRef.value?.open();
+};
+
+const handleUnreadChange = (count: number) => {
+    unreadCount.value = count;
 };
 
 // 일반 메뉴 항목
@@ -213,7 +246,7 @@ const handleLogout = async () => {
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0;
-    border-radius: 0.5rem;
+    border-radius: 6px;
     transition: all 0.2s;
     position: relative;
     border: none;
@@ -233,10 +266,22 @@ const handleLogout = async () => {
 }
 
 .nav-button-active {
-    background: linear-gradient(to right, rgba(234, 88, 12, 0.15), rgba(234, 88, 12, 0.05));
+    background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid #ea580c;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+.nav-button-active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #ea580c;
+    border-radius: 0;
 }
 
 .nav-button-inactive {
@@ -264,8 +309,7 @@ const handleLogout = async () => {
 }
 
 .nav-icon-active {
-    transform: scale(1.1);
-    color: #ea580c;
+    color: #ffffff;
 }
 
 .nav-icon-inactive {
@@ -285,17 +329,11 @@ const handleLogout = async () => {
     overflow: hidden;
 }
 
-/* Sidebar Footer */
-.sidebar-footer {
-    border-top: 1px solid #475569;
-}
-
 .team-info {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
 }
 
 .team-info-expanded {
@@ -315,7 +353,6 @@ const handleLogout = async () => {
     align-items: center;
     justify-content: center;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border: 1px solid #ea580c;
     flex-shrink: 0;
 }
 
@@ -404,5 +441,43 @@ const handleLogout = async () => {
     color: white;
     white-space: nowrap;
     overflow: hidden;
+}
+
+/* Notification */
+.notification-entry {
+    padding: 0.75rem;
+
+}
+
+.notification-entry .nav-button {
+    position: relative;
+}
+
+.nav-icon-notification {
+    color: #ea580c;
+}
+
+.nav-button-inactive:hover .nav-icon-notification {
+    color: #ea580c;
+}
+
+.notification-entry .nav-button-inactive:hover .nav-label {
+    color: #0f172a;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #dc2626;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 999px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+    z-index: 10;
 }
 </style>

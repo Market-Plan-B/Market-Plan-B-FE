@@ -6,7 +6,7 @@
             <div ref="lottieContainer"></div>
             <div class="impact-card" @click="goToAnalysis">
                 <div class="impact-card-label">Brent Oil</div>
-                <div class="impact-card-score">{{ todayImpact.score }}</div>
+                <div class="impact-card-score">${{ fmt(predictedChange) }}</div>
             </div>
         </div>
 
@@ -33,10 +33,11 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
 import { dashboardAPI } from "@/api/dashboard";
+import { loadAllFinancialData } from '@/api/financial';
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
@@ -46,22 +47,58 @@ import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
 
-const todayImpact = ref({ score: 0 });
+const predictedBrentPrice = ref(0);
 const apiData = ref(null);
 const lottieContainer = ref(null);
 const loading = ref(true);
 
+const financial = ref({
+    brent: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
+    wti: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
+    crack: { value: 0 },
+    naturalGas: { value: 0, change: 0 },
+    heatingOil: { value: 0, change: 0 },
+    usdkrw: { price: 0 },
+    cnyusd: { price: 0 },
+    eurusd: { price: 0, change: 0 },
+    dxy: { index: 0, change: 0 },
+    us10y: { rate: 0 },
+    us2y: { rate: 0 },
+    sp500: { value: 0, change: 0 },
+    vix: { value: 0, change: 0 },
+    gold: { value: 0, change: 0 },
+    copper: { value: 0, change: 0 },
+});
+
+const predictedChange = computed(() => {
+    if (!predictedBrentPrice.value || !financial.value.brent?.price) return 0;
+    return financial.value.brent.price - predictedBrentPrice.value;
+});
+
+const fmt = (v, decimals = 2) => {
+    if (v == null || isNaN(v)) return '-';
+    return v.toFixed(decimals);
+};
+
 const loadOverallImpact = async () => {
     try {
         if (window.dashboardData?.overall) {
-            todayImpact.value.score = window.dashboardData.overall.overall_score;
+            predictedBrentPrice.value = window.dashboardData.overall.overall_score;
         } else {
             const response = await dashboardAPI.getOverallImpact();
-            todayImpact.value.score = response.data.overall_score;
+            predictedBrentPrice.value = response.data.overall_score;
         }
     } catch (error) {
         console.error("전체 영향도 로드 실패:", error);
-        todayImpact.value.score = 0;
+        predictedBrentPrice.value = 0;
+    }
+};
+
+const loadFinancialData = async () => {
+    try {
+        financial.value = await loadAllFinancialData();
+    } catch (error) {
+        console.error("금융 데이터 로드 실패:", error);
     }
 };
 
@@ -89,7 +126,7 @@ onMounted(async () => {
         });
     }
 
-    await loadOverallImpact();
+    await Promise.all([loadOverallImpact(), loadFinancialData()]);
     await loadDailyFactor();
 });
 </script>
