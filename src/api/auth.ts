@@ -12,6 +12,7 @@ export interface SignInResponse {
   accessToken: string;
   refreshToken: string;
   refreshTokenExpire: string;
+  userId: number;
 }
 
 export interface LogoutRequest {
