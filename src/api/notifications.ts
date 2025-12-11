@@ -21,7 +21,7 @@ export interface ReadAllNotificationsResponse {
   count: number;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "https://oil-api.skala25a.project.skala-ai.com";
 
 export const notificationsAPI = {
   // 특정 user_id의 알림 전체 조회
