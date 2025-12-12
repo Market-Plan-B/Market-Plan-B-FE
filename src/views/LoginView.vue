@@ -114,17 +114,21 @@ const handleLogin = async () => {
         // JWT 토큰에서 사용자 정보 추출
         const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
         const isAdminUser = payload.auth?.includes('ROLE_ADMIN') || false;
-
+        
+        // API 응답에서 userId 사용
         const userData = {
-            id: payload.id || 0,
+            id: response.userId,
             username: payload.name || payload.username || payload.sub || '',
             email: payload.sub,
             authorities: payload.auth?.split(',').map((role: string) => ({ authority: role.trim() })) || [],
             role: isAdminUser ? 'admin' : 'user'
         };
-
-        // 토큰과 사용자 정보 저장
-        authStore.setTokens({ ...response, user: userData });
+        // 토큰과 사용자 정보 저장 
+        authStore.setTokens({ 
+            ...response, 
+            userId: response.userId, 
+            user: userData 
+        });
 
         // 역할에 따라 리다이렉트
         if (isAdminUser) {

@@ -22,6 +22,7 @@ export interface TokenPayload {
   refreshToken: string;
   grantType?: string;
   refreshTokenExpire?: string | number;
+  userId?: number;
   user?: User | null;
 }
 
@@ -30,7 +31,6 @@ export interface TokenPayload {
 ============================ */
 
 export const useAuthStore = defineStore("auth", () => {
-  // localStorage 값 로드 (타입 안전하게 처리)
   const accessToken: Ref<string | null> = ref(
     localStorage.getItem("access_token")
   );
@@ -85,6 +85,11 @@ export const useAuthStore = defineStore("auth", () => {
     if (tokens.user) {
       localStorage.setItem("user", JSON.stringify(tokens.user));
     }
+
+    if (tokens.userId) {
+      localStorage.setItem("userId", tokens.userId.toString());
+      localStorage.setItem("user_id", tokens.userId.toString()); 
+    }
   };
 
   const clearTokens = (): void => {
@@ -92,11 +97,16 @@ export const useAuthStore = defineStore("auth", () => {
     refreshToken.value = null;
     user.value = null;
 
+    // 인증 관련 localStorage 정리
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("grant_type");
     localStorage.removeItem("refresh_token_expire");
     localStorage.removeItem("user");
+    
+    // 채팅 관련 localStorage 정리
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("userId");
   };
 
   /* ============================

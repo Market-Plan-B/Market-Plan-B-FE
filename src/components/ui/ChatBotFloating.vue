@@ -16,7 +16,7 @@
                     <span>Marimo</span>
                 </div>
             </div>
-            <button class="close-btn" @click="isOpen = false">
+            <button class="close-btn" @click="closeChat">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
@@ -79,6 +79,9 @@
                             </div>
                             <template v-else>
                                 <div class="bot-bubble" v-html="msg.answer"></div>
+                                <div v-if="msg.chartData" class="chart-container">
+                                    <canvas :id="`chart-${i}`"></canvas>
+                                </div>
                                 <time>Marimo {{ msg.answerTime }}</time>
                                 <div v-if="msg.suggestions?.length" class="suggestions">
                                     <span class="suggest-label">다음 분석 추천</span>
@@ -118,7 +121,7 @@
             </div>
         </footer>
 
-        <button v-if="!isOpen" class="fab-trigger" @click="isOpen = true">
+        <button v-if="!isOpen" class="fab-trigger" @click="openChat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
@@ -131,33 +134,118 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, computed } from 'vue'
+import { ref, reactive, nextTick, computed, onMounted } from 'vue'
+import { chatAPI } from '@/api/chat'
+import { useAuthStore } from '@/stores/auth'
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
 
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend
+)
+
+const authStore = useAuthStore()
 const isOpen = ref(false)
 const inputText = ref('')
 const isLoading = ref(false)
 const isComposing = ref(false)
 const chatBody = ref(null)
 const messages = reactive([])
+const currentSessionId = ref(null)
+const quickQuestions = ref([])
 
-const quickQuestions = [
-    { title: '현재 유가 동향은?', desc: '브렌트유, WTI, 두바이유 실시간 가격 및 변동 요인', query: '현재 유가 동향' },
-    { title: 'OPEC+ 감산 현황은?', desc: '최신 감산 결정과 회원국별 이행률 분석', query: 'OPEC+ 감산 현황' },
-    { title: '미국 셰일 생산량은?', desc: '미국 원유 생산량과 시추 활동 현황', query: '미국 셰일 생산량' }
-]
+const getUserId = async () => {
+    // 1순위: localStorage userId (백엔드에서 직접 받은 값)
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+        const userId = parseInt(storedUserId)
+        if (userId > 0) {
+            console.log('[LOG] localStorage userId 사용:', userId)
+            return userId
+        }
+    }
+    
+    // 2순위: authStore에서 가져오기 (id가 0이 아닌 경우)
+    if (authStore.isAuthenticated && authStore.user?.id && authStore.user.id !== 0) {
+        console.log('[LOG] authStore.user.id 사용:', authStore.user.id)
+        return authStore.user.id
+    }
+    
+    // 3순위: localStorage user 객체에서 가져오기 (id가 0이 아닌 경우)
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+        try {
+            const userObj = JSON.parse(storedUser)
+            if (userObj?.id && userObj.id !== 0) {
+                console.log('[LOG] localStorage user.id 사용:', userObj.id)
+                return userObj.id
+            }
+        } catch (error) {
+            console.error('localStorage user 파싱 오류:', error)
+        }
+    }
+    
+    // 4순위: localStorage user_id 직접 가져오기 (호환성)
+    const legacyUserId = localStorage.getItem('user_id')
+    if (legacyUserId) {
+        const userId = parseInt(legacyUserId)
+        if (userId > 0) {
+            console.log('[LOG] localStorage user_id 사용:', userId)
+            return userId
+        }
+    }
+    
+    console.error('[ERROR] 모든 방법에서 사용자 ID를 찾을 수 없음')
+    throw new Error('로그인이 필요합니다. 다시 로그인해주세요.')
+}
 
-const responses = {
-    '현재 유가 동향': {
-        text: `<strong>2024년 12월 26일 국제 유가 현황</strong><br><br><strong>주요 유종별 가격</strong><br>브렌트유: $73.04 (-0.8%)<br>WTI: $69.38 (-1.2%)<br>두바이유: $72.15 (-0.9%)<br><br><strong>하락 요인</strong><br>중국 경제 성장률 둔화 우려로 인한 수요 감소 전망, 미국 원유 재고 320만 배럴 증가, 달러 강세가 주요 하락 요인입니다.`,
-        suggestions: ['중국 경제가 유가에 미치는 영향은?', '미국 원유 재고 증가 원인은?', '내년 유가 전망은?']
-    },
-    'OPEC+ 감산 현황': {
-        text: `<strong>OPEC+ 감산 정책 현황</strong><br><br><strong>현재 감산 규모</strong><br>총 감산량: 일 366만 배럴<br>자발적 감산: 일 220만 배럴 (2024년 말까지)<br><br><strong>주요 국가별 감산량</strong><br>사우디아라비아: 100만 b/d<br>러시아: 50만 b/d<br>이라크: 22만 b/d`,
-        suggestions: ['이행률이 낮은 이유는?', '감산 연장 가능성은?', '비OPEC 국가 영향은?']
-    },
-    '미국 셰일 생산량': {
-        text: `<strong>미국 원유 생산 현황</strong><br><br><strong>생산량 통계</strong><br>현재 생산량: 일 1,320만 배럴<br>전년 대비: +2.1% 증가<br>셰일 비중: 약 65% (860만 b/d)<br><br><strong>경제성 분석</strong><br>손익분기점 WTI $45-55/배럴, 현재 수익성 양호입니다.`,
-        suggestions: ['셰일 기술 발전 현황은?', '환경 규제 영향은?', '수출량 현황은?']
+const initializeChat = async () => {
+    try {
+        console.log('[LOG] 새 세션 생성')
+        const session = await chatAPI.createSession(await getUserId())
+        currentSessionId.value = session.id
+        
+        const suggestions = await chatAPI.getSuggestions(session.id)
+        
+        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
+            title: text,
+            desc: '유가 및 원유 시장 분석',
+            query: text
+        }))
+    } catch (error) {
+        console.error('채팅 초기화 실패:', error)
+        quickQuestions.value = []
+    }
+}
+
+const openChat = async () => {
+    try {
+        // 로그인 체크
+        await getUserId() // 이 함수가 에러를 던지면 로그인이 안된 것
+        
+        isOpen.value = true
+        if (!currentSessionId.value) {
+            await initializeChat()
+        }
+    } catch (error) {
+        console.error('채팅 열기 실패:', error)
+        alert(error.message || '채팅을 사용하려면 로그인이 필요합니다.')
     }
 }
 
@@ -198,40 +286,257 @@ const handleSend = () => {
 
 const delay = (ms) => new Promise(r => setTimeout(r, ms))
 
-const sendMessage = async (query) => {
-    if (isLoading.value) return
-    isLoading.value = true
+// Chart.js 데이터 파싱
+const separateTextAndChart = (message) => {
+  const decoded = message.replace(/&quot;/g, '"')
+  const jsonStart = decoded.indexOf('{"chartType"')
+  
+  if (jsonStart === -1) {
+    return { text: message, chart: null }
+  }
+  
+  const text = message.substring(0, jsonStart).trim()
+  const jsonStr = decoded.substring(jsonStart)
+  let chart = null
+  
+  try {
+    chart = JSON.parse(jsonStr)
+  } catch (error) {
+    console.error('JSON 파싱 실패:', error)
+  }
+  
+  return { text, chart }
+}
 
-    const msg = reactive({
-        question: query,
-        questionTime: getTime(),
-        answer: '',
-        answerTime: '',
-        suggestions: [],
-        status: 'thinking',
-        toolText: ''
-    })
-    messages.push(msg)
-    scrollToBottom()
-
-    await delay(1500)
-    msg.status = 'tool'
-    msg.toolText = '데이터 분석 중...'
-    scrollToBottom()
-
-    await delay(1500)
-    const resp = responses[query] || {
-        text: '죄송합니다. 해당 질문에 대한 정보가 준비되지 않았습니다.<br><br>다른 질문을 시도해 보시거나 추천 분석을 선택해 주세요.',
-        suggestions: ['현재 유가 동향', 'OPEC+ 감산 현황', '미국 셰일 생산량']
+// 차트 렌더링 (라인 차트만 지원)
+const renderChart = (canvas, chartData) => {
+  if (!canvas || !chartData) return
+  
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: chartData.datasets
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: chartData.title
+        },
+        legend: {
+          display: true
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: !!chartData.yAxisLabel,
+            text: chartData.yAxisLabel || ''
+          }
+        }
+      }
     }
+  })
+}
 
-    msg.status = 'done'
-    msg.answer = resp.text
-    msg.answerTime = getTime()
-    msg.suggestions = resp.suggestions
-    isLoading.value = false
+const formatResponse = (text) => {
+    return text
+        // 요약 섹션
+        .replace(/-요약-\s*/g, '<div class="summary-section"><div class="section-header"><span class="icon">📋</span><h3>요약</h3></div>')
+        .replace(/(?<=<\/h3><\/div>)([^<]+?)(?=\s*\d+\.)/g, '<div class="section-content">$1</div></div>')
+        
+        // 섹션 헤더 (강조된 제목)
+        .replace(/\*\*([^주요|최신|현재|분석|전망|영향|요인|상황|현황|정책|결정|수준|동향|전망|전략|전망|전망|전망]+?)\*\*/g, '<div class="section-title"><span class="title-icon">📈</span>$1</div>')
+        
+        // 표 처리 (| 로 구분된 데이터)
+        .replace(/\|([^|\n]+)\|([^|\n]+)\|([^|\n]*)/g, (match, col1, col2, col3) => {
+            const cells = [col1, col2, col3].filter(cell => cell && cell.trim())
+            if (cells.length >= 2) {
+                return `<div class="data-row"><span class="data-label">${col1.trim()}</span><span class="data-value">${col2.trim()}</span>${col3 ? `<span class="data-change">${col3.trim()}</span>` : ''}</div>`
+            }
+            return match
+        })
+        
+        // 가격 데이터 (숫자: $숫자 형태)
+        .replace(/([\w\s가-힣]+):\s*\$([\d,\.]+)\s*\(([+-][\d\.%]+)\)/g, '<div class="price-item"><span class="price-label">$1</span><span class="price-value">$$$2</span><span class="price-change $3">$3</span></div>')
+        
+        // 번호 목록 (줄바꿈 제거)
+        .replace(/(\d+)\s*[\r\n]+\s*([^\r\n]+)/g, '$1. $2')
+        .replace(/(\d+)\s*\n+\s*([^\n]+)/g, '$1. $2')
+        .replace(/(\d+)\s+([^\d\n][^\n]*)/g, '$1. $2')
+        .replace(/(\d+)\. ([^\n]+)/g, '<div class="numbered-item"><span class="number">$1</span><span class="content"><strong>$2</strong></span></div>')
+        
+        // 불릿 포인트
+        .replace(/^[-•]\s+(.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span class="bullet-text">$1</span></div>')
+        
+        // 강조 텍스트
+        .replace(/\*\*([^*]+)\*\*/g, '<strong class="highlight">$1</strong>')
+        .replace(/__([^_]+)__/g, '<strong class="highlight">$1</strong>')
+        
+        // 숫자 강조 (단위 포함)
+        .replace(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(b\/d|\ub9cc\s*배럴|배럴|%|달러)/g, '<span class="number-highlight">$1 $2</span>')
+        
+        // 줄바꿈 처리
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        
+        // 문단 태그
+        .replace(/^(?!<div|<h\d|<span)(.+?)(?=<div|<h\d|$)/gm, '<p>$1</p>')
+        
+        // 빈 태그 제거
+        .replace(/<p>\s*<\/p>/g, '')
+        .replace(/<div class="section-content">\s*<\/div>/g, '')
+}
+
+const typeWriter = async (msg, fullText) => {
+    const formattedText = formatResponse(fullText)
+    msg.answer = ''
+    
+    // HTML 태그를 고려한 안전한 타이핑
+    let currentIndex = 0
+    const textLength = formattedText.length
+    
+    while (currentIndex <= textLength) {
+        // HTML 태그 내부에서는 빠르게 진행
+        if (formattedText[currentIndex] === '<') {
+            const tagEnd = formattedText.indexOf('>', currentIndex)
+            if (tagEnd !== -1) {
+                currentIndex = tagEnd + 1
+                msg.answer = formattedText.slice(0, currentIndex)
+                continue
+            }
+        }
+        
+        msg.answer = formattedText.slice(0, currentIndex)
+        currentIndex++
+        
+        // 더 빠른 타이핑
+        await delay(15)
+        
+        // 스크롤을 덜 빈번히 호출
+        if (currentIndex % 10 === 0) {
+            scrollToBottom()
+        }
+    }
+    
     scrollToBottom()
 }
+
+const sendMessage = async (query) => {
+    if (isLoading.value) return
+    
+    try {
+        isLoading.value = true
+
+        const msg = reactive({
+            question: query,
+            questionTime: getTime(),
+            answer: '',
+            answerTime: '',
+            suggestions: [],
+            status: 'thinking'
+        })
+
+        messages.push(msg)
+        scrollToBottom()
+
+        if (!currentSessionId.value) {
+            await initializeChat()
+        }
+
+        msg.status = 'tool'
+        msg.toolText = '시장 데이터 분석 중...'
+        await delay(1000)
+
+        const response = await chatAPI.sendMessage(query, currentSessionId.value, await getUserId())
+        
+        msg.status = 'complete'
+        msg.answerTime = getTime()
+        
+        // 텍스트와 차트 분리
+        const { text, chart } = separateTextAndChart(response.message)
+        
+        await typeWriter(msg, text)
+        
+        // 차트 렌더링
+        if (chart) {
+          msg.chartData = chart
+          nextTick(() => {
+            const canvas = document.querySelector(`#chart-${messages.length - 1}`)
+            if (canvas) {
+              renderChart(canvas, chart)
+            }
+          })
+        }
+        
+        msg.suggestions = response.suggestions || []
+        
+    } catch (error) {
+        console.error('메시지 전송 실패:', error)
+        
+        if (error.message === '로그인이 필요합니다.') {
+            alert('로그인이 필요합니다.')
+            return
+        }
+        
+        const msg = messages[messages.length - 1]
+        if (msg) {
+            msg.status = 'complete'
+            msg.answerTime = getTime()
+            await typeWriter(msg, '죄송합니다. 일시적인 오류가 발생했습니다. 다시 시도해 주세요.')
+            msg.suggestions = []
+        }
+    } finally {
+        isLoading.value = false
+        scrollToBottom()
+    }
+}
+
+const endSession = async () => {
+    if (currentSessionId.value) {
+        try {
+            await chatAPI.endSession(currentSessionId.value)
+        } catch (error) {
+            console.error('세션 종료 실패:', error)
+        }
+        currentSessionId.value = null
+    }
+}
+
+const closeChat = () => {
+    isOpen.value = false
+    endSession()
+}
+
+// 대시보드에서 미리 세션과 추천 질문 로드
+const preloadChatData = async () => {
+    try {
+        console.log('[LOG] 채팅 데이터 미리 로드 시작')
+        const session = await chatAPI.createSession(await getUserId())
+        currentSessionId.value = session.id
+        
+        const suggestions = await chatAPI.getSuggestions(session.id)
+        
+        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
+            title: text,
+            desc: '유가 및 원유 시장 분석',
+            query: text
+        }))
+        
+        console.log('[LOG] 채팅 데이터 미리 로드 완료')
+    } catch (error) {
+        console.error('[LOG] 채팅 데이터 미리 로드 실패:', error)
+    }
+}
+
+// 전역에서 사용할 수 있도록 export
+defineExpose({ preloadChatData })
+
+onMounted(() => {
+    // 컴포넌트 마운트 시 초기화는 하지 않고, 채팅 열 때만 초기화
+})
 </script>
 
 <style scoped>

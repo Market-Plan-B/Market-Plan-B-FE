@@ -28,7 +28,7 @@
             </div>
         </section>
 
-        <ChatBotFloating />
+        <ChatBotFloating ref="chatBot" />
     </div>
 </template>
 
@@ -51,6 +51,7 @@ const predictedBrentPrice = ref(0);
 const apiData = ref(null);
 const lottieContainer = ref(null);
 const loading = ref(true);
+const chatBot = ref(null);
 
 const financial = ref({
     brent: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
@@ -128,6 +129,13 @@ onMounted(async () => {
 
     await Promise.all([loadOverallImpact(), loadFinancialData()]);
     await loadDailyFactor();
+    
+    // 채팅 데이터 미리 로드 (비동기로 백그라운드 실행)
+    setTimeout(async () => {
+        if (chatBot.value) {
+            await chatBot.value.preloadChatData();
+        }
+    }, 1000);
 });
 </script>
 
