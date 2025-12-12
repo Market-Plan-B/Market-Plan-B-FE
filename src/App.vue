@@ -23,7 +23,7 @@ import { useRoute } from "vue-router";
 import Sidebar from "@/components/ui/Sidebar.vue";
 
 const route = useRoute();
-const isExpanded = ref(false);
+const isExpanded = ref(true);
 
 const isLoginPage = computed(() => route.path === '/login');
 

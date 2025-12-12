@@ -90,7 +90,6 @@ const loadOverallImpact = async () => {
             predictedBrentPrice.value = response.data.overall_score;
         }
     } catch (error) {
-        console.error("전체 영향도 로드 실패:", error);
         predictedBrentPrice.value = 0;
     }
 };
@@ -99,7 +98,7 @@ const loadFinancialData = async () => {
     try {
         financial.value = await loadAllFinancialData();
     } catch (error) {
-        console.error("금융 데이터 로드 실패:", error);
+        // 로드 실패 무시
     }
 };
 
@@ -110,7 +109,7 @@ const loadDailyFactor = async () => {
         const response = await dashboardAPI.getImpactAnalysis(today); //  동일한 API
         apiData.value = response.data;
     } catch (err) {
-        console.error("Daily Feature 로드 실패:", err);
+        // 로드 실패 무시
     } finally {
         loading.value = false;
     }
@@ -129,7 +128,7 @@ onMounted(async () => {
 
     await Promise.all([loadOverallImpact(), loadFinancialData()]);
     await loadDailyFactor();
-    
+
     // 채팅 데이터 미리 로드 (비동기로 백그라운드 실행)
     setTimeout(async () => {
         if (chatBot.value) {

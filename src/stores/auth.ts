@@ -119,7 +119,7 @@ export const useAuthStore = defineStore("auth", () => {
         await authService.logout(refreshToken.value);
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      // 로그아웃 오류 무시
     } finally {
       clearTokens();
     }

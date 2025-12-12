@@ -7,36 +7,24 @@
                 <div class="header-left">
                     <div class="bot-logo">
                         <div class="logo-inner">
-                            <svg class="robot-icon" viewBox="0 0 40 40" fill="none">
-                                <!-- 안테나 -->
-                                <circle class="antenna-ball" cx="20" cy="4" r="3" fill="#22c55e" />
-                                <rect class="antenna-stick" x="19" y="6" width="2" height="6" fill="#64748b" />
-                                <!-- 얼굴 -->
-                                <rect class="robot-face" x="6" y="12" width="28" height="24" rx="6" fill="#ffffff" />
-                                <!-- 눈 - 기본 -->
-                                <circle class="eye eye-left" cx="14" cy="22" r="4" fill="#0f172a" />
-                                <circle class="eye eye-right" cx="26" cy="22" r="4" fill="#0f172a" />
-                                <!-- 눈 하이라이트 -->
-                                <circle class="eye-highlight" cx="15.5" cy="20.5" r="1.5" fill="#ffffff" />
-                                <circle class="eye-highlight" cx="27.5" cy="20.5" r="1.5" fill="#ffffff" />
-                                <!-- 입 - 기본 (살짝 미소) -->
-                                <path class="mouth mouth-normal" d="M14 30 Q20 34 26 30" stroke="#0f172a"
-                                    stroke-width="2" stroke-linecap="round" fill="none" />
-                                <!-- 입 - 호버 (활짝 웃음) -->
-                                <path class="mouth mouth-happy" d="M12 28 Q20 36 28 28" stroke="#ea580c"
-                                    stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0" />
-                                <!-- 볼터치 -->
-                                <circle class="blush blush-left" cx="9" cy="26" r="3" fill="#fca5a5" opacity="0" />
-                                <circle class="blush blush-right" cx="31" cy="26" r="3" fill="#fca5a5" opacity="0" />
+                            <svg class="message-icon" viewBox="0 0 24 24" fill="none">
+                                <!-- 말풍선 -->
+                                <path
+                                    d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                                    fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <!-- 점 3개 -->
+                                <circle cx="8" cy="12" r="1.2" fill="#9ca3af" />
+                                <circle cx="12" cy="12" r="1.2" fill="#9ca3af" />
+                                <circle cx="16" cy="12" r="1.2" fill="#9ca3af" />
                             </svg>
                         </div>
-                        <span class="online-dot"></span>
                     </div>
                     <div class="header-info">
                         <h1>Oil Market AI</h1>
                         <div class="status-row">
                             <span class="status-dot"></span>
-                            <span>Marimo · 온라인</span>
+                            <span>AI 어시스턴트</span>
                         </div>
                     </div>
                 </div>
@@ -114,29 +102,6 @@
                         </div>
                     </div>
 
-                    <div class="capabilities">
-                        <div class="cap-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                            <span>실시간 유가 정보</span>
-                        </div>
-                        <div class="cap-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                            <span>시장 동향 분석</span>
-                        </div>
-                        <div class="cap-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                            <span>리스크 예측</span>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- 대화 내용 -->
@@ -159,16 +124,13 @@
                             <!-- AI 응답 -->
                             <div class="ai-message">
                                 <div class="ai-avatar">
-                                    <svg class="robot-mini" viewBox="0 0 40 40" fill="none">
-                                        <circle cx="20" cy="4" r="2.5" fill="#22c55e" />
-                                        <rect x="19" y="5.5" width="2" height="5" fill="#94a3b8" />
-                                        <rect x="8" y="12" width="24" height="20" rx="5" fill="#ffffff" />
-                                        <circle cx="15" cy="20" r="3" fill="#0f172a" />
-                                        <circle cx="25" cy="20" r="3" fill="#0f172a" />
-                                        <circle cx="16" cy="18.5" r="1" fill="#ffffff" />
-                                        <circle cx="26" cy="18.5" r="1" fill="#ffffff" />
-                                        <path d="M14 27 Q20 30 26 27" stroke="#0f172a" stroke-width="1.5"
-                                            stroke-linecap="round" fill="none" />
+                                    <svg class="message-mini" viewBox="0 0 24 24" fill="none">
+                                        <path
+                                            d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                                            fill="#ea580c" stroke="#ea580c" stroke-width="1" />
+                                        <circle cx="8" cy="12" r="1" fill="#ffffff" />
+                                        <circle cx="12" cy="12" r="1" fill="#ffffff" />
+                                        <circle cx="16" cy="12" r="1" fill="#ffffff" />
                                     </svg>
                                 </div>
                                 <div class="ai-content">
@@ -281,30 +243,20 @@
         <!-- 닫힌 상태: 플로팅 버튼 -->
         <button v-else class="fab-button" @click="openChat">
             <div class="fab-content">
-                <svg class="robot-fab" viewBox="0 0 40 40" fill="none">
-                    <!-- 안테나 -->
-                    <circle class="antenna-ball" cx="20" cy="3" r="3" fill="#22c55e" />
-                    <rect x="19" y="5" width="2" height="5" fill="#ffffff" opacity="0.8" />
-                    <!-- 얼굴 -->
-                    <rect x="6" y="10" width="28" height="26" rx="7" fill="#ffffff" />
-                    <!-- 눈 - 기본 -->
-                    <circle class="fab-eye fab-eye-left" cx="14" cy="20" r="4" fill="#0f172a" />
-                    <circle class="fab-eye fab-eye-right" cx="26" cy="20" r="4" fill="#0f172a" />
-                    <!-- 눈 하이라이트 -->
-                    <circle cx="15.5" cy="18.5" r="1.5" fill="#ffffff" />
-                    <circle cx="27.5" cy="18.5" r="1.5" fill="#ffffff" />
-                    <!-- 입 - 기본 -->
-                    <path class="fab-mouth fab-mouth-normal" d="M13 30 Q20 34 27 30" stroke="#0f172a" stroke-width="2"
-                        stroke-linecap="round" fill="none" />
-                    <!-- 입 - 호버 -->
-                    <path class="fab-mouth fab-mouth-happy" d="M11 28 Q20 38 29 28" stroke="#ea580c" stroke-width="2.5"
-                        stroke-linecap="round" fill="none" opacity="0" />
-                    <!-- 볼터치 -->
-                    <circle class="fab-blush fab-blush-left" cx="8" cy="26" r="3.5" fill="#fca5a5" opacity="0" />
-                    <circle class="fab-blush fab-blush-right" cx="32" cy="26" r="3.5" fill="#fca5a5" opacity="0" />
+                <svg class="fab-icon" viewBox="0 0 24 24" fill="none">
+                    <!-- 말풍선 -->
+                    <path
+                        d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                        fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <!-- 점 3개 -->
+                    <circle cx="8" cy="12" r="1.3" fill="#64748b" />
+                    <circle cx="12" cy="12" r="1.3" fill="#64748b" />
+                    <circle cx="16" cy="12" r="1.3" fill="#64748b" />
                 </svg>
             </div>
             <span class="fab-pulse"></span>
+            <span class="fab-tooltip">무엇이든 물어보세요</span>
         </button>
     </div>
 </template>
@@ -793,79 +745,23 @@ onUnmounted(() => {
 .logo-inner {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #ea580c 0%, #ea580c 100%);
-    border-radius: 14px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
     cursor: pointer;
     transition: transform 0.2s ease;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
 }
 
 .logo-inner:hover {
     transform: scale(1.05);
 }
 
-.robot-icon {
-    width: 32px;
-    height: 32px;
-}
-
-/* 로봇 아이콘 호버 애니메이션 */
-.robot-icon .antenna-ball {
-    animation: antennaPulse 2s ease-in-out infinite;
-}
-
-@keyframes antennaPulse {
-
-    0%,
-    100% {
-        fill: #22c55e;
-    }
-
-    50% {
-        fill: #4ade80;
-    }
-}
-
-.robot-icon .eye,
-.robot-icon .mouth-normal,
-.robot-icon .eye-highlight {
-    transition: opacity 0.2s ease;
-}
-
-.robot-icon .heart,
-.robot-icon .mouth-happy,
-.robot-icon .blush {
-    transition: opacity 0.3s ease;
-}
-
-/* 호버 시 눈은 그대로, 입만 더 밝게 웃음 */
-.logo-inner:hover .robot-icon .mouth-normal {
-    opacity: 0;
-}
-
-.logo-inner:hover .robot-icon .mouth-happy {
-    opacity: 1;
-}
-
-.logo-inner:hover .robot-icon .blush {
-    opacity: 0.6;
-}
-
-@keyframes heartBeat {
-    0% {
-        transform: scale(0.8);
-    }
-
-    50% {
-        transform: scale(1.1);
-    }
-
-    100% {
-        transform: scale(1);
-    }
+.message-icon {
+    width: 28px;
+    height: 28px;
 }
 
 .header-info h1 {
@@ -885,7 +781,7 @@ onUnmounted(() => {
 .status-dot {
     width: 6px;
     height: 6px;
-    background: #22c55e;
+    background: #19d328;
     border-radius: 50%;
 }
 
@@ -1120,7 +1016,7 @@ onUnmounted(() => {
 .cap-item svg {
     width: 14px;
     height: 14px;
-    color: #22c55e;
+    color: #ea580c;
 }
 
 /* ===== 날짜 배지 ===== */
@@ -1169,7 +1065,7 @@ onUnmounted(() => {
 .message-content.user {
     max-width: 85%;
     padding: 14px 18px;
-    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    background: linear-gradient(135deg, #ea580c 0%, #ea580c 100%);
     color: #ffffff;
     border-radius: 20px 20px 6px 20px;
     font-size: 14px;
@@ -1196,18 +1092,18 @@ onUnmounted(() => {
 .ai-avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
-    border-radius: 12px;
+    background: transparent;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25);
 }
 
-.robot-mini {
-    width: 28px;
-    height: 28px;
+.message-mini {
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(0 2px 4px rgba(234, 88, 12, 0.25));
 }
 
 .ai-content {
@@ -1328,7 +1224,7 @@ onUnmounted(() => {
 .progress-fill {
     height: 100%;
     width: 60%;
-    background: linear-gradient(90deg, #ea580c, #f97316);
+    background: linear-gradient(90deg, #ea580c, #ea580c);
     border-radius: 2px;
     animation: progress 1.5s ease-in-out infinite;
 }
@@ -1641,7 +1537,7 @@ onUnmounted(() => {
 }
 
 .send-button.active {
-    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    background: linear-gradient(135deg, #ea580c 0%, #ea580c 100%);
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
 }
@@ -1674,7 +1570,7 @@ onUnmounted(() => {
     height: 64px;
     border: none;
     background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
-    border-radius: 20px;
+    border-radius: 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1693,50 +1589,47 @@ onUnmounted(() => {
         0 6px 12px rgba(234, 88, 12, 0.25);
 }
 
+.fab-button:hover .fab-tooltip {
+    opacity: 1;
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.fab-tooltip {
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 20%;
+    transform: translateX(10px) translateY(-50%);
+    background: rgb(255, 255, 255, 0.5);
+    color: #000000;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+
 .fab-content {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.robot-fab {
-    width: 38px;
-    height: 38px;
-}
-
-/* FAB 로봇 호버 애니메이션 */
-.robot-fab .antenna-ball {
-    animation: antennaPulse 2s ease-in-out infinite;
-}
-
-.robot-fab .fab-eye,
-.robot-fab .fab-mouth-normal {
-    transition: opacity 0.2s ease;
-}
-
-.robot-fab .fab-heart,
-.robot-fab .fab-mouth-happy,
-.robot-fab .fab-blush {
-    transition: opacity 0.3s ease;
-}
-
-/* 호버 시 눈은 그대로, 입만 더 밝게 웃음 */
-.fab-button:hover .robot-fab .fab-mouth-normal {
-    opacity: 0;
-}
-
-.fab-button:hover .robot-fab .fab-mouth-happy {
-    opacity: 1;
-}
-
-.fab-button:hover .robot-fab .fab-blush {
-    opacity: 0.7;
+.fab-icon {
+    width: 32px;
+    height: 32px;
 }
 
 .fab-pulse {
     position: absolute;
     inset: 0;
-    border-radius: 20px;
+    border-radius: 18px;
     background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
     animation: fabPulse 2s infinite;
     z-index: -1;

@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe, Bell } from "lucide-vue-next";
 import NotificationFloating from "@/components/ui/NotificationFloating.vue";
@@ -99,7 +99,7 @@ const authStore = useAuthStore();
 
 const emit = defineEmits(["sidebar-hover"]);
 
-const isExpanded = ref(false);
+const isExpanded = ref(true);
 const NotificationFloatingRef = ref();
 const unreadCount = ref(0);
 
@@ -107,6 +107,10 @@ const expand = (state: boolean) => {
     isExpanded.value = state;
     emit("sidebar-hover", state);
 };
+
+onMounted(() => {
+    emit("sidebar-hover", isExpanded.value);
+});
 
 const openNotifications = () => {
     NotificationFloatingRef.value?.open();
@@ -156,10 +160,8 @@ const navigate = (path: string) => {
 
 // 로그아웃
 const handleLogout = async () => {
-    if (confirm("로그아웃 하시겠습니까?")) {
-        await authStore.logout();
-        router.push("/login");
-    }
+    await authStore.logout();
+    router.push("/login");
 };
 </script>
 
