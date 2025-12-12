@@ -243,7 +243,7 @@ onMounted(loadStrategies);
     color: #ea580c;
     background: rgba(234, 88, 12, 0.1);
     padding: 4px 10px;
-    border-radius: 12px;
+    border-radius: 4px;
     opacity: 0;
     transition: opacity 0.2s;
 }

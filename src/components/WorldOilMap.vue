@@ -372,7 +372,7 @@
                             <section v-for="(news, idx) in currentPageNews" :key="idx" class="info-card news-card">
                                 <div class="card-header news-header">
                                     <h3>{{ news.title }}</h3>
-                                    <span class="news-level">{{ news.level }}</span>
+                                    <span class="news-level" :class="getScoreClass(news.level)">{{ news.level }}</span>
                                 </div>
                                 <p class="news-desc">{{ news.desc }}</p>
                                 <div class="news-footer">
@@ -530,12 +530,6 @@ function getSupplySignal(yoy: number): '공급 증가' | '공급 보합' | '공�
     return '공급 보합';
 }
 
-function getSupplySignalColor(signal: string): string {
-    if (signal === '공급 증가') return '#16a34a';
-    if (signal === '공급 감소') return '#dc2626';
-    return '#6b7280';
-}
-
 const opecYoyDisplay = computed(() => {
     if (opecYoyChange.value == null) return 'N/A';
     const v = opecYoyChange.value;
@@ -569,14 +563,6 @@ const supplyShockRisk = computed(() => {
     return 'MED';
 });
 
-const supplyShockRiskColor = computed(() => {
-    const risk = supplyShockRisk.value;
-    if (risk === 'HIGH') return '#dc2626';
-    if (risk === 'MED') return '#facc15';
-    if (risk === 'LOW') return '#16a34a';
-    return '#6b7280';
-});
-
 // 2) OECD Inventory
 interface OecdRegionSnapshot {
     code: string;
@@ -600,12 +586,6 @@ function getOecdSignal(region: OecdRegionSnapshot): 'Tight' | 'Neutral' | 'Loose
     return 'Neutral';
 }
 
-function getOecdSignalColor(signal: string): string {
-    if (signal === 'Tight') return '#dc2626';
-    if (signal === 'Loose') return '#16a34a';
-    return '#facc15';
-}
-
 const globalStockDiffDisplay = computed(() => {
     if (globalStockDiffPct.value == null) return 'N/A';
     const v = globalStockDiffPct.value;
@@ -618,13 +598,6 @@ const globalDaysDiffDisplay = computed(() => {
     return `${v >= 0 ? '+' : ''}${v.toFixed(1)}일`;
 });
 
-const tightestRegionName = computed(() => {
-    if (!oecdRegions.value.length) return 'N/A';
-    return oecdRegions.value.reduce((t, r) =>
-        (r.stocksDiffPct + r.daysDiff) < (t.stocksDiffPct + t.daysDiff) ? r : t
-    ).name;
-});
-
 const globalInventorySignal = computed(() => {
     if (globalStockDiffPct.value == null || globalDaysDiff.value == null) return '공급: N/A';
     const s = globalStockDiffPct.value;
@@ -632,14 +605,6 @@ const globalInventorySignal = computed(() => {
     if (s <= -3 && d <= -1) return '공급 부족';
     if (s >= 3 && d >= 1) return '공급 여유';
     return '공급 보합';
-});
-
-const globalInventorySignalColor = computed(() => {
-    const sig = globalInventorySignal.value;
-    if (sig.includes('Tight')) return '#dc2626';
-    if (sig.includes('Loose')) return '#16a34a';
-    if (sig.includes('Balanced')) return '#facc15';
-    return '#6b7280';
 });
 
 // 3) US Stocks
@@ -727,13 +692,6 @@ const maxCategory = computed(() => {
     if (abs > 10 && v > 0) return '공급 여유';
     if (abs > 4) return v < 0 ? '약간 공급 부족' : '약간 공급 여유';
     return '공급 보합';
-});
-
-const maxCategoryColor = computed(() => {
-    const sig = maxCategory.value;
-    if (sig.includes('Tight')) return '#dc2626';
-    if (sig.includes('Loose')) return '#16a34a';
-    return '#6b7280';
 });
 
 const maxCategoryClass = computed(() => {
@@ -1434,6 +1392,15 @@ function closeModal() {
     selectedCountry.value = null;
 }
 
+// 영향도 점수에 따른 색상 클래스 반환
+function getScoreClass(level: number): string {
+    const absScore = Math.abs(level);
+    if (absScore >= 0.7) return 'score-urgent';
+    if (absScore >= 0.5) return 'score-high';
+    if (absScore >= 0.3) return 'score-mid';
+    return 'score-low';
+}
+
 onBeforeUnmount(() => {
     mapInstance.value?.remove();
 });
@@ -1751,23 +1718,6 @@ onBeforeUnmount(() => {
     background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
 }
 
-.impact-section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1e293b;
-    letter-spacing: -0.01em;
-}
-
-.impact-section-count {
-    font-size: 13px;
-    font-weight: 500;
-    color: #64748b;
-    margin-left: auto;
-    background: #f1f5f9;
-    padding: 4px 10px;
-    border-radius: 20px;
-}
-
 .impact-country-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -2033,10 +1983,6 @@ onBeforeUnmount(() => {
     color: #dc2626;
 }
 
-.indicator-price--warning {
-    color: #ea580c;
-}
-
 .indicator-change {
     font-size: 12px;
     font-weight: 600;
@@ -2124,8 +2070,26 @@ onBeforeUnmount(() => {
     font-size: 12px;
     font-weight: 600;
     flex-shrink: 0;
-    background: #fed7aa;
+}
+
+.news-level.score-urgent {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.news-level.score-high {
+    background: #fff7ed;
     color: #ea580c;
+}
+
+.news-level.score-mid {
+    background: #fefce8;
+    color: #ca8a04;
+}
+
+.news-level.score-low {
+    background: #f0fdf4;
+    color: #16a34a;
 }
 
 .news-desc {

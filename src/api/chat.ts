@@ -35,21 +35,17 @@ export interface ChatSuggestions {
 export const chatAPI = {
   // 메시지 전송
   async sendMessage(message: string, sessionId: number, userId: number): Promise<ChatResponse> {
-    console.log('[API] sendMessage 요청:', { message, session_id: sessionId, user_id: userId });
     const response = await axios.post<ChatResponse>(`${API_BASE_URL}/message`, {
       message,
       session_id: sessionId,
       user_id: userId
     });
-    console.log('[API] sendMessage 응답:', response.data);
     return response.data;
   },
 
   // 새 세션 생성
   async createSession(userId: number): Promise<ChatSession> {
-    console.log('[API] createSession 요청:', { user_id: userId });
     const response = await axios.post<ChatSession>(`${API_BASE_URL}/session?user_id=${userId}`);
-    console.log('[API] createSession 응답:', response.data);
     return response.data;
   },
 
@@ -67,11 +63,9 @@ export const chatAPI = {
 
   // 추천 질문 조회
   async getSuggestions(sessionId: number): Promise<ChatSuggestions> {
-    console.log('[API] getSuggestions 요청:', { session_id: sessionId });
     const response = await axios.get<ChatSuggestions>(`${API_BASE_URL}/suggestions`, {
       params: { session_id: sessionId }
     });
-    console.log('[API] getSuggestions 응답:', response.data);
     return response.data;
   }
 };

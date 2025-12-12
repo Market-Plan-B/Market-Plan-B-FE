@@ -30,18 +30,13 @@
                 </div>
 
                 <!-- 비밀번호 입력 -->
-                <div class="input-group">
-                    <input type="password" placeholder="Password" v-model="password" class="login-input"
-                        @keyup.enter="handleLogin" />
-                    <Lock class="input-icon" />
-                </div>
-
-                <!-- 옵션 -->
-                <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" v-model="rememberMe" class="checkbox" />
-                        <span>로그인 상태 유지</span>
-                    </label>
+                <div class="input-group password-input-group">
+                    <input :type="showPassword ? 'text' : 'password'" placeholder="Password" v-model="password"
+                        class="login-input" @keyup.enter="handleLogin" />
+                    <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn">
+                        <Eye v-if="!showPassword" class="password-icon" />
+                        <EyeOff v-else class="password-icon" />
+                    </button>
                 </div>
 
                 <!-- 에러 메시지 -->
@@ -63,13 +58,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { User, Lock } from 'lucide-vue-next';
+import { User, Lock, Eye, EyeOff } from 'lucide-vue-next';
 import { authService } from '@/api/auth';
 
 const router = useRouter();
 const email = ref('');
 const password = ref('');
-const rememberMe = ref(false);
+const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 
@@ -102,19 +97,10 @@ const handleLogin = async () => {
         const authStore = useAuthStore();
         const response = await authService.signIn(email.value, password.value);
 
-        // Remember me 처리
-        if (rememberMe.value) {
-            localStorage.setItem('rememberMe', 'true');
-            localStorage.setItem('email', email.value);
-        } else {
-            localStorage.removeItem('rememberMe');
-            localStorage.removeItem('email');
-        }
-
         // JWT 토큰에서 사용자 정보 추출
         const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
         const isAdminUser = payload.auth?.includes('ROLE_ADMIN') || false;
-        
+
         // API 응답에서 userId 사용
         const userData = {
             id: response.userId,
@@ -124,10 +110,10 @@ const handleLogin = async () => {
             role: isAdminUser ? 'admin' : 'user'
         };
         // 토큰과 사용자 정보 저장 
-        authStore.setTokens({ 
-            ...response, 
-            userId: response.userId, 
-            user: userData 
+        authStore.setTokens({
+            ...response,
+            userId: response.userId,
+            user: userData
         });
 
         // 역할에 따라 리다이렉트
@@ -146,7 +132,6 @@ const handleLogin = async () => {
         errorMessage.value = error.response?.data?.message ||
             error.response?.data?.detail ||
             '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
-        console.error('Login error:', error);
     }
 };
 
@@ -304,6 +289,10 @@ const handleLogin = async () => {
     margin-bottom: 1.5rem;
 }
 
+.password-input-group {
+    margin-bottom: 2.5rem;
+}
+
 .login-input {
     width: 100%;
     padding: 1rem 3rem 1rem 1rem;
@@ -337,39 +326,31 @@ const handleLogin = async () => {
     pointer-events: none;
 }
 
-/* 폼 옵션 */
-.form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-}
-
-.remember-me {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: white;
+.password-toggle-btn {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
     cursor: pointer;
-}
-
-.checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: #64748b;
-    cursor: pointer;
-}
-
-.forgot-password {
-    color: white;
-    text-decoration: none;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: opacity 0.3s ease;
-    cursor: pointer;
+    width: 24px;
+    height: 24px;
 }
 
-.forgot-password:hover {
+.password-toggle-btn:hover {
     opacity: 0.7;
+}
+
+.password-icon {
+    width: 20px;
+    height: 20px;
+    color: rgba(148, 163, 184, 0.6);
 }
 
 .error-message {
