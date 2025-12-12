@@ -80,7 +80,7 @@
         </div>
 
         <!-- 알림 모달 -->
-        <NotificationModal ref="notificationModalRef" :showTrigger="false" @unread-change="handleUnreadChange" />
+        <NotificationFloating ref="NotificationFloatingRef" :showTrigger="false" @unread-change="handleUnreadChange" />
 
     </aside>
 </template>
@@ -89,7 +89,7 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Droplets, LayoutDashboard, FileText, TrendingUp, LogOut, Globe, Bell } from "lucide-vue-next";
-import NotificationModal from "@/components/ui/NotificationModal.vue";
+import NotificationFloating from "@/components/ui/NotificationFloating.vue";
 import { isAdmin } from "@/utils/auth";
 import { useAuthStore } from "@/stores/auth";
 
@@ -100,7 +100,7 @@ const authStore = useAuthStore();
 const emit = defineEmits(["sidebar-hover"]);
 
 const isExpanded = ref(false);
-const notificationModalRef = ref();
+const NotificationFloatingRef = ref();
 const unreadCount = ref(0);
 
 const expand = (state: boolean) => {
@@ -109,7 +109,7 @@ const expand = (state: boolean) => {
 };
 
 const openNotifications = () => {
-    notificationModalRef.value?.open();
+    NotificationFloatingRef.value?.open();
 };
 
 const handleUnreadChange = (count: number) => {

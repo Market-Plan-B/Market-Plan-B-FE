@@ -14,8 +14,6 @@
                 <router-view />
             </main>
         </div>
-
-        <NotificationModal />
     </div>
 </template>
 
@@ -23,7 +21,6 @@
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import Sidebar from "@/components/ui/Sidebar.vue";
-import NotificationModal from "@/components/ui/NotificationModal.vue";
 
 const route = useRoute();
 const isExpanded = ref(false);

@@ -233,11 +233,11 @@ const predictedChange = computed(() => {
 
 const changeDescription = computed(() => {
     if (predictedChange.value > 0) {
-        return '실제 가격이 예측보다 낮게 형성됨';
+        return '실제 가격이 예측값보다 낮게 나타났습니다.';
     } else if (predictedChange.value < 0) {
-        return '실제 가격이 예측보다 높게 형성됨';
+        return '실제 가격이 예측값보다 높게 나타났습니다.';
     } else {
-        return '실제 가격이 예측과 동일하게 형성됨';
+        return '실제 가격이 예측값과 동일하게 나타났습니다.';
     }
 });
 

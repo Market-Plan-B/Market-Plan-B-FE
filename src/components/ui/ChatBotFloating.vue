@@ -1,163 +1,339 @@
 <template>
-    <div class="chatbot" :class="{ open: isOpen }" :style="chatStyle">
-        <header v-if="isOpen" class="header">
-            <div class="header-left">
-                <div class="avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
-                        <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
-                        <line x1="8" y1="9" x2="16" y2="9" />
-                        <line x1="8" y1="13" x2="14" y2="13" />
-                    </svg>
-                </div>
-                <div class="header-text">
-                    <h1>Oil Market AI</h1>
-                    <span>Marimo</span>
-                </div>
-            </div>
-            <button class="close-btn" @click="closeChat">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-            </button>
-        </header>
-
-        <main v-if="isOpen" class="body" ref="chatBody">
-            <div v-if="messages.length === 0" class="welcome">
-                <div class="welcome-card">
-                    <h2>안녕하세요!</h2>
-                    <p>원유 시장이 궁금하신가요? 실시간 유가부터 리스크 분석까지, 무엇이든 편하게 물어보세요!</p>
-                </div>
-                <div class="quick-actions">
-                    <span class="quick-label">이런 것들이 궁금하지 않으세요?</span>
-                    <div class="quick-list">
-                        <button v-for="(q, i) in quickQuestions" :key="i" class="quick-btn"
-                            @click="sendMessage(q.query)">
-                            <span class="quick-num">{{ i + 1 }}</span>
-                            <div class="quick-content">
-                                <strong>{{ q.title }}</strong>
-                                <span>{{ q.desc }}</span>
-                            </div>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m9 18 6-6-6-6" />
+    <div class="chatbot" :class="{ open: isOpen }">
+        <!-- 열린 상태: 채팅 패널 -->
+        <div v-if="isOpen" class="chat-container">
+            <!-- 헤더 -->
+            <header class="chat-header">
+                <div class="header-left">
+                    <div class="bot-logo">
+                        <div class="logo-inner">
+                            <svg class="robot-icon" viewBox="0 0 40 40" fill="none">
+                                <!-- 안테나 -->
+                                <circle class="antenna-ball" cx="20" cy="4" r="3" fill="#22c55e" />
+                                <rect class="antenna-stick" x="19" y="6" width="2" height="6" fill="#64748b" />
+                                <!-- 얼굴 -->
+                                <rect class="robot-face" x="6" y="12" width="28" height="24" rx="6" fill="#ffffff" />
+                                <!-- 눈 - 기본 -->
+                                <circle class="eye eye-left" cx="14" cy="22" r="4" fill="#0f172a" />
+                                <circle class="eye eye-right" cx="26" cy="22" r="4" fill="#0f172a" />
+                                <!-- 눈 하이라이트 -->
+                                <circle class="eye-highlight" cx="15.5" cy="20.5" r="1.5" fill="#ffffff" />
+                                <circle class="eye-highlight" cx="27.5" cy="20.5" r="1.5" fill="#ffffff" />
+                                <!-- 입 - 기본 (살짝 미소) -->
+                                <path class="mouth mouth-normal" d="M14 30 Q20 34 26 30" stroke="#0f172a"
+                                    stroke-width="2" stroke-linecap="round" fill="none" />
+                                <!-- 입 - 호버 (활짝 웃음) -->
+                                <path class="mouth mouth-happy" d="M12 28 Q20 36 28 28" stroke="#ea580c"
+                                    stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0" />
+                                <!-- 볼터치 -->
+                                <circle class="blush blush-left" cx="9" cy="26" r="3" fill="#fca5a5" opacity="0" />
+                                <circle class="blush blush-right" cx="31" cy="26" r="3" fill="#fca5a5" opacity="0" />
                             </svg>
+                        </div>
+                        <span class="online-dot"></span>
+                    </div>
+                    <div class="header-info">
+                        <h1>Oil Market AI</h1>
+                        <div class="status-row">
+                            <span class="status-dot"></span>
+                            <span>Marimo · 온라인</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <!-- 새로고침/초기화 버튼 -->
+                    <button class="action-btn" @click="handleRefresh" :title="messages.length > 0 ? '대화 초기화' : '새로고침'">
+                        <svg v-if="messages.length > 0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6M1 20v-6h6" />
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                        </svg>
+                    </button>
+                    <button class="close-btn" @click="closeChat" title="닫기">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 메인 채팅 영역 -->
+            <main class="chat-body" ref="chatBody">
+                <!-- 웰컴 화면 -->
+                <div v-if="messages.length === 0" class="welcome-screen">
+                    <div class="welcome-hero">
+                        <h2>안녕하세요! 👋</h2>
+                        <p>원유 시장 전문 AI 어시스턴트 <strong>Marimo</strong>입니다.<br />실시간 유가, 시장 동향, 리스크 분석까지 무엇이든 물어보세요!</p>
+                    </div>
+
+                    <div class="quick-section">
+                        <div class="section-header">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            <span>추천 질문</span>
+                        </div>
+
+                        <!-- 추천 질문 로딩 중 -->
+                        <div v-if="isLoadingQuestions" class="quick-loading">
+                            <div class="loading-spinner-container">
+                                <div class="loading-spinner"></div>
+                                <span>추천 질문을 불러오는 중...</span>
+                            </div>
+                        </div>
+
+                        <!-- 추천 질문 목록 -->
+                        <div v-else class="quick-grid">
+                            <button v-for="(q, i) in quickQuestions" :key="i" class="quick-card"
+                                @click="sendMessage(q.query)">
+                                <div class="card-icon">
+                                    <svg v-if="i === 0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                                    </svg>
+                                    <svg v-else-if="i === 1" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M3 3v18h18" />
+                                        <path d="M18 17l-5-5-4 4-3-3" />
+                                    </svg>
+                                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M12 6v6l4 2" />
+                                    </svg>
+                                </div>
+                                <span class="card-text">{{ q.title }}</span>
+                                <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="capabilities">
+                        <div class="cap-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                            <span>실시간 유가 정보</span>
+                        </div>
+                        <div class="cap-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                            <span>시장 동향 분석</span>
+                        </div>
+                        <div class="cap-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                            <span>리스크 예측</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 대화 내용 -->
+                <template v-else>
+                    <div class="date-badge">
+                        <span>{{ todayDate }}</span>
+                    </div>
+
+                    <TransitionGroup name="message">
+                        <div v-for="(msg, i) in messages" :key="i" class="message-block"
+                            :style="{ '--delay': i * 0.05 + 's' }">
+                            <!-- 사용자 메시지 -->
+                            <div class="user-message">
+                                <div class="message-content user">
+                                    <p>{{ msg.question }}</p>
+                                </div>
+                                <time>{{ msg.questionTime }}</time>
+                            </div>
+
+                            <!-- AI 응답 -->
+                            <div class="ai-message">
+                                <div class="ai-avatar">
+                                    <svg class="robot-mini" viewBox="0 0 40 40" fill="none">
+                                        <circle cx="20" cy="4" r="2.5" fill="#22c55e" />
+                                        <rect x="19" y="5.5" width="2" height="5" fill="#94a3b8" />
+                                        <rect x="8" y="12" width="24" height="20" rx="5" fill="#ffffff" />
+                                        <circle cx="15" cy="20" r="3" fill="#0f172a" />
+                                        <circle cx="25" cy="20" r="3" fill="#0f172a" />
+                                        <circle cx="16" cy="18.5" r="1" fill="#ffffff" />
+                                        <circle cx="26" cy="18.5" r="1" fill="#ffffff" />
+                                        <path d="M14 27 Q20 30 26 27" stroke="#0f172a" stroke-width="1.5"
+                                            stroke-linecap="round" fill="none" />
+                                    </svg>
+                                </div>
+                                <div class="ai-content">
+                                    <!-- 생각중 상태 -->
+                                    <div v-if="msg.status === 'thinking'" class="thinking-indicator">
+                                        <div class="thinking-dots">
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                        </div>
+                                        <span class="thinking-text">생각하는 중...</span>
+                                    </div>
+
+                                    <!-- 분석중 상태 -->
+                                    <div v-else-if="msg.status === 'tool'" class="analyzing-indicator">
+                                        <div class="analyze-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="11" cy="11" r="8" />
+                                                <path d="m21 21-4.35-4.35" />
+                                            </svg>
+                                        </div>
+                                        <div class="analyze-info">
+                                            <span class="analyze-title">{{ msg.toolText }}</span>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 완료된 응답 -->
+                                    <template v-else>
+                                        <div class="message-bubble ai" v-html="msg.answer"></div>
+
+                                        <!-- 차트 -->
+                                        <div v-if="msg.chartData" class="chart-wrapper">
+                                            <canvas :id="`chart-${i}`"></canvas>
+                                        </div>
+
+                                        <!-- 메시지 액션 -->
+                                        <div class="message-actions">
+                                            <time>{{ msg.answerTime }}</time>
+                                            <button class="copy-btn" @click="copyMessage(msg.answer)"
+                                                :title="copied ? '복사됨!' : '복사'">
+                                                <svg v-if="!copied" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                                                </svg>
+                                                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <!-- 추천 질문 -->
+                                        <div v-if="msg.suggestions?.length" class="follow-up">
+                                            <span class="follow-label">관련 질문</span>
+                                            <div class="follow-list">
+                                                <button v-for="(s, si) in msg.suggestions" :key="si" class="follow-btn"
+                                                    @click="sendMessage(s)">
+                                                    <span>{{ s }}</span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2">
+                                                        <path d="m9 18 6-6-6-6" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </TransitionGroup>
+                </template>
+
+            </main>
+
+            <!-- 스크롤 투 바텀 버튼 (푸터 위에 위치) -->
+            <Transition name="fade">
+                <button v-if="showScrollButton" class="scroll-bottom-btn" @click="scrollToBottom">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M19 12l-7 7-7-7" />
+                    </svg>
+                </button>
+            </Transition>
+
+            <!-- 입력 영역 -->
+            <footer class="chat-footer">
+                <div class="input-container">
+                    <div class="input-wrapper" :class="{ focused: inputFocused, disabled: isLoading }">
+                        <input ref="inputRef" v-model="inputText" @keydown.enter="handleEnter"
+                            @compositionstart="isComposing = true" @compositionend="isComposing = false"
+                            @focus="inputFocused = true" @blur="inputFocused = false" placeholder="메시지를 입력하세요..."
+                            :disabled="isLoading" />
+                        <button class="send-button" @click="handleSend" :disabled="!inputText.trim() || isLoading"
+                            :class="{ active: inputText.trim() && !isLoading }">
+                            <svg v-if="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                            <div v-else class="send-spinner"></div>
                         </button>
                     </div>
                 </div>
-            </div>
+            </footer>
+        </div>
 
-            <template v-else>
-                <div class="date-divider"><span>{{ todayDate }}</span></div>
-                <div v-for="(msg, i) in messages" :key="i" class="message-group">
-                    <div class="user-row">
-                        <div class="user-bubble">{{ msg.question }}</div>
-                        <time>{{ msg.questionTime }}</time>
-                    </div>
-                    <div class="bot-row">
-                        <div class="bot-avatar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
-                                <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
-                                <line x1="8" y1="9" x2="16" y2="9" />
-                                <line x1="8" y1="13" x2="14" y2="13" />
-                            </svg>
-                        </div>
-                        <div class="bot-content">
-                            <div v-if="msg.status === 'thinking'" class="status-indicator">
-                                <div class="status-bar"></div>
-                                <span>생각중...</span>
-                            </div>
-                            <div v-else-if="msg.status === 'tool'" class="status-indicator tool">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="m21 21-4.35-4.35" />
-                                </svg>
-                                <span>{{ msg.toolText }}</span>
-                                <div class="status-bar"></div>
-                            </div>
-                            <template v-else>
-                                <div class="bot-bubble" v-html="msg.answer"></div>
-                                <div v-if="msg.chartData" class="chart-container">
-                                    <canvas :id="`chart-${i}`"></canvas>
-                                </div>
-                                <time>Marimo {{ msg.answerTime }}</time>
-                                <div v-if="msg.suggestions?.length" class="suggestions">
-                                    <span class="suggest-label">다음 분석 추천</span>
-                                    <div class="suggest-list">
-                                        <button v-for="(s, si) in msg.suggestions" :key="si" class="suggest-btn"
-                                            @click="sendMessage(s)">
-                                            <span class="suggest-dot"></span>
-                                            <span>{{ s }}</span>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="m9 18 6-6-6-6" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </main>
-
-        <footer v-if="isOpen" class="footer">
-            <div class="input-wrap">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
+        <!-- 닫힌 상태: 플로팅 버튼 -->
+        <button v-else class="fab-button" @click="openChat">
+            <div class="fab-content">
+                <svg class="robot-fab" viewBox="0 0 40 40" fill="none">
+                    <!-- 안테나 -->
+                    <circle class="antenna-ball" cx="20" cy="3" r="3" fill="#22c55e" />
+                    <rect x="19" y="5" width="2" height="5" fill="#ffffff" opacity="0.8" />
+                    <!-- 얼굴 -->
+                    <rect x="6" y="10" width="28" height="26" rx="7" fill="#ffffff" />
+                    <!-- 눈 - 기본 -->
+                    <circle class="fab-eye fab-eye-left" cx="14" cy="20" r="4" fill="#0f172a" />
+                    <circle class="fab-eye fab-eye-right" cx="26" cy="20" r="4" fill="#0f172a" />
+                    <!-- 눈 하이라이트 -->
+                    <circle cx="15.5" cy="18.5" r="1.5" fill="#ffffff" />
+                    <circle cx="27.5" cy="18.5" r="1.5" fill="#ffffff" />
+                    <!-- 입 - 기본 -->
+                    <path class="fab-mouth fab-mouth-normal" d="M13 30 Q20 34 27 30" stroke="#0f172a" stroke-width="2"
+                        stroke-linecap="round" fill="none" />
+                    <!-- 입 - 호버 -->
+                    <path class="fab-mouth fab-mouth-happy" d="M11 28 Q20 38 29 28" stroke="#ea580c" stroke-width="2.5"
+                        stroke-linecap="round" fill="none" opacity="0" />
+                    <!-- 볼터치 -->
+                    <circle class="fab-blush fab-blush-left" cx="8" cy="26" r="3.5" fill="#fca5a5" opacity="0" />
+                    <circle class="fab-blush fab-blush-right" cx="32" cy="26" r="3.5" fill="#fca5a5" opacity="0" />
                 </svg>
-                <input v-model="inputText" @keydown.enter="handleEnter" @compositionstart="isComposing = true"
-                    @compositionend="isComposing = false" placeholder="궁금한 것이 있으시면 언제든 물어보세요!" :disabled="isLoading" />
-                <button class="send-btn" @click="handleSend" :disabled="!inputText.trim() || isLoading">
-                    <svg v-if="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m22 2-7 20-4-9-9-4z" />
-                        <path d="M22 2 11 13" />
-                    </svg>
-                    <span v-else class="spinner"></span>
-                </button>
             </div>
-        </footer>
-
-        <button v-if="!isOpen" class="fab-trigger" @click="openChat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="15" rx="4" ry="4" />
-                <path d="M5 18l-2 3v-5h2z" fill="currentColor" />
-                <line x1="8" y1="9" x2="16" y2="9" />
-                <line x1="8" y1="13" x2="14" y2="13" />
-            </svg>
+            <span class="fab-pulse"></span>
         </button>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, computed, onMounted } from 'vue'
+import { ref, reactive, nextTick, computed, onMounted, onUnmounted, watch } from 'vue'
 import { chatAPI } from '@/api/chat'
 import { useAuthStore } from '@/stores/auth'
 import {
-  Chart,
-  LineController,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Title,
-  Tooltip,
-  Legend
+    Chart,
+    LineController,
+    LineElement,
+    PointElement,
+    LinearScale,
+    CategoryScale,
+    Title,
+    Tooltip,
+    Legend
 } from 'chart.js'
 
 Chart.register(
-  LineController,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Title,
-  Tooltip,
-  Legend
+    LineController,
+    LineElement,
+    PointElement,
+    LinearScale,
+    CategoryScale,
+    Title,
+    Tooltip,
+    Legend
 )
 
 const authStore = useAuthStore()
@@ -166,94 +342,104 @@ const inputText = ref('')
 const isLoading = ref(false)
 const isComposing = ref(false)
 const chatBody = ref(null)
+const inputRef = ref(null)
 const messages = reactive([])
 const currentSessionId = ref(null)
 const quickQuestions = ref([])
+const isLoadingQuestions = ref(false)
+const inputFocused = ref(false)
+const showScrollButton = ref(false)
+const copied = ref(false)
 
 const getUserId = async () => {
-    // 1순위: localStorage userId (백엔드에서 직접 받은 값)
     const storedUserId = localStorage.getItem('userId')
     if (storedUserId) {
         const userId = parseInt(storedUserId)
-        if (userId > 0) {
-            console.log('[LOG] localStorage userId 사용:', userId)
-            return userId
-        }
+        if (userId > 0) return userId
     }
-    
-    // 2순위: authStore에서 가져오기 (id가 0이 아닌 경우)
+
     if (authStore.isAuthenticated && authStore.user?.id && authStore.user.id !== 0) {
-        console.log('[LOG] authStore.user.id 사용:', authStore.user.id)
         return authStore.user.id
     }
-    
-    // 3순위: localStorage user 객체에서 가져오기 (id가 0이 아닌 경우)
+
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
         try {
             const userObj = JSON.parse(storedUser)
-            if (userObj?.id && userObj.id !== 0) {
-                console.log('[LOG] localStorage user.id 사용:', userObj.id)
-                return userObj.id
-            }
+            if (userObj?.id && userObj.id !== 0) return userObj.id
         } catch (error) {
-            console.error('localStorage user 파싱 오류:', error)
+            // 파싱 오류 무시
         }
     }
-    
-    // 4순위: localStorage user_id 직접 가져오기 (호환성)
+
     const legacyUserId = localStorage.getItem('user_id')
     if (legacyUserId) {
         const userId = parseInt(legacyUserId)
-        if (userId > 0) {
-            console.log('[LOG] localStorage user_id 사용:', userId)
-            return userId
-        }
+        if (userId > 0) return userId
     }
-    
-    console.error('[ERROR] 모든 방법에서 사용자 ID를 찾을 수 없음')
+
     throw new Error('로그인이 필요합니다. 다시 로그인해주세요.')
 }
 
 const initializeChat = async () => {
+    isLoadingQuestions.value = true
     try {
-        console.log('[LOG] 새 세션 생성')
         const session = await chatAPI.createSession(await getUserId())
         currentSessionId.value = session.id
-        
+
         const suggestions = await chatAPI.getSuggestions(session.id)
-        
-        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
+
+        quickQuestions.value = suggestions.suggestions.map((text) => ({
             title: text,
-            desc: '유가 및 원유 시장 분석',
             query: text
         }))
     } catch (error) {
-        console.error('채팅 초기화 실패:', error)
-        quickQuestions.value = []
+        quickQuestions.value = [
+            { title: '오늘 브렌트유 가격은?', query: '오늘 브렌트유 가격 알려줘' },
+            { title: '최근 유가 동향 분석', query: '최근 유가 동향을 분석해줘' },
+            { title: '원유 시장 리스크 요인', query: '현재 원유 시장의 주요 리스크 요인은?' }
+        ]
+    } finally {
+        isLoadingQuestions.value = false
     }
 }
 
 const openChat = async () => {
     try {
-        // 로그인 체크
-        await getUserId() // 이 함수가 에러를 던지면 로그인이 안된 것
-        
+        await getUserId()
         isOpen.value = true
         if (!currentSessionId.value) {
             await initializeChat()
         }
+        nextTick(() => {
+            inputRef.value?.focus()
+        })
     } catch (error) {
-        console.error('채팅 열기 실패:', error)
         alert(error.message || '채팅을 사용하려면 로그인이 필요합니다.')
     }
 }
 
-const chatStyle = computed(() => ({
-    '--size': isOpen.value ? '420px' : '60px',
-    '--height': isOpen.value ? 'min(720px, calc(100vh - 48px))' : '60px',
-    '--radius': isOpen.value ? '24px' : '20px'
-}))
+const closeChat = () => {
+    isOpen.value = false
+}
+
+const clearChat = () => {
+    if (confirm('대화 내용을 모두 삭제하시겠습니까?')) {
+        messages.length = 0
+        endSession()
+        initializeChat()
+    }
+}
+
+const handleRefresh = () => {
+    if (messages.length > 0) {
+        // 메시지가 있으면 초기화
+        clearChat()
+    } else {
+        // 메시지가 없으면 추천 질문 새로고침
+        initializeChat()
+    }
+}
 
 const todayDate = computed(() => {
     const d = new Date()
@@ -268,8 +454,20 @@ const getTime = () => {
 
 const scrollToBottom = () => {
     nextTick(() => {
-        chatBody.value?.scrollTo({ top: chatBody.value.scrollHeight, behavior: 'smooth' })
+        if (chatBody.value) {
+            chatBody.value.scrollTo({
+                top: chatBody.value.scrollHeight,
+                behavior: 'smooth'
+            })
+        }
     })
+}
+
+const handleScroll = () => {
+    if (chatBody.value) {
+        const { scrollTop, scrollHeight, clientHeight } = chatBody.value
+        showScrollButton.value = scrollHeight - scrollTop - clientHeight > 100
+    }
 }
 
 const handleEnter = (e) => {
@@ -284,122 +482,102 @@ const handleSend = () => {
     inputText.value = ''
 }
 
-const delay = (ms) => new Promise(r => setTimeout(r, ms))
-
-// Chart.js 데이터 파싱
-const separateTextAndChart = (message) => {
-  const decoded = message.replace(/&quot;/g, '"')
-  const jsonStart = decoded.indexOf('{"chartType"')
-  
-  if (jsonStart === -1) {
-    return { text: message, chart: null }
-  }
-  
-  const text = message.substring(0, jsonStart).trim()
-  const jsonStr = decoded.substring(jsonStart)
-  let chart = null
-  
-  try {
-    chart = JSON.parse(jsonStr)
-  } catch (error) {
-    console.error('JSON 파싱 실패:', error)
-  }
-  
-  return { text, chart }
+const copyMessage = async (html) => {
+    const text = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+    try {
+        await navigator.clipboard.writeText(text)
+        copied.value = true
+        setTimeout(() => { copied.value = false }, 2000)
+    } catch (err) {
+        // 복사 실패 무시
+    }
 }
 
-// 차트 렌더링 (라인 차트만 지원)
-const renderChart = (canvas, chartData) => {
-  if (!canvas || !chartData) return
-  
-  new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: chartData.labels,
-      datasets: chartData.datasets
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: chartData.title
-        },
-        legend: {
-          display: true
-        }
-      },
-      scales: {
-        y: {
-          title: {
-            display: !!chartData.yAxisLabel,
-            text: chartData.yAxisLabel || ''
-          }
-        }
-      }
+const delay = (ms) => new Promise(r => setTimeout(r, ms))
+
+const separateTextAndChart = (message) => {
+    const decoded = message.replace(/&quot;/g, '"')
+    const jsonStart = decoded.indexOf('{"chartType"')
+
+    if (jsonStart === -1) {
+        return { text: message, chart: null }
     }
-  })
+
+    const text = message.substring(0, jsonStart).trim()
+    const jsonStr = decoded.substring(jsonStart)
+    let chart = null
+
+    try {
+        chart = JSON.parse(jsonStr)
+    } catch (error) {
+        // JSON 파싱 실패 무시
+    }
+
+    return { text, chart }
+}
+
+const renderChart = (canvas, chartData) => {
+    if (!canvas || !chartData) return
+
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: chartData.datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: chartData.title },
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: !!chartData.yAxisLabel,
+                        text: chartData.yAxisLabel || ''
+                    }
+                }
+            }
+        }
+    })
 }
 
 const formatResponse = (text) => {
-    return text
-        // 요약 섹션
-        .replace(/-요약-\s*/g, '<div class="summary-section"><div class="section-header"><span class="icon">📋</span><h3>요약</h3></div>')
-        .replace(/(?<=<\/h3><\/div>)([^<]+?)(?=\s*\d+\.)/g, '<div class="section-content">$1</div></div>')
-        
-        // 섹션 헤더 (강조된 제목)
-        .replace(/\*\*([^주요|최신|현재|분석|전망|영향|요인|상황|현황|정책|결정|수준|동향|전망|전략|전망|전망|전망]+?)\*\*/g, '<div class="section-title"><span class="title-icon">📈</span>$1</div>')
-        
-        // 표 처리 (| 로 구분된 데이터)
+    let processed = text.replace(/(\d+)\.(\d+)/g, '$1__DECIMAL__$2')
+
+    processed = processed
+        .replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\|([^|\n]+)\|([^|\n]+)\|([^|\n]*)/g, (match, col1, col2, col3) => {
             const cells = [col1, col2, col3].filter(cell => cell && cell.trim())
             if (cells.length >= 2) {
-                return `<div class="data-row"><span class="data-label">${col1.trim()}</span><span class="data-value">${col2.trim()}</span>${col3 ? `<span class="data-change">${col3.trim()}</span>` : ''}</div>`
+                return `<div class="data-row"><span class="label">${col1.trim()}</span><span class="value">${col2.trim()}</span>${col3 ? `<span class="change">${col3.trim()}</span>` : ''}</div>`
             }
             return match
         })
-        
-        // 가격 데이터 (숫자: $숫자 형태)
-        .replace(/([\w\s가-힣]+):\s*\$([\d,\.]+)\s*\(([+-][\d\.%]+)\)/g, '<div class="price-item"><span class="price-label">$1</span><span class="price-value">$$$2</span><span class="price-change $3">$3</span></div>')
-        
-        // 번호 목록 (줄바꿈 제거)
-        .replace(/(\d+)\s*[\r\n]+\s*([^\r\n]+)/g, '$1. $2')
-        .replace(/(\d+)\s*\n+\s*([^\n]+)/g, '$1. $2')
-        .replace(/(\d+)\s+([^\d\n][^\n]*)/g, '$1. $2')
-        .replace(/(\d+)\. ([^\n]+)/g, '<div class="numbered-item"><span class="number">$1</span><span class="content"><strong>$2</strong></span></div>')
-        
-        // 불릿 포인트
-        .replace(/^[-•]\s+(.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span class="bullet-text">$1</span></div>')
-        
-        // 강조 텍스트
-        .replace(/\*\*([^*]+)\*\*/g, '<strong class="highlight">$1</strong>')
-        .replace(/__([^_]+)__/g, '<strong class="highlight">$1</strong>')
-        
-        // 숫자 강조 (단위 포함)
-        .replace(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(b\/d|\ub9cc\s*배럴|배럴|%|달러)/g, '<span class="number-highlight">$1 $2</span>')
-        
-        // 줄바꿈 처리
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>')
-        
-        // 문단 태그
-        .replace(/^(?!<div|<h\d|<span)(.+?)(?=<div|<h\d|$)/gm, '<p>$1</p>')
-        
-        // 빈 태그 제거
+        .replace(/([\w\s가-힣]+):\s*\$([\d,\.]+)\s*\(([+-][\d\.%]+)\)/g, '<div class="price-row"><span class="label">$1</span><span class="price">$$$2</span><span class="change $3">$3</span></div>')
+        .replace(/^(\d{1,2})\.\s+(.+)$/gm, '<div class="list-item"><span class="num">$1</span><span class="text">$2</span></div>')
+        .replace(/^(\d{1,2})\s*\n+([^\d\n].+)$/gm, '<div class="list-item"><span class="num">$1</span><span class="text">$2</span></div>')
+        .replace(/^[-•]\s+(.+)$/gm, '<div class="bullet-item"><span class="dot"></span><span>$1</span></div>')
+        // 콤마가 포함된 숫자도 처리 (예: 425,691 배럴)
+        .replace(/(\d{1,3}(?:,\d{3})*(?:__DECIMAL__\d+)?)\s*(USD|b\/d|만\s*배럴|배럴|%|달러)/g, '<span class="highlight-num">$1 $2</span>')
+        .replace(/\n\n+/g, '</p><p>')
+        .replace(/\n/g, ' ')
         .replace(/<p>\s*<\/p>/g, '')
-        .replace(/<div class="section-content">\s*<\/div>/g, '')
+
+    processed = processed.replace(/__DECIMAL__/g, '.')
+
+    return `<p>${processed}</p>`
 }
 
 const typeWriter = async (msg, fullText) => {
     const formattedText = formatResponse(fullText)
     msg.answer = ''
-    
-    // HTML 태그를 고려한 안전한 타이핑
+
     let currentIndex = 0
     const textLength = formattedText.length
-    
+
     while (currentIndex <= textLength) {
-        // HTML 태그 내부에서는 빠르게 진행
         if (formattedText[currentIndex] === '<') {
             const tagEnd = formattedText.indexOf('>', currentIndex)
             if (tagEnd !== -1) {
@@ -408,25 +586,23 @@ const typeWriter = async (msg, fullText) => {
                 continue
             }
         }
-        
+
         msg.answer = formattedText.slice(0, currentIndex)
         currentIndex++
-        
-        // 더 빠른 타이핑
-        await delay(15)
-        
-        // 스크롤을 덜 빈번히 호출
-        if (currentIndex % 10 === 0) {
+
+        await delay(8)
+
+        if (currentIndex % 15 === 0) {
             scrollToBottom()
         }
     }
-    
+
     scrollToBottom()
 }
 
 const sendMessage = async (query) => {
     if (isLoading.value) return
-    
+
     try {
         isLoading.value = true
 
@@ -446,41 +622,38 @@ const sendMessage = async (query) => {
             await initializeChat()
         }
 
+        await delay(800)
         msg.status = 'tool'
         msg.toolText = '시장 데이터 분석 중...'
-        await delay(1000)
+        scrollToBottom()
 
         const response = await chatAPI.sendMessage(query, currentSessionId.value, await getUserId())
-        
+
         msg.status = 'complete'
         msg.answerTime = getTime()
-        
-        // 텍스트와 차트 분리
+
         const { text, chart } = separateTextAndChart(response.message)
-        
+
         await typeWriter(msg, text)
-        
-        // 차트 렌더링
+
         if (chart) {
-          msg.chartData = chart
-          nextTick(() => {
-            const canvas = document.querySelector(`#chart-${messages.length - 1}`)
-            if (canvas) {
-              renderChart(canvas, chart)
-            }
-          })
+            msg.chartData = chart
+            nextTick(() => {
+                const canvas = document.querySelector(`#chart-${messages.length - 1}`)
+                if (canvas) {
+                    renderChart(canvas, chart)
+                }
+            })
         }
-        
+
         msg.suggestions = response.suggestions || []
-        
+
     } catch (error) {
-        console.error('메시지 전송 실패:', error)
-        
         if (error.message === '로그인이 필요합니다.') {
             alert('로그인이 필요합니다.')
             return
         }
-        
+
         const msg = messages[messages.length - 1]
         if (msg) {
             msg.status = 'complete'
@@ -499,111 +672,110 @@ const endSession = async () => {
         try {
             await chatAPI.endSession(currentSessionId.value)
         } catch (error) {
-            console.error('세션 종료 실패:', error)
+            // 세션 종료 실패 무시
         }
         currentSessionId.value = null
     }
 }
 
-const closeChat = () => {
-    isOpen.value = false
-    endSession()
-}
-
-// 대시보드에서 미리 세션과 추천 질문 로드
 const preloadChatData = async () => {
     try {
-        console.log('[LOG] 채팅 데이터 미리 로드 시작')
         const session = await chatAPI.createSession(await getUserId())
         currentSessionId.value = session.id
-        
+
         const suggestions = await chatAPI.getSuggestions(session.id)
-        
-        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
+
+        quickQuestions.value = suggestions.suggestions.map((text) => ({
             title: text,
-            desc: '유가 및 원유 시장 분석',
             query: text
         }))
-        
-        console.log('[LOG] 채팅 데이터 미리 로드 완료')
     } catch (error) {
-        console.error('[LOG] 채팅 데이터 미리 로드 실패:', error)
+        // 미리 로드 실패 무시
     }
 }
 
-// 전역에서 사용할 수 있도록 export
 defineExpose({ preloadChatData })
 
 onMounted(() => {
-    // 컴포넌트 마운트 시 초기화는 하지 않고, 채팅 열 때만 초기화
+    // 스크롤 이벤트 리스너
+})
+
+watch(chatBody, (el) => {
+    if (el) {
+        el.addEventListener('scroll', handleScroll)
+    }
+}, { immediate: true })
+
+onUnmounted(() => {
+    if (chatBody.value) {
+        chatBody.value.removeEventListener('scroll', handleScroll)
+    }
 })
 </script>
 
 <style scoped>
+/* ===== 기본 컨테이너 ===== */
 .chatbot {
     position: fixed;
     right: 24px;
     bottom: 24px;
     z-index: 9999;
-    width: var(--size);
-    height: var(--height);
-    background: #fff;
-    border-radius: var(--radius);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.chatbot:not(.open) {
-    background: #ea580c;
-    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4);
-    cursor: pointer;
-}
-
-.chatbot:not(.open):hover {
-    transform: scale(1.05) translateY(-2px);
+.chatbot.open {
+    width: 420px;
+    height: min(740px, calc(100vh - 48px));
 }
 
 @media (max-width: 480px) {
     .chatbot.open {
-        right: 12px;
-        bottom: 12px;
-        width: calc(100vw - 24px);
-        height: calc(100vh - 24px);
-        border-radius: 20px;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
     }
 }
 
-.fab-trigger {
+/* ===== 채팅 컨테이너 ===== */
+.chat-container {
     width: 100%;
     height: 100%;
-    border: none;
-    background: transparent;
-    cursor: pointer;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.04),
+        0 24px 48px -12px rgba(0, 0, 0, 0.18);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    transition: transform 0.2s ease;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
 }
 
-.fab-trigger:hover {
-    transform: scale(1.1);
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
-.fab-trigger svg {
-    width: 28px;
-    height: 28px;
+@media (max-width: 480px) {
+    .chat-container {
+        border-radius: 0;
+    }
 }
 
-.header {
-    padding: 20px 24px;
+/* ===== 헤더 ===== */
+.chat-header {
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #f1f5f9;
 }
 
 .header-left {
@@ -612,458 +784,994 @@ onMounted(() => {
     gap: 12px;
 }
 
-.avatar {
-    width: 40px;
-    height: 40px;
+.bot-logo {
+    position: relative;
+    width: 44px;
+    height: 44px;
+}
+
+.logo-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #ea580c 0%, #ea580c 100%);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ea580c;
-    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
-.avatar svg {
-    width: 100%;
-    height: 100%;
+.logo-inner:hover {
+    transform: scale(1.05);
 }
 
-.header-text h1 {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 700;
-    color: #1f2937;
-}
-
-.header-text span {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-.close-btn {
+.robot-icon {
     width: 32px;
     height: 32px;
+}
+
+/* 로봇 아이콘 호버 애니메이션 */
+.robot-icon .antenna-ball {
+    animation: antennaPulse 2s ease-in-out infinite;
+}
+
+@keyframes antennaPulse {
+
+    0%,
+    100% {
+        fill: #22c55e;
+    }
+
+    50% {
+        fill: #4ade80;
+    }
+}
+
+.robot-icon .eye,
+.robot-icon .mouth-normal,
+.robot-icon .eye-highlight {
+    transition: opacity 0.2s ease;
+}
+
+.robot-icon .heart,
+.robot-icon .mouth-happy,
+.robot-icon .blush {
+    transition: opacity 0.3s ease;
+}
+
+/* 호버 시 눈은 그대로, 입만 더 밝게 웃음 */
+.logo-inner:hover .robot-icon .mouth-normal {
+    opacity: 0;
+}
+
+.logo-inner:hover .robot-icon .mouth-happy {
+    opacity: 1;
+}
+
+.logo-inner:hover .robot-icon .blush {
+    opacity: 0.6;
+}
+
+@keyframes heartBeat {
+    0% {
+        transform: scale(0.8);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.header-info h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+}
+
+.status-row span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #000000;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn,
+.close-btn {
+    width: 36px;
+    height: 36px;
     border: none;
-    background: #f3f4f6;
-    border-radius: 8px;
+    background: #f1f5f9;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6b7280;
-    transition: all 0.2s;
+    color: #64748b;
+    transition: all 0.2s ease;
 }
 
+.action-btn:hover,
 .close-btn:hover {
-    background: #e5e7eb;
-    color: #1f2937;
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
 }
 
+
+.action-btn svg,
 .close-btn svg {
     width: 18px;
     height: 18px;
 }
 
-.body {
+/* ===== 채팅 본문 ===== */
+.chat-body {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
-    background: #fafbfc;
+    padding: 20px;
+    background: #f8fafc;
+    position: relative;
 }
 
-.body::-webkit-scrollbar {
+.chat-body::-webkit-scrollbar {
     width: 6px;
 }
 
-.body::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+.chat-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-body::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
     border-radius: 3px;
 }
 
-.welcome {
+/* ===== 웰컴 화면 ===== */
+.welcome-screen {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
 }
 
-.welcome-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+.welcome-hero {
+    text-align: center;
+    padding: 24px 16px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.welcome-card h2 {
+.welcome-hero h2 {
     margin: 0 0 8px;
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 700;
-    color: #1f2937;
+    color: #0f172a;
 }
 
-.welcome-card p {
+.welcome-hero p {
     margin: 0;
     font-size: 14px;
-    color: #6b7280;
-    line-height: 1.5;
+    color: #64748b;
+    line-height: 1.6;
 }
 
-.quick-actions {
-    background: #fff;
+.welcome-hero strong {
+    color: #ea580c;
+}
+
+/* 추천 질문 섹션 */
+.quick-section {
+    background: #ffffff;
     border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.quick-label {
-    display: block;
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: #64748b;
+}
+
+.section-header svg {
+    width: 16px;
+    height: 16px;
+}
+
+.section-header span {
     font-size: 13px;
     font-weight: 600;
-    color: #374151;
-    margin-bottom: 12px;
 }
 
-.quick-list {
+/* 추천 질문 로딩 */
+.quick-loading {
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-spinner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-spinner-container span {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f1f5f9;
+    border-top-color: #ea580c;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.quick-grid {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.quick-btn {
+.quick-card {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 14px;
-    background: #f9fafb;
-    border: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     cursor: pointer;
-    text-align: left;
     transition: all 0.2s;
+    text-align: left;
 }
 
-.quick-btn:hover {
-    background: #f3f4f6;
+.quick-card:hover {
+    background: #fff7ed;
+    border-color: #fed7aa;
     transform: translateX(4px);
 }
 
-.quick-num {
-    width: 28px;
-    height: 28px;
-    background: #ea580c;
-    color: #fff;
-    border-radius: 8px;
+.card-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ea580c 0%, #ea580c 100%);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
+    color: white;
     flex-shrink: 0;
 }
 
-.quick-content {
+.card-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.card-text {
     flex: 1;
-}
-
-.quick-content strong {
-    display: block;
     font-size: 14px;
-    color: #1f2937;
-    margin-bottom: 2px;
+    font-weight: 500;
+    color: #0f172a;
 }
 
-.quick-content span {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.quick-btn svg {
+.card-arrow {
     width: 16px;
     height: 16px;
-    color: #9ca3af;
+    color: #94a3b8;
     flex-shrink: 0;
+    transition: transform 0.2s;
 }
 
-.quick-btn:hover svg {
+.quick-card:hover .card-arrow {
     color: #ea580c;
+    transform: translateX(4px);
 }
 
-.date-divider {
+/* 기능 목록 */
+.capabilities {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.cap-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.cap-item svg {
+    width: 14px;
+    height: 14px;
+    color: #22c55e;
+}
+
+/* ===== 날짜 배지 ===== */
+.date-badge {
     text-align: center;
     margin-bottom: 20px;
 }
 
-.date-divider span {
+.date-badge span {
+    display: inline-block;
+    padding: 6px 14px;
+    background: #ffffff;
+    border-radius: 20px;
     font-size: 12px;
-    color: #9ca3af;
+    color: #64748b;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.message-group {
+/* ===== 메시지 블록 ===== */
+.message-block {
     margin-bottom: 24px;
+    animation: fadeInUp 0.3s ease forwards;
+    animation-delay: var(--delay);
 }
 
-.user-row {
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 사용자 메시지 */
+.user-message {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     margin-bottom: 16px;
 }
 
-.user-bubble {
-    max-width: 80%;
+.message-content.user {
+    max-width: 85%;
     padding: 14px 18px;
-    background: #ea580c;
-    color: #fff;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #ffffff;
     border-radius: 20px 20px 6px 20px;
     font-size: 14px;
     line-height: 1.5;
-    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 
-.user-row time {
+.message-content.user p {
+    margin: 0;
+}
+
+.user-message time {
     font-size: 11px;
-    color: #9ca3af;
-    margin-top: 4px;
+    color: #94a3b8;
+    margin-top: 6px;
 }
 
-.bot-row {
+/* AI 메시지 */
+.ai-message {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
+    gap: 12px;
 }
 
-.bot-avatar {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
+.ai-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ea580c;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25);
 }
 
-.bot-avatar svg {
-    width: 100%;
-    height: 100%;
+.robot-mini {
+    width: 28px;
+    height: 28px;
 }
 
-.bot-content {
+.ai-content {
     flex: 1;
     min-width: 0;
 }
 
-.status-indicator {
+/* 생각중 인디케이터 */
+.thinking-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    gap: 10px;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-radius: 6px 20px 20px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.status-indicator span {
+.thinking-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.thinking-dots span {
+    width: 8px;
+    height: 8px;
+    background: #ea580c;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.thinking-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinking-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.thinking-text {
     font-size: 13px;
-    color: #6b7280;
+    color: #64748b;
 }
 
-.status-indicator svg {
-    width: 14px;
-    height: 14px;
-    color: #9ca3af;
+/* 분석중 인디케이터 */
+.analyzing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-radius: 6px 20px 20px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.status-bar {
-    width: 24px;
-    height: 3px;
-    background: #e5e7eb;
+.analyze-icon {
+    width: 32px;
+    height: 32px;
+    background: #fff7ed;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ea580c;
+    animation: pulse 2s infinite;
+}
+
+.analyze-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.analyze-info {
+    flex: 1;
+}
+
+.analyze-title {
+    display: block;
+    font-size: 13px;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #e2e8f0;
     border-radius: 2px;
     overflow: hidden;
 }
 
-.status-bar::after {
-    content: '';
-    display: block;
-    width: 100%;
+.progress-fill {
     height: 100%;
-    background: #9ca3af;
-    animation: slide 1.2s ease-in-out infinite;
+    width: 60%;
+    background: linear-gradient(90deg, #ea580c, #f97316);
+    border-radius: 2px;
+    animation: progress 1.5s ease-in-out infinite;
 }
 
-@keyframes slide {
+@keyframes progress {
     0% {
-        transform: translateX(-100%);
+        width: 20%;
+        margin-left: 0;
     }
 
     50% {
-        transform: translateX(0);
+        width: 60%;
+        margin-left: 20%;
     }
 
     100% {
-        transform: translateX(100%);
+        width: 20%;
+        margin-left: 80%;
     }
 }
 
-.bot-bubble {
-    background: #fff;
+/* AI 메시지 버블 */
+.message-bubble.ai {
+    background: #ffffff;
     padding: 16px 18px;
     border-radius: 6px 20px 20px 20px;
     font-size: 14px;
     line-height: 1.7;
-    color: #1f2937;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.bot-bubble :deep(strong) {
-    display: block;
+.message-bubble.ai :deep(p) {
+    margin: 0 0 12px;
+}
+
+.message-bubble.ai :deep(p:last-child) {
+    margin-bottom: 0;
+}
+
+.message-bubble.ai :deep(strong) {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.message-bubble.ai :deep(.list-item) {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.message-bubble.ai :deep(.list-item:last-child) {
+    border-bottom: none;
+}
+
+.message-bubble.ai :deep(.list-item .num) {
+    width: 24px;
+    height: 24px;
+    background: #ea580c;
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
     font-weight: 700;
-    color: #1f2937;
-    margin: 12px 0 6px;
+    flex-shrink: 0;
 }
 
-.bot-bubble :deep(strong:first-child) {
-    margin-top: 0;
+.message-bubble.ai :deep(.list-item .text) {
+    flex: 1;
+    padding-top: 2px;
 }
 
-.bot-content>time {
-    display: block;
+.message-bubble.ai :deep(.bullet-item) {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.message-bubble.ai :deep(.bullet-item .dot) {
+    width: 6px;
+    height: 6px;
+    background: #ea580c;
+    border-radius: 50%;
+    margin-top: 7px;
+    flex-shrink: 0;
+}
+
+.message-bubble.ai :deep(.highlight-num) {
+    font-weight: 600;
+    color: #ea580c;
+}
+
+.message-bubble.ai :deep(.data-row),
+.message-bubble.ai :deep(.price-row) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+.message-bubble.ai :deep(.data-row .label),
+.message-bubble.ai :deep(.price-row .label) {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.message-bubble.ai :deep(.data-row .value),
+.message-bubble.ai :deep(.price-row .price) {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* 차트 래퍼 */
+.chart-wrapper {
+    margin-top: 12px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* 메시지 액션 */
+.message-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.message-actions time {
     font-size: 11px;
-    color: #9ca3af;
-    margin-top: 6px;
+    color: #94a3b8;
 }
 
-.suggestions {
+.copy-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.copy-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 후속 질문 */
+.follow-up {
     margin-top: 14px;
 }
 
-.suggest-label {
+.follow-label {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: #6b7280;
+    color: #64748b;
     margin-bottom: 8px;
 }
 
-.suggest-list {
+.follow-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.suggest-btn {
+.follow-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     padding: 12px 14px;
-    background: #fff;
-    border: none;
-    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     cursor: pointer;
-    text-align: left;
     transition: all 0.2s;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    text-align: left;
 }
 
-.suggest-btn:hover {
-    background: #f9fafb;
-    transform: translateX(4px);
+.follow-btn:hover {
+    background: #fff7ed;
+    border-color: #fed7aa;
 }
 
-.suggest-dot {
-    width: 8px;
-    height: 8px;
-    background: #ea580c;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.suggest-btn>span:last-of-type {
-    flex: 1;
+.follow-btn span:first-child {
     font-size: 13px;
-    color: #374151;
+    color: #0f172a;
 }
 
-.suggest-btn svg {
+.follow-btn svg {
     width: 14px;
     height: 14px;
-    color: #9ca3af;
+    color: #94a3b8;
     flex-shrink: 0;
 }
 
-.suggest-btn:hover svg {
-    color: #ea580c
+.follow-btn:hover svg {
+    color: #ea580c;
 }
 
-.footer {
-    padding: 16px 20px;
-    background: #fff;
+/* 스크롤 버튼 */
+.scroll-bottom-btn {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.scroll-bottom-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.scroll-bottom-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===== 푸터/입력 ===== */
+.chat-footer {
+    padding: 16px 20px 20px;
+    background: #ffffff;
     border-top: 1px solid #f1f5f9;
 }
 
-.input-wrap {
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-wrapper {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #f3f4f6;
-    border-radius: 24px;
-    padding: 10px 16px;
+    background: #f1f5f9;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 6px 6px 6px 18px;
+    transition: all 0.2s;
 }
 
-.input-icon {
-    width: 18px;
-    height: 18px;
-    color: #9ca3af;
-    flex-shrink: 0;
+.input-wrapper.focused {
+    background: #ffffff;
+    border-color: #ea580c;
+    box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
 }
 
-.input-wrap input {
+.input-wrapper.disabled {
+    opacity: 0.7;
+}
+
+.input-wrapper input {
     flex: 1;
     border: none;
     outline: none;
     background: transparent;
     font-size: 14px;
-    color: #1f2937;
+    color: #0f172a;
+    padding: 10px 0;
 }
 
-.input-wrap input::placeholder {
-    color: #9ca3af;
+.input-wrapper input::placeholder {
+    color: #94a3b8;
 }
 
-.send-btn {
-    width: 40px;
-    height: 40px;
+.send-button {
+    width: 44px;
+    height: 44px;
     border: none;
-    background: #ea580c;
-    border-radius: 50%;
+    background: #e2e8f0;
+    border-radius: 12px;
     cursor: pointer;
-    color: #fff;
+    color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
-.send-btn:hover:not(:disabled) {
+.send-button.active {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+}
+
+.send-button.active:hover {
     transform: scale(1.05);
 }
 
-.send-btn:disabled {
-    opacity: 0.5;
+.send-button:disabled {
     cursor: not-allowed;
 }
 
-.send-btn svg {
-    width: 16px;
-    height: 16px;
+.send-button svg {
+    width: 18px;
+    height: 18px;
 }
 
-.spinner {
-    width: 16px;
-    height: 16px;
+.send-spinner {
+    width: 18px;
+    height: 18px;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
+    border-top-color: #ffffff;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
+}
+
+/* ===== FAB 버튼 ===== */
+.fab-button {
+    width: 64px;
+    height: 64px;
+    border: none;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow:
+        0 8px 24px rgba(234, 88, 12, 0.4),
+        0 4px 8px rgba(234, 88, 12, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-button:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow:
+        0 12px 32px rgba(234, 88, 12, 0.45),
+        0 6px 12px rgba(234, 88, 12, 0.25);
+}
+
+.fab-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.robot-fab {
+    width: 38px;
+    height: 38px;
+}
+
+/* FAB 로봇 호버 애니메이션 */
+.robot-fab .antenna-ball {
+    animation: antennaPulse 2s ease-in-out infinite;
+}
+
+.robot-fab .fab-eye,
+.robot-fab .fab-mouth-normal {
+    transition: opacity 0.2s ease;
+}
+
+.robot-fab .fab-heart,
+.robot-fab .fab-mouth-happy,
+.robot-fab .fab-blush {
+    transition: opacity 0.3s ease;
+}
+
+/* 호버 시 눈은 그대로, 입만 더 밝게 웃음 */
+.fab-button:hover .robot-fab .fab-mouth-normal {
+    opacity: 0;
+}
+
+.fab-button:hover .robot-fab .fab-mouth-happy {
+    opacity: 1;
+}
+
+.fab-button:hover .robot-fab .fab-blush {
+    opacity: 0.7;
+}
+
+.fab-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    animation: fabPulse 2s infinite;
+    z-index: -1;
+}
+
+@keyframes fabPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+/* ===== 트랜지션 ===== */
+.message-enter-active {
+    transition: all 0.3s ease;
+}
+
+.message-enter-from {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 
 @keyframes spin {
