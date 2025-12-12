@@ -1,7 +1,8 @@
 <template>
     <div>
-        <div v-if="loading" class="flex justify-center items-center h-64">
-            <div class="text-black-500">Loading...</div>
+        <div v-if="loading" class="chart-loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">데이터를 불러오는 중...</div>
         </div>
         <template v-else>
             <div class="chart-mode-toggle">
@@ -233,5 +234,36 @@ onBeforeUnmount(() => {
 
 :deep(rect:hover) {
     opacity: 0.85;
+}
+
+/* Loading Styles */
+.chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 256px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #ea580c;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

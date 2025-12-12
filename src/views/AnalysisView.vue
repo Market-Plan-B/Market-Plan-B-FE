@@ -9,7 +9,7 @@
                 <div class="key-indicators-grid">
                     <div class="key-indicator-card">
                         <div class="key-indicator-header">
-                            <span class="key-indicator-label">Brent Oil(예상)</span>
+                            <span class="key-indicator-label">Brent Oil(예측)</span>
                             <svg class="key-indicator-icon icon-orange" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -22,20 +22,19 @@
 
                     <div class="key-indicator-card">
                         <div class="key-indicator-header">
-                            <span class="key-indicator-label">예상 대비 변화</span>
-                            <svg :class="['key-indicator-icon', predictedChange >= 0 ? 'icon-green' : 'icon-red']"
+                            <span class="key-indicator-label">예측 대비 변화 (실제 - 예측)</span>
+                            <svg :class="['key-indicator-icon', predictedBrentPrice >= 0 ? 'icon-green' : 'icon-red']"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </div>
-                        <div :class="['key-indicator-value', predictedChange >= 0 ? 'value-green' : 'value-red']">
-                            {{ fmt(predictedBrentPrice) }}
+                        <div :class="['key-indicator-value', predictedBrentPrice >= 0 ? 'value-green' : 'value-red']">
+                            {{ predictedBrentPrice >= 0 ? '+' : '' }}{{ fmt(predictedBrentPrice) }}
                         </div>
-                        <span
-                            :class="['key-indicator-badge', predictedChange >= 0 ? 'badge-positive' : 'badge-negative']">
-                            {{ predictedChangePercent >= 0 ? '+' : '' }}{{ fmt(predictedChangePercent) }}%
-                        </span>
+                        <div class="key-indicator-description">
+                            {{ changeDescription }}
+                        </div>
                     </div>
 
                     <div class="key-indicator-card">
@@ -140,7 +139,7 @@ const financial = ref<FinancialData>({
     wti: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
     crack: { value: 0 },
     naturalGas: { value: 0, change: 0 },
-    heatingOil: { value: 0, change: 0 },
+    heatingOil: { value: 0, change: 0 }, // RBOB Gasoline (RB=F)
     usdkrw: { price: 0 },
     cnyusd: { price: 0 },
     eurusd: { price: 0, change: 0 },
@@ -197,18 +196,18 @@ const coreIndicators = computed(() => {
         supply: [
             { key: 'brent', label: 'Brent Crude', value: f.brent.price, trend: f.brent.changePercent || 0, prefix: '$', color: '#f97316', description: '북해산 원유 현물가', history: h.brent },
             { key: 'wti', label: 'WTI Crude', value: f.wti.price, trend: f.wti.changePercent || 0, prefix: '$', color: '#64748b', description: '서부 텍사스산 원유', history: h.wti },
-            { key: 'spread', label: 'Brent-WTI Spread', value: spread.value, trend: calcTrend(calcSpreadHistory()), prefix: '$', color: '#3b82f6', description: '지역 프리미엄/공급 병목', history: calcSpreadHistory() },
+            { key: 'spread', label: 'Brent-WTI Spread', value: spread.value, trend: calcTrend(calcSpreadHistory()), prefix: '$', color: '#3b82f6', description: '지역별 원유 가격 차이 (Brent - WTI)', history: calcSpreadHistory() },
             { key: 'gas', label: 'Natural Gas', value: f.naturalGas.value, trend: f.naturalGas.change || 0, prefix: '$', color: '#10b981', description: '천연가스 선물', history: h.naturalGas },
         ],
         macro: [
             { key: 'dxy', label: 'Dollar Index', value: f.dxy.index, trend: f.dxy.change || 0, color: '#8b5cf6', description: 'USD 강세 = 유가 하락 압력', history: h.dxy },
-            { key: 'us10y', label: 'US 10Y Yield', value: f.us10y.rate, trend: calcTrend(h.us10y), suffix: '%', color: '#0ea5e9', description: '장기 금리 (경기 전망)', history: h.us10y },
-            { key: 'us2y', label: 'US 2Y Yield', value: f.us2y.rate, trend: calcTrend(h.us2y), suffix: '%', color: '#06b6d4', description: '단기 금리 (Fed 정책)', history: h.us2y },
-            { key: 'eurusd', label: 'EUR/USD', value: f.eurusd.price, trend: f.eurusd.change || 0, prefix: '$', color: '#22c55e', description: '유로/달러 환율', history: h.eurusd },
+            { key: 'us10y', label: 'US 10Y Yield', value: f.us10y.rate, trend: calcTrend(h.us10y), suffix: '%', color: '#0ea5e9', description: '미국 장기 금리 (금리 상승 = 유가 하락 압력)', history: h.us10y },
+            { key: 'us2y', label: 'US 2Y Yield', value: f.us2y.rate, trend: calcTrend(h.us2y), suffix: '%', color: '#06b6d4', description: '미국 단기 금리 (Fed 정책 방향)', history: h.us2y },
+            { key: 'eurusd', label: 'USD/CNY', value: f.eurusd.price, trend: f.eurusd.change || 0, prefix: '¥', color: '#22c55e', description: '달러/위안 환율 (위안 약세 시 유가 상승 요인)', history: h.eurusd },
         ],
         commodity: [
-            { key: 'heating', label: 'Heating Oil', value: f.heatingOil.value, trend: f.heatingOil.change || 0, prefix: '$', color: '#f43f5e', description: '난방유 선물', history: h.heatingOil },
-            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: 0, prefix: '$', color: '#ec4899', description: '정제 마진', history: [] },
+            { key: 'heating', label: 'RBOB Gasoline', value: f.heatingOil.value, trend: f.heatingOil.change || 0, prefix: '$', color: '#f43f5e', description: '휘발유 선물 (RB=F) - 정제 마진과 유가의 핵심 지표', history: h.heatingOil },
+            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: 0, prefix: '$', color: '#ec4899', description: '정유 정제 마진 (정제제품 가격 -  원유 가격)', history: [] },
             { key: 'copper', label: 'Copper', value: f.copper.value, trend: f.copper.change || 0, prefix: '$', color: '#b45309', description: '구리 (경기 선행지표)', history: h.copper },
             { key: 'gold', label: 'Gold', value: f.gold.value, trend: f.gold.change || 0, prefix: '$', color: '#eab308', description: '금 (인플레 헤지)', history: h.gold },
         ],
@@ -232,9 +231,14 @@ const predictedChange = computed(() => {
     return financial.value.brent.price - predictedBrentPrice.value;
 });
 
-const predictedChangePercent = computed(() => {
-    if (!predictedBrentPrice.value) return 0;
-    return (predictedChange.value / predictedBrentPrice.value) * 100;
+const changeDescription = computed(() => {
+    if (predictedChange.value > 0) {
+        return '실제 가격이 예측값보다 낮게 나타났습니다.';
+    } else if (predictedChange.value < 0) {
+        return '실제 가격이 예측값보다 높게 나타났습니다.';
+    } else {
+        return '실제 가격이 예측값과 동일하게 나타났습니다.';
+    }
 });
 
 const fmt = (v?: number, decimals = 2) => v?.toFixed(decimals) ?? '-';
@@ -428,7 +432,13 @@ onMounted(() => {
 .key-indicator-unit {
     font-size: 13px;
     color: #4b5563;
-    font-weight: 500;
+    font-weight: 400;
+}
+
+.key-indicator-description {
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 400;
 }
 
 .text-muted {
@@ -506,10 +516,11 @@ onMounted(() => {
 }
 
 .indicator-card {
-    background: #fafafa;
-    border: 1px solid #e5e7eb;
+    background: #fff;
     border-radius: 8px;
-    padding: 16px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 

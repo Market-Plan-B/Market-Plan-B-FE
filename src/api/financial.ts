@@ -16,7 +16,7 @@ export interface FinancialData {
   wti: any;
   crack: { value: number };
   naturalGas: { value: number; change: number };
-  heatingOil: { value: number; change: number };
+  heatingOil: { value: number; change: number }; // RBOB Gasoline (RB=F)
   usdkrw: { price: number };
   cnyusd: { price: number };
   eurusd: { price: number; change: number };
@@ -175,6 +175,12 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
   const response = await axios.get(`${BACKEND_API}/all`, { timeout: 30000 });
   const d = response.data.data;
 
+  // USD/CNY 데이터 - 백엔드 API에서 가져오기 (CNYUSD=X 티커 사용)
+  const eurusdData = {
+    price: d["CNYUSD=X"]?.price ?? 0,
+    change: d["CNYUSD=X"]?.changePercent ?? 0,
+  };
+
   return {
     brent: {
       price: d["BZ=F"]?.price ?? 0,
@@ -196,14 +202,16 @@ export const loadAllFinancialData = async (): Promise<FinancialData> => {
       change: d["NG=F"]?.changePercent ?? 0,
     },
     heatingOil: {
-      value: d["HO=F"]?.price ?? 0,
-      change: d["HO=F"]?.changePercent ?? 0,
+      // RBOB Gasoline (RB=F) - 휘발유 선물
+      value: d["RB=F"]?.price ?? 0,
+      change: d["RB=F"]?.changePercent ?? 0,
     },
     usdkrw: { price: d["KRW=X"]?.price ?? 0 },
     cnyusd: { price: d["CNYUSD=X"]?.price ?? 0 },
     eurusd: {
-      price: d["EURUSD=X"]?.price ?? 0,
-      change: d["EURUSD=X"]?.changePercent ?? 0,
+      // USD/CNY 데이터 (백엔드 API에서 가져옴 - CNYUSD=X 티커)
+      price: eurusdData.price,
+      change: eurusdData.change,
     },
     dxy: {
       index: d["DX-Y.NYB"]?.price ?? 0,
@@ -278,7 +286,7 @@ export const loadAllHistoryData = async (days = 7): Promise<HistoryData> => {
     "BZ=F",
     "CL=F",
     "NG=F",
-    "HO=F",
+    "RB=F",
     "DX-Y.NYB",
     "^GSPC",
     "^VIX",
@@ -286,7 +294,7 @@ export const loadAllHistoryData = async (days = 7): Promise<HistoryData> => {
     "HG=F",
     "^TNX",
     "^IRX",
-    "EURUSD=X",
+    "CNYUSD=X",
   ];
   const results = await Promise.all(symbols.map((s) => fetchHistory(s, days)));
 

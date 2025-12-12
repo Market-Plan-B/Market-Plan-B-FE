@@ -64,7 +64,8 @@
                         </div>
                     </div>
                     <div v-else class="empty-state">
-                        <p class="empty-title"> 선택하신 날짜에는 카드뉴스가 제공되지 않습니다.</p>
+                        <p class="empty-title">카드 뉴스가 없습니다</p>
+                        <p class="empty-subtitle">선택한 날짜의 카드 뉴스를 찾을 수 없습니다</p>
                     </div>
                 </div>
             </Transition>
@@ -76,8 +77,7 @@
                 <Transition name="fade" mode="out-in">
                     <div v-if="isLoading" class="loading-state">
                         <div class="loading-spinner"></div>
-                        <p class="loading-title">리포트를 생성하고 있습니다</p>
-                        <p class="loading-subtitle">최신 데이터를 분석 중입니다...</p>
+                        <p class="loading-title">리포트를 불러오는 중...</p>
                         <div class="loading-progress">
                             <div class="progress-bar" :style="{ width: loadingProgress + '%' }"></div>
                         </div>
@@ -599,7 +599,7 @@ onMounted(() => {
 
 .empty-title {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
     color: #000000;
     margin-bottom: 8px;
 }

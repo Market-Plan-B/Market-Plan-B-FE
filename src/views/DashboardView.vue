@@ -149,7 +149,7 @@ onMounted(async () => {
 
 .lottie-fixed {
     position: absolute;
-    top: 36px;
+    top: 26px;
     right: 48px;
     z-index: 50;
     display: flex;
@@ -173,7 +173,7 @@ onMounted(async () => {
     text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
-    margin-top: -6px;
+    margin-top: 5px;
 }
 
 .impact-card:hover {
@@ -223,7 +223,7 @@ onMounted(async () => {
 .dashboard-card-title {
     font-weight: 600;
     margin-bottom: 0.75rem;
-    color: #374151;
+    color: #000000;
 }
 
 .chart-overflow {
