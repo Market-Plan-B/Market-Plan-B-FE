@@ -153,7 +153,6 @@ defineExpose({
 
 const loadNotifications = async () => {
     if (!authStore.user?.id) {
-        console.error('User ID not found');
         return;
     }
 

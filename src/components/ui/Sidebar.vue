@@ -309,7 +309,7 @@ const handleLogout = async () => {
 }
 
 .nav-icon-active {
-    color: #ffffff;
+    color: #ea580c;
 }
 
 .nav-icon-inactive {

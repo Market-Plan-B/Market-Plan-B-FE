@@ -28,7 +28,10 @@
             <template v-if="supplyTab === 'usStocks'">
                 <h3 class="impact-summary-title">US 원유 재고 요약</h3>
 
-                <div v-if="usStocksLoading" class="us-stocks-loading">데이터 불러오는 중...</div>
+                <div v-if="usStocksLoading" class="data-loading">
+                    <div class="data-loading-spinner"></div>
+                    <span>데이터 불러오는 중...</span>
+                </div>
                 <div v-else-if="!crudeStocksDisplay" class="us-stocks-empty">데이터 없음</div>
 
                 <div v-else class="seasonal-list">
@@ -59,7 +62,10 @@
             <template v-else-if="supplyTab === 'oecdStocks'">
                 <h3 class="impact-summary-title">OECD 상업 재고</h3>
 
-                <div v-if="oecdLoading" class="us-stocks-loading">데이터 불러오는 중...</div>
+                <div v-if="oecdLoading" class="data-loading">
+                    <div class="data-loading-spinner"></div>
+                    <span>데이터 불러오는 중...</span>
+                </div>
                 <div v-else-if="!oecdRegions.length" class="us-stocks-empty">데이터 없음</div>
 
                 <div v-else class="seasonal-list">
@@ -97,7 +103,10 @@
             <template v-else-if="supplyTab === 'supplyMonitor'">
                 <h3 class="impact-summary-title">주요 산유국 생산 현황</h3>
 
-                <div v-if="supplyLoading" class="us-stocks-loading">데이터 불러오는 중...</div>
+                <div v-if="supplyLoading" class="data-loading">
+                    <div class="data-loading-spinner"></div>
+                    <span>데이터 불러오는 중...</span>
+                </div>
                 <div v-else-if="!supplyProducers.length" class="us-stocks-empty">데이터 없음</div>
 
                 <div v-else class="supply-producer-list">
@@ -347,81 +356,100 @@
         </div>
 
         <!-- 나라 뉴스 모달 -->
-        <transition name="fade-zoom">
-            <div v-if="selectedCountry" class="modal-overlay">
-                <div class="modal-container">
-                    <button @click="closeModal" class="modal-close-btn">X</button>
-                    <h2 class="modal-title">{{ selectedCountry.name }} 주요 뉴스</h2>
-                    <div class="modal-content">
+        <transition name="modal-fade">
+            <div v-if="selectedCountry" class="modal-backdrop" @click.self="closeModal">
+                <div class="modal-panel">
+                    <header class="modal-header">
+                        <h2 class="modal-title">{{ selectedCountry.name }} 주요 뉴스</h2>
+                        <button @click="closeModal" class="close-btn">X</button>
+                    </header>
+                    <div class="modal-body">
                         <div v-if="!selectedCountry.articles.length" class="modal-empty">
                             <div class="modal-empty-icon">📰</div>
                             <div class="modal-empty-text">현재 표시할 뉴스가 없어요</div>
                         </div>
-                        <div v-else class="modal-news-container">
-                            <div class="modal-news-list">
-                                <div v-for="(news, idx) in currentPageNews" :key="idx" class="modal-news-card">
-                                    <div class="news-card-header">
-                                        <h3 class="news-card-title">{{ news.title }}</h3>
-                                        <span class="news-card-level">{{ news.level }}</span>
-                                    </div>
-                                    <p class="news-card-desc">{{ news.desc }}</p>
-                                    <div class="news-card-footer">
-                                        <a :href="news.url" target="_blank" rel="noopener noreferrer"
-                                            class="news-card-link">원본
-                                            Link</a>
-                                        <p class="news-card-date">{{ news.date }}</p>
-                                    </div>
+                        <template v-else>
+                            <section v-for="(news, idx) in currentPageNews" :key="idx" class="info-card news-card">
+                                <div class="card-header news-header">
+                                    <h3>{{ news.title }}</h3>
+                                    <span class="news-level">{{ news.level }}</span>
                                 </div>
-                            </div>
-                        </div>
+                                <p class="news-desc">{{ news.desc }}</p>
+                                <div class="news-footer">
+                                    <a :href="news.url" target="_blank" rel="noopener noreferrer" class="news-link">원본
+                                        Link</a>
+                                    <span class="news-date">{{ news.date }}</span>
+                                </div>
+                            </section>
+                        </template>
                     </div>
                 </div>
             </div>
         </transition>
 
         <!-- 영향도 요약 모달 -->
-        <transition name="fade-zoom">
-            <div v-if="showImpactSummaryModal" class="modal-overlay">
-                <div class="modal-container impact-summary-modal">
-                    <button @click="closeImpactSummaryModal" class="modal-close-btn">X</button>
-                    <h2 class="modal-title">국가별 영향도 전체 목록</h2>
-                    <div class="modal-content">
-                        <div class="impact-summary-modal-content">
-                            <div v-if="urgentList.length" class="impact-category-section">
-                                <div class="impact-category-label impact-label-urgent">🟥 긴급 ({{ urgentList.length }}개)
-                                </div>
-                                <div class="category-country-grid">
-                                    <div v-for="(country, idx) in urgentList" :key="idx" class="category-country-item">
-                                        {{ country }}
-                                    </div>
+        <transition name="modal-fade">
+            <div v-if="showImpactSummaryModal" class="modal-backdrop" @click.self="closeImpactSummaryModal">
+                <div class="modal-panel">
+                    <header class="modal-header">
+                        <h2 class="modal-title">국가별 영향도 전체 목록</h2>
+                        <button @click="closeImpactSummaryModal" class="close-btn">X</button>
+                    </header>
+                    <div class="modal-body">
+                        <section v-if="urgentListData.length" class="info-card impact-section-card">
+                            <div class="card-header impact-header">
+                                <span class="impact-dot urgent"></span>
+                                <h3>긴급</h3>
+                                <span class="impact-count">{{ urgentListData.length }}개국</span>
+                            </div>
+                            <div class="impact-country-grid">
+                                <div v-for="(country, idx) in urgentListData" :key="idx"
+                                    class="impact-country-chip urgent clickable"
+                                    @click="onCountryChipClick(country.code)">
+                                    {{ country.name }}
                                 </div>
                             </div>
-                            <div v-if="highList.length" class="impact-category-section">
-                                <div class="impact-category-label impact-label-high">🟧 높음 ({{ highList.length }}개)
-                                </div>
-                                <div class="category-country-grid">
-                                    <div v-for="(country, idx) in highList" :key="idx" class="category-country-item">
-                                        {{ country }}
-                                    </div>
+                        </section>
+                        <section v-if="highListData.length" class="info-card impact-section-card">
+                            <div class="card-header impact-header">
+                                <span class="impact-dot high"></span>
+                                <h3>높음</h3>
+                                <span class="impact-count">{{ highListData.length }}개국</span>
+                            </div>
+                            <div class="impact-country-grid">
+                                <div v-for="(country, idx) in highListData" :key="idx"
+                                    class="impact-country-chip high clickable"
+                                    @click="onCountryChipClick(country.code)">
+                                    {{ country.name }}
                                 </div>
                             </div>
-                            <div v-if="midList.length" class="impact-category-section">
-                                <div class="impact-category-label impact-label-mid">🟨 중간 ({{ midList.length }}개)</div>
-                                <div class="category-country-grid">
-                                    <div v-for="(country, idx) in midList" :key="idx" class="category-country-item">
-                                        {{ country }}
-                                    </div>
+                        </section>
+                        <section v-if="midListData.length" class="info-card impact-section-card">
+                            <div class="card-header impact-header">
+                                <span class="impact-dot mid"></span>
+                                <h3>중간</h3>
+                                <span class="impact-count">{{ midListData.length }}개국</span>
+                            </div>
+                            <div class="impact-country-grid">
+                                <div v-for="(country, idx) in midListData" :key="idx"
+                                    class="impact-country-chip mid clickable" @click="onCountryChipClick(country.code)">
+                                    {{ country.name }}
                                 </div>
                             </div>
-                            <div v-if="lowList.length" class="impact-category-section">
-                                <div class="impact-category-label impact-label-low">🟩 낮음 ({{ lowList.length }}개)</div>
-                                <div class="category-country-grid">
-                                    <div v-for="(country, idx) in lowList" :key="idx" class="category-country-item">
-                                        {{ country }}
-                                    </div>
+                        </section>
+                        <section v-if="lowListData.length" class="info-card impact-section-card">
+                            <div class="card-header impact-header">
+                                <span class="impact-dot low"></span>
+                                <h3>낮음</h3>
+                                <span class="impact-count">{{ lowListData.length }}개국</span>
+                            </div>
+                            <div class="impact-country-grid">
+                                <div v-for="(country, idx) in lowListData" :key="idx"
+                                    class="impact-country-chip low clickable" @click="onCountryChipClick(country.code)">
+                                    {{ country.name }}
                                 </div>
                             </div>
-                        </div>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -445,6 +473,29 @@ const SEASONAL_SOURCE_ID = 'seasonal-bands';
 const SEASONAL_LAYER_ID = 'seasonal-overlay';
 
 const mapImpactData = ref<MapImpact[]>([]);
+
+// 나라별로 최대 절대값 region_score를 가진 데이터만 남기기
+const aggregatedMapImpactData = computed(() => {
+    const countryMap = new Map<string, MapImpact>();
+
+    mapImpactData.value.forEach((item) => {
+        if (!item.code || typeof item.code !== 'string') return;
+
+        const code = item.code.toUpperCase();
+        const existing = countryMap.get(code);
+
+        if (!existing) {
+            countryMap.set(code, item);
+        } else {
+            if (Math.abs(item.region_score) > Math.abs(existing.region_score)) {
+                countryMap.set(code, item);
+            }
+        }
+    });
+
+    return Array.from(countryMap.values());
+});
+
 const mapContainer = ref<HTMLElement | null>(null);
 const mapInstance = ref<maplibregl.Map | null>(null);
 const mapLoading = ref(true);
@@ -878,10 +929,17 @@ const marketIndicators = ref<MarketIndicator[]>([
 
 const currentPageNews = computed(() => selectedCountry.value?.articles || []);
 
-const urgentList = computed(() => mapImpactData.value.filter((i) => i.region_score >= 0.8).map((i) => i.name));
-const highList = computed(() => mapImpactData.value.filter((i) => i.region_score >= 0.6 && i.region_score < 0.8).map((i) => i.name));
-const midList = computed(() => mapImpactData.value.filter((i) => i.region_score >= 0.4 && i.region_score < 0.6).map((i) => i.name));
-const lowList = computed(() => mapImpactData.value.filter((i) => i.region_score < 0.4).map((i) => i.name));
+// 국가 목록 (name과 code 포함) - 절대값 기준으로 분류 (나라별 최대값 기준)
+const urgentListData = computed(() => aggregatedMapImpactData.value.filter((i) => Math.abs(i.region_score) >= 0.7).map((i) => ({ name: i.name, code: i.code })));
+const highListData = computed(() => aggregatedMapImpactData.value.filter((i) => Math.abs(i.region_score) >= 0.5 && Math.abs(i.region_score) < 0.7).map((i) => ({ name: i.name, code: i.code })));
+const midListData = computed(() => aggregatedMapImpactData.value.filter((i) => Math.abs(i.region_score) >= 0.3 && Math.abs(i.region_score) < 0.5).map((i) => ({ name: i.name, code: i.code })));
+const lowListData = computed(() => aggregatedMapImpactData.value.filter((i) => Math.abs(i.region_score) < 0.3).map((i) => ({ name: i.name, code: i.code })));
+
+// 기존 호환성을 위해 이름만 추출한 리스트
+const urgentList = computed(() => urgentListData.value.map((i) => i.name));
+const highList = computed(() => highListData.value.map((i) => i.name));
+const midList = computed(() => midListData.value.map((i) => i.name));
+const lowList = computed(() => lowListData.value.map((i) => i.name));
 
 const displayedUrgentList = computed(() => urgentList.value.slice(0, 3));
 const displayedHighList = computed(() => highList.value.slice(0, 3));
@@ -906,6 +964,20 @@ function closeImpactSummaryModal() {
     showImpactSummaryModal.value = false;
 }
 
+// 영향도 모달에서 국가 클릭 시 뉴스 모달 열기
+async function onCountryChipClick(countryCode: string) {
+    // 영향도 모달 닫기
+    closeImpactSummaryModal();
+
+    // 해당 국가 뉴스 가져오기
+    try {
+        const response = await dashboardAPI.getRegionImpact(countryCode);
+        openModal(response.data.region, response.data.contents || []);
+    } catch (error) {
+        console.error(`나라 뉴스 로드 실패: ${countryCode}`, error);
+    }
+}
+
 // 7) Map Interactions
 function focusProducer(producer: SupplyProducer) {
     mapInstance.value?.flyTo({ center: [producer.lon, producer.lat], zoom: 4, duration: 1500 });
@@ -922,58 +994,37 @@ function restoreImpactViewColors() {
     const map = mapInstance.value;
     if (!map || !map.getLayer('country-fill')) return;
 
-    // Impact View로 돌아갈 때 원래 색상으로 복원
+    // Impact View로 돌아갈 때 원래 색상으로 복원 (절대값 기준)
     const getColorByScore = (score: number) => {
+        const absScore = Math.abs(score);
         // 점수가 0~1 사이의 값인 경우 (0.0 ~ 1.0)
-        if (score <= 1) {
-            if (score >= 0.8) return '#dc2626';
-            if (score >= 0.6) return '#ea580c';
-            if (score >= 0.4) return '#facc15';
-            if (score >= 0.2) return '#22c55e';
+        if (absScore <= 1) {
+            if (absScore >= 0.7) return '#dc2626';  // 긴급 (빨강)
+            if (absScore >= 0.5) return '#ea580c';  // 높음 (주황)
+            if (absScore >= 0.3) return '#facc15';  // 중간 (노랑)
+            if (absScore > 0.1) return '#22c55e';     // 낮음 (초록)
             return 'transparent';
         }
         // 점수가 1보다 큰 경우 (기존 로직)
-        if (score >= 8) return '#dc2626';
-        if (score >= 6) return '#ea580c';
-        if (score >= 4) return '#facc15';
-        if (score >= 2) return '#22c55e';
+        if (absScore >= 7) return '#dc2626';
+        if (absScore >= 5) return '#ea580c';
+        if (absScore >= 3) return '#facc15';
+        if (absScore > 1) return '#22c55e';
         return 'transparent';
     };
 
-    if (mapImpactData.value.length === 0) {
-        console.warn('No map impact data available for coloring');
-        return;
-    }
+    if (aggregatedMapImpactData.value.length === 0) return;
 
-    // 중복 제거를 위한 Map 사용
-    const colorMap = new Map<string, string>();
-    mapImpactData.value.forEach((item) => {
+    // aggregatedMapImpactData는 이미 나라별 최대값만 포함
+    const colorMatch: string[] = [];
+    aggregatedMapImpactData.value.forEach((item) => {
         if (item.code && typeof item.code === 'string' && item.code.length === 3) {
-            // ISO 코드는 3자리 문자열이어야 함 (OECD 같은 것 제외)
             const code = item.code.toUpperCase();
-            // 알파벳만 포함된 3자리 코드인지 확인
             if (/^[A-Z]{3}$/.test(code)) {
-                const color = getColorByScore(item.region_score);
-                // 중복된 코드가 있으면 첫 번째 값 유지
-                if (!colorMap.has(code)) {
-                    colorMap.set(code, color);
-                } else {
-                    console.warn(`중복된 ISO 코드 발견: ${code} (${item.name})`);
-                }
-            } else {
-                console.warn('Invalid ISO code format for country:', item.name, 'code:', item.code);
+                colorMatch.push(code, getColorByScore(item.region_score));
             }
-        } else if (item.code) {
-            console.warn('Invalid ISO code for country:', item.name, 'code:', item.code);
         }
     });
-
-    const colorMatch: string[] = [];
-    colorMap.forEach((color, code) => {
-        colorMatch.push(code, color);
-    });
-
-    console.log('Applying colors to', colorMatch.length / 2, 'countries');
 
     map.setPaintProperty('country-fill', 'fill-color', [
         'match',
@@ -1064,8 +1115,6 @@ async function loadMapData() {
     try {
         const response = await dashboardAPI.getMapImpact();
         mapImpactData.value = response.data;
-        console.log('Map data loaded:', mapImpactData.value.length, 'countries');
-        console.log('Sample data:', mapImpactData.value.slice(0, 3));
 
         // 지도가 이미 로드된 경우 색상 적용
         if (mapInstance.value && mapInstance.value.getLayer('country-fill')) {
@@ -1129,52 +1178,33 @@ async function initMap() {
         ).then((r) => r.json());
 
         const getColorByScore = (score: number) => {
-            // 점수가 0~1 사이의 값인 경우 (0.0 ~ 1.0)
-            if (score <= 1) {
-                if (score >= 0.8) return '#dc2626';  // 매우 높음 (빨강)
-                if (score >= 0.6) return '#ea580c';  // 높음 (주황)
-                if (score >= 0.4) return '#facc15';  // 중간 (노랑)
-                if (score >= 0.2) return '#22c55e';  // 낮음 (초록)
-                return 'transparent';  // 매우 낮음
+            const absScore = Math.abs(score);
+            // 점수가 0~1 사이의 값인 경우 (0.0 ~ 1.0) - 절대값 기준
+            if (absScore <= 1) {
+                if (absScore >= 0.7) return '#dc2626';  // 긴급 (빨강)
+                if (absScore >= 0.5) return '#ea580c';  // 높음 (주황)
+                if (absScore >= 0.3) return '#facc15';  // 중간 (노랑)
+                if (absScore > 0.1) return '#22c55e';     // 낮음 (초록)
+                return 'transparent';
             }
             // 점수가 1보다 큰 경우 (기존 로직)
-            if (score >= 8) return '#dc2626';
-            if (score >= 6) return '#ea580c';
-            if (score >= 4) return '#facc15';
-            if (score >= 2) return '#22c55e';
+            if (absScore >= 7) return '#dc2626';
+            if (absScore >= 5) return '#ea580c';
+            if (absScore >= 3) return '#facc15';
+            if (absScore > 1) return '#22c55e';
             return 'transparent';
         };
 
-        // 중복 제거를 위한 Map 사용
-        const colorMap = new Map<string, string>();
-        mapImpactData.value.forEach((item) => {
+        // aggregatedMapImpactData는 이미 나라별 최대값만 포함
+        const colorMatch: string[] = [];
+        aggregatedMapImpactData.value.forEach((item) => {
             if (item.code && typeof item.code === 'string' && item.code.length === 3) {
-                // ISO 코드는 3자리 문자열이어야 함 (OECD 같은 것 제외)
                 const code = item.code.toUpperCase();
-                // 알파벳만 포함된 3자리 코드인지 확인
                 if (/^[A-Z]{3}$/.test(code)) {
-                    const color = getColorByScore(item.region_score);
-                    // 중복된 코드가 있으면 첫 번째 값 유지
-                    if (!colorMap.has(code)) {
-                        colorMap.set(code, color);
-                    } else {
-                        console.warn(`중복된 ISO 코드 발견: ${code} (${item.name})`);
-                    }
-                } else {
-                    console.warn('Invalid ISO code format for country:', item.name, 'code:', item.code);
+                    colorMatch.push(code, getColorByScore(item.region_score));
                 }
-            } else if (item.code) {
-                console.warn('Invalid ISO code for country:', item.name, 'code:', item.code);
             }
         });
-
-        const colorMatch: string[] = [];
-        colorMap.forEach((color, code) => {
-            colorMatch.push(code, color);
-        });
-
-        console.log('Color match pairs:', colorMatch.length / 2, 'countries');
-        console.log('Sample color matches:', colorMatch.slice(0, 6));
 
         map.addSource('world-borders', { type: 'geojson', data: geoData, generateId: true });
 
@@ -1261,15 +1291,15 @@ async function initMap() {
             if (!props) return;
             const diffSign = props.stocksDiffPct >= 0 ? '+' : '';
             const daysSign = props.daysDiff >= 0 ? '+' : '';
-            const signalColor = props.signal === 'Tight' ? '#dc2626' : props.signal === 'Loose' ? '#16a34a' : '#f59e0b';
+            const signalClass = props.signal === 'Tight' ? 'popup-signal-tight' : props.signal === 'Loose' ? 'popup-signal-loose' : 'popup-signal-neutral';
             const signalText = props.signal === 'Tight' ? '공급 부족' : props.signal === 'Loose' ? '공급 여유' : props.signal === 'Neutral' ? '공급 보합' : props.signal;
             popup.setLngLat(e.lngLat).setHTML(`
-        <div style="padding:12px 16px;font-size:13px;background:#fff;color:#111;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);min-width:160px;">
-            <div style="font-weight:600;font-size:14px;margin-bottom:8px;">${props.name}</div>
-            <div style="color:#555;margin-bottom:4px;">재고: ${Number(props.stocksMbbl).toLocaleString()} Mbbl</div>
-            <div style="color:#555;margin-bottom:4px;">5년 대비: ${diffSign}${Number(props.stocksDiffPct).toFixed(1)}%</div>
-            <div style="color:#555;margin-bottom:4px;">재고일수: ${Number(props.daysOfSupply).toFixed(1)}일 (${daysSign}${Number(props.daysDiff).toFixed(1)})</div>
-            <div style="color:${signalColor};font-weight:500;">${signalText}</div>
+        <div class="map-popup">
+            <div class="popup-title">${props.name}</div>
+            <div class="popup-row">재고: ${Number(props.stocksMbbl).toLocaleString()} Mbbl</div>
+            <div class="popup-row">5년 대비: ${diffSign}${Number(props.stocksDiffPct).toFixed(1)}%</div>
+            <div class="popup-row">재고일수: ${Number(props.daysOfSupply).toFixed(1)}일 (${daysSign}${Number(props.daysDiff).toFixed(1)})</div>
+            <div class="popup-signal ${signalClass}">${signalText}</div>
         </div>
     `).addTo(map);
         });
@@ -1280,13 +1310,13 @@ async function initMap() {
             const props = e.features?.[0]?.properties;
             if (!props) return;
             const yoySign = props.yoyChangePct >= 0 ? '+' : '';
-            const signalColor = props.signal === '공급 증가' ? '#16a34a' : props.signal === '공급 감소' ? '#dc2626' : '#6b7280';
+            const signalClass = props.signal === '공급 증가' ? 'popup-signal-loose' : props.signal === '공급 감소' ? 'popup-signal-tight' : 'popup-signal-neutral';
             popup.setLngLat(e.lngLat).setHTML(`
-        <div style="padding:12px 16px;font-size:13px;background:#fff;color:#111;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);min-width:140px;">
-            <div style="font-weight:600;font-size:14px;margin-bottom:8px;">${props.country}</div>
-            <div style="color:#555;margin-bottom:4px;">생산량: ${props.prodMbd} Mb/d</div>
-            <div style="color:#555;margin-bottom:4px;">YoY: ${yoySign}${props.yoyChangePct}%</div>
-            <div style="color:${signalColor};font-weight:500;">${props.signal}</div>
+        <div class="map-popup">
+            <div class="popup-title">${props.country}</div>
+            <div class="popup-row">생산량: ${props.prodMbd} Mb/d</div>
+            <div class="popup-row">YoY: ${yoySign}${props.yoyChangePct}%</div>
+            <div class="popup-signal ${signalClass}">${props.signal}</div>
         </div>
     `).addTo(map);
         });
@@ -1317,12 +1347,12 @@ async function initMap() {
                     if (change != null) {
                         const sign = change >= 0 ? '+' : '';
                         const signal = change > 4 ? '공급 여유' : change < -4 ? '공급 부족' : '공급 보합';
-                        const signalColor = change > 0 ? '#16a34a' : change < 0 ? '#dc2626' : '#6b7280';
+                        const signalClass = change > 0 ? 'popup-signal-loose' : change < 0 ? 'popup-signal-tight' : 'popup-signal-neutral';
                         popup.setLngLat(e.lngLat).setHTML(`
-        <div style="padding:12px 16px;font-size:13px;background:#fff;color:#111;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);min-width:140px;">
-            <div style="font-weight:600;font-size:14px;margin-bottom:8px;">US Crude Stocks</div>
-            <div style="color:#555;margin-bottom:4px;">주간 변동: ${sign}${change.toFixed(1)} Mbbl</div>
-            <div style="color:${signalColor};font-weight:500;">${signal}</div>
+        <div class="map-popup">
+            <div class="popup-title">US Crude Stocks</div>
+            <div class="popup-row">주간 변동: ${sign}${change.toFixed(1)} Mbbl</div>
+            <div class="popup-signal ${signalClass}">${signal}</div>
         </div>
     `).addTo(map);
                     }
@@ -1359,24 +1389,11 @@ async function initMap() {
         map.on('click', 'country-fill', async (e) => {
             if (isSupplyMode.value || !e.features?.length) return;
             const isoCode = e.features[0].properties['ISO3166-1-Alpha-3'];
-            console.log(`나라 클릭: ${isoCode}`);
             try {
                 const response = await dashboardAPI.getRegionImpact(isoCode);
-                console.log(`API 응답 성공:`, response.data);
-                console.log(`- Region:`, response.data.region);
-                console.log(`- Contents 개수:`, response.data.contents?.length || 0);
-                console.log(`- Contents 데이터:`, response.data.contents);
-
-                if (response.data.contents && response.data.contents.length > 0) {
-                    console.log(`- 첫 번째 뉴스:`, response.data.contents[0]);
-                }
-
                 openModal(response.data.region, response.data.contents || []);
             } catch (error) {
                 console.error(`나라 뉴스 로드 실패: ${isoCode}`, error);
-                if (error instanceof Error) {
-                    console.error(`에러 메시지: ${error.message}`);
-                }
             }
         });
 
@@ -1391,31 +1408,19 @@ async function initMap() {
 }
 
 function openModal(region: any, contents: any[]) {
-    console.log(`openModal 호출 - region:`, region);
-    console.log(`openModal 호출 - contents:`, contents);
-    console.log(`openModal 호출 - contents 타입:`, Array.isArray(contents) ? '배열' : typeof contents);
-    console.log(`openModal 호출 - contents 길이:`, contents?.length || 0);
-
     if (!contents || !Array.isArray(contents)) {
-        console.warn(`⚠️ contents가 배열이 아닙니다:`, contents);
         contents = [];
     }
 
     const articles = contents
         .sort((a, b) => (b.source_score || 0) - (a.source_score || 0))
-        .map((a) => {
-            console.log(`뉴스 변환 중:`, a);
-            return {
-                title: a.title || '제목 없음',
-                desc: a.summary || '요약 없음',
-                url: a.url || '#',
-                date: a.published_date || '',
-                level: a.source_score || 0,
-            };
-        });
-
-    console.log(`변환된 articles:`, articles);
-    console.log(`articles 개수:`, articles.length);
+        .map((a) => ({
+            title: a.title || '제목 없음',
+            desc: a.summary || '요약 없음',
+            url: a.url || '#',
+            date: a.published_date || '',
+            level: a.source_score || 0,
+        }));
 
     selectedCountry.value = {
         name: region.name,
@@ -1423,9 +1428,6 @@ function openModal(region: any, contents: any[]) {
         region_score: region.region_score,
         articles: articles,
     };
-
-    console.log(`selectedCountry 설정 완료:`, selectedCountry.value);
-    console.log(`모달 표시 여부:`, !!selectedCountry.value);
 }
 
 function closeModal() {
@@ -1507,8 +1509,6 @@ onBeforeUnmount(() => {
     bottom: 16px;
     left: 16px;
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid #e5e7eb;
     border-radius: 6px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 16px;
@@ -1584,56 +1584,285 @@ onBeforeUnmount(() => {
     line-height: 1.5;
 }
 
-.impact-summary-modal {
-    max-width: 800px;
-    width: 100%;
-    max-height: 80vh;
-}
-
-.impact-summary-modal-content {
+/* 공통 모달 스타일 (Countermeasure와 동일) */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
-    flex-direction: column;
-    gap: 24px;
-    max-height: calc(80vh - 100px);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
     overflow-y: auto;
-    padding: 8px 0;
 }
 
-.impact-category-section {
+.modal-panel {
+    width: 100%;
+    max-width: 800px;
+    max-height: calc(100vh - 48px);
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    overflow: hidden;
+    margin: auto;
 }
 
-.category-country-grid {
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 28px;
+    background: #ffffff;
+    position: relative;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+    letter-spacing: -0.3px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.close-btn {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    color: #000000;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 5px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.info-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.card-header {
+    margin-bottom: 12px;
+}
+
+.card-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -0.2px;
+}
+
+.info-card p {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* 영향도 모달 섹션 카드 */
+.impact-section-card {
+    background: #f8fafc;
+}
+
+.impact-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.impact-header h3 {
+    flex: 1;
+}
+
+.impact-count {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.impact-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.impact-dot.urgent {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+}
+
+.impact-dot.high {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+}
+
+.impact-dot.mid {
+    background: linear-gradient(135deg, #eab308 0%, #facc15 100%);
+}
+
+.impact-dot.low {
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
+.impact-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+
+.impact-section-count {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    margin-left: auto;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.impact-country-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
 }
 
-.category-country-item {
-    padding: 10px 14px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+.impact-country-chip {
+    padding: 12px 16px;
+    border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
-    color: #111827;
-    transition: background 0.2s;
     text-align: center;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
 }
 
-.category-country-item:hover {
-    background: #f3f4f6;
+.impact-country-chip.clickable {
+    cursor: pointer;
+}
+
+.impact-country-chip.urgent {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #000000;
+}
+
+.impact-country-chip.urgent:hover {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.impact-country-chip.high {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    color: #000000;
+}
+
+.impact-country-chip.high:hover {
+    background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15);
+}
+
+.impact-country-chip.mid {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    color: #000000;
+}
+
+.impact-country-chip.mid:hover {
+    background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);
+}
+
+.impact-country-chip.low {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    color: #000000;
+}
+
+.impact-country-chip.low:hover {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
 }
 
 /* US Stocks & Supply Producer List */
-.us-stocks-loading,
 .us-stocks-empty {
     font-size: 14px;
     color: #6b7280;
     text-align: center;
     padding: 16px 0;
+}
+
+/* Data Loading (Small boxes) */
+.data-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0;
+    gap: 12px;
+}
+
+.data-loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #ea580c;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.data-loading span {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
 .supply-producer-list {
@@ -1728,7 +1957,6 @@ onBeforeUnmount(() => {
     bottom: 16px;
     right: 16px;
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
     border: 1px solid #e5e7eb;
     border-radius: 6px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1849,80 +2077,13 @@ onBeforeUnmount(() => {
     color: #6b7280;
 }
 
-/* Modal */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-    padding: 24px;
-}
-
-.modal-overlay .modal-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-    width: 900px;
-    max-width: 90vw;
-    height: 650px;
-    max-height: 90vh;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #e5e7eb;
-    position: relative;
-}
-
-.modal-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-close-btn {
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    color: #6b7280;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    transition: color 0.2s;
-}
-
-.modal-close-btn:hover {
-    color: #1f2937;
-}
-
-.modal-title {
-    font-weight: 500;
-    font-size: 24px;
-    margin-bottom: 16px;
-    color: #000000;
-    text-align: center;
-}
-
-.modal-content {
-    flex: 1;
-    overflow: hidden;
-}
-
+/* 모달 빈 상태 */
 .modal-empty {
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 60px 0;
 }
 
 .modal-empty-icon {
@@ -1932,106 +2093,92 @@ onBeforeUnmount(() => {
 
 .modal-empty-text {
     font-weight: 500;
-    font-size: 20px;
-    margin-bottom: 16px;
-    color: #000000;
+    font-size: 16px;
+    color: #6b7280;
     text-align: center;
 }
 
-.modal-news-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+/* 뉴스 카드 스타일 */
+.news-card {
+    background: #f8fafc;
 }
 
-.modal-news-list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-}
-
-.modal-news-card {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.news-card-header {
+.news-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 8px;
+    gap: 12px;
 }
 
-.news-card-title {
-    font-size: 18px;
-    font-weight: 500;
-    color: #111827;
-    line-height: 1.5;
+.news-header h3 {
     flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.5;
 }
 
-.news-card-level {
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-size: 13px;
+.news-level {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
     font-weight: 600;
-    margin-left: 8px;
     flex-shrink: 0;
     background: #fed7aa;
     color: #ea580c;
 }
 
-.news-card-desc {
-    font-size: 16px;
-    font-weight: 400;
-    color: #374151;
-    margin-bottom: 12px;
-    line-height: 1.75;
-    flex: 1;
-    overflow-y: auto;
+.news-desc {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.7;
+    margin: 0;
 }
 
-.news-card-footer {
+.news-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid #e2e8f0;
 }
 
-.news-card-link {
-    font-size: 16px;
+.news-link {
+    font-size: 14px;
     color: #ea580c;
     text-decoration: none;
-    transition: text-decoration 0.2s;
+    font-weight: 500;
 }
 
-.news-card-link:hover {
+.news-link:hover {
     text-decoration: underline;
 }
 
-.news-card-date {
-    font-size: 14px;
+.news-date {
+    font-size: 13px;
     color: #6b7280;
 }
 
-/* Transitions */
-.fade-zoom-enter-active,
-.fade-zoom-leave-active {
+/* Modal Transitions */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
     transition: opacity 0.25s ease;
 }
 
-.fade-zoom-enter-from,
-.fade-zoom-leave-to {
+.modal-fade-enter-active .modal-panel,
+.modal-fade-leave-active .modal-panel {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+    opacity: 0;
+}
+
+.modal-fade-enter-from .modal-panel,
+.modal-fade-leave-to .modal-panel {
+    transform: scale(0.95) translateY(10px);
     opacity: 0;
 }
 
@@ -2045,6 +2192,45 @@ onBeforeUnmount(() => {
 
 :deep(.maplibregl-popup-tip) {
     display: none;
+}
+
+/* Map Popup 스타일 */
+:deep(.map-popup) {
+    padding: 12px 16px;
+    font-size: 13px;
+    background: #fff;
+    color: #111;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 140px;
+}
+
+:deep(.popup-title) {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #111;
+}
+
+:deep(.popup-row) {
+    color: #555;
+    margin-bottom: 4px;
+}
+
+:deep(.popup-signal) {
+    font-weight: 500;
+}
+
+:deep(.popup-signal-tight) {
+    color: #dc2626;
+}
+
+:deep(.popup-signal-loose) {
+    color: #16a34a;
+}
+
+:deep(.popup-signal-neutral) {
+    color: #6b7280;
 }
 
 /* Supply View 색상 클래스 */
