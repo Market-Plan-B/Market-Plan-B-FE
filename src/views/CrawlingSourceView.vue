@@ -297,7 +297,6 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import draggable from 'vuedraggable';
 import lottie from 'lottie-web';
 import type { AnimationItem } from 'lottie-web';
-import { Pencil, X } from 'lucide-vue-next';
 import { adminAPI, type AdminKeywordItem, type CrawlingSourceItem } from '@/api/admin';
 
 interface Keyword { id: number; name: string; isActive: boolean }

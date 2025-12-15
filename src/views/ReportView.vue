@@ -183,7 +183,6 @@ async function loadDaily() {
             const cleanBase64 = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
             return cleanBase64;
         });
-        console.log('카드뉴스 이미지:', cardNewsImages.value.length, '개 로드됨');
 
         if (reportRes.created_at) {
             const date = new Date(reportRes.created_at);
@@ -192,7 +191,6 @@ async function loadDaily() {
             lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
         }
     } catch (error) {
-        console.error('데일리 리포트 로드 실패:', error);
         reportHtml.value = "";
         cardNewsImages.value = [];
     } finally {
@@ -218,7 +216,6 @@ async function loadWeekly() {
             reportHtml.value = "";
         }
     } catch (error) {
-        console.error('위클리 리포트 로드 실패:', error);
         reportHtml.value = "";
     } finally {
         isLoading.value = false;
