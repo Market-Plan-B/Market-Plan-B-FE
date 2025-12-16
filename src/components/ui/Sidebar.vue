@@ -35,19 +35,6 @@
 
         <!-- 하단: SK 팀 정보 및 로그아웃 -->
         <div class="sidebar-footer">
-            <!-- SK 팀 정보 -->
-            <div :class="['team-info', isExpanded ? 'team-info-expanded' : 'team-info-collapsed']">
-                <div class="sk-logo-container">
-                    <span class="sk-logo">SK</span>
-                </div>
-                <div v-if="isExpanded" class="team-details">
-                    <p class="team-name">SK E&S</p>
-                    <p class="team-label">
-                        <span class="team-text">{{ userName }}</span>
-                    </p>
-                </div>
-            </div>
-
             <!-- 알림 버튼 -->
             <div class="notification-entry">
                 <button @click="openNotifications" :class="[
@@ -66,15 +53,19 @@
                     </span>
                 </button>
             </div>
-
-            <!-- 로그아웃 버튼 -->
-            <div class="logout-container">
-                <button @click="handleLogout" :class="[
-                    'logout-button',
-                    isExpanded ? 'logout-button-expanded' : 'logout-button-collapsed'
-                ]" :title="isExpanded ? '' : '로그아웃'">
+            <!-- SK 팀 정보 + 로그아웃 -->
+            <div :class="['team-info', isExpanded ? 'team-info-expanded' : 'team-info-collapsed']">
+                <div class="sk-logo-container">
+                    <span class="sk-logo">SK</span>
+                </div>
+                <div v-if="isExpanded" class="team-details">
+                    <p class="team-name">SK E&S</p>
+                    <p class="team-label">
+                        <span class="team-text">{{ userName }}</span>
+                    </p>
+                </div>
+                <button @click="handleLogout" class="logout-icon-btn" title="로그아웃">
                     <LogOut class="logout-icon" />
-                    <span v-if="isExpanded" class="logout-text">로그아웃</span>
                 </button>
             </div>
         </div>
@@ -99,7 +90,7 @@ const authStore = useAuthStore();
 
 const emit = defineEmits(["sidebar-hover"]);
 
-const isExpanded = ref(true);
+const isExpanded = ref(false);
 const NotificationFloatingRef = ref();
 const unreadCount = ref(0);
 
@@ -111,6 +102,7 @@ const expand = (state: boolean) => {
 onMounted(() => {
     emit("sidebar-hover", isExpanded.value);
 });
+
 
 const openNotifications = () => {
     NotificationFloatingRef.value?.open();
@@ -124,7 +116,7 @@ const handleUnreadChange = (count: number) => {
 const commonNavItems = [
     { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { to: "/reports", label: "리포트", icon: FileText },
-    { to: "/analysis", label: "영향 분석", icon: TrendingUp },
+    { to: "/analysis", label: "영향도 분석", icon: TrendingUp },
 ];
 
 // 관리자 전용 메뉴 항목
@@ -182,7 +174,7 @@ const handleLogout = async () => {
 }
 
 .sidebar-expanded {
-    width: 13rem;
+    width: 15rem;
 }
 
 .sidebar-collapsed {
@@ -201,6 +193,14 @@ const handleLogout = async () => {
 
 .sidebar-collapsed .sidebar-header {
     justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-nav {
+    padding: 0.5rem;
+}
+
+.sidebar-collapsed .sidebar-footer {
+    padding: 0.5rem;
 }
 
 .logo-container {
@@ -230,15 +230,21 @@ const handleLogout = async () => {
 
 /* Sidebar Navigation */
 .sidebar-nav {
-    padding: 0.5rem;
+    padding: 0.75rem;
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     transition: all 0.3s;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
     overflow-y: auto;
+    min-height: 0;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 0.5rem 0.75rem;
 }
 
 /* Nav Button */
@@ -247,7 +253,7 @@ const handleLogout = async () => {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.5rem 0;
+    padding: 0.5rem;
     border-radius: 6px;
     transition: all 0.2s;
     position: relative;
@@ -257,7 +263,7 @@ const handleLogout = async () => {
 }
 
 .nav-button-expanded {
-    padding-left: 0.75rem;
+    padding: 0.5rem 0.75rem;
     justify-content: flex-start;
     color: white;
 }
@@ -320,7 +326,7 @@ const handleLogout = async () => {
 
 .nav-button-inactive:hover .nav-icon {
     transform: scale(1.05);
-    color: #0f172a;
+    color: #ea580c;
 }
 
 .nav-label {
@@ -335,7 +341,9 @@ const handleLogout = async () => {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
 }
 
 .team-info-expanded {
@@ -379,7 +387,6 @@ const handleLogout = async () => {
 .team-label {
     display: inline-block;
     width: 100%;
-    color: white;
     font-size: 0.75rem;
     color: #94a3b8;
 }
@@ -400,55 +407,44 @@ const handleLogout = async () => {
     white-space: nowrap;
 }
 
-/* Logout Container */
-.logout-container {
-    padding: 0.75rem;
-}
-
-.logout-button {
-    width: 100%;
+/* Logout Icon Button */
+.logout-icon-btn {
+    width: 2rem;
+    height: 2rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    justify-content: center;
+    border: none;
     border-radius: 0.375rem;
-    transition: all 0.2s;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.logout-icon-btn:hover {
     background: rgba(234, 88, 12, 0.15);
     color: #ea580c;
-    border: none;
-    cursor: pointer;
 }
 
-.logout-button:hover {
-    background: rgba(234, 88, 12, 0.05);
-}
-
-.logout-button-expanded {
-    justify-content: flex-start;
-}
-
-.logout-button-collapsed {
-    justify-content: center;
+.logout-icon-btn:active {
+    transform: scale(0.95);
 }
 
 .logout-icon {
-    width: 1rem;
-    height: 1rem;
-    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
 }
 
-.logout-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
+.team-info-collapsed .logout-icon-btn {
+    display: none;
 }
 
 /* Notification */
 .notification-entry {
-    padding: 0.75rem;
-
+    margin-bottom: 0.5rem;
 }
 
 .notification-entry .nav-button {

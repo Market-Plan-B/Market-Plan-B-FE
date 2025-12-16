@@ -8,7 +8,7 @@
                 <div class="header-content">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-bold text-2xl text-gray-900">Market Intelligence Report</h2>
+                            <h2 class="report-title">시장 인텔리전스 리포트</h2>
                         </div>
                     </div>
                 </div>
@@ -78,10 +78,6 @@
                     <div v-if="isLoading" class="loading-state">
                         <div class="loading-spinner"></div>
                         <p class="loading-title">리포트를 불러오는 중...</p>
-                        <div class="loading-progress">
-                            <div class="progress-bar" :style="{ width: loadingProgress + '%' }"></div>
-                        </div>
-                        <p class="loading-percentage">{{ loadingProgress }}%</p>
                     </div>
                     <div v-else-if="reportHtml" class="report-content report-html-wrapper" v-html="sanitizedReportHtml">
                     </div>
@@ -183,6 +179,7 @@ async function loadDaily() {
             const cleanBase64 = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
             return cleanBase64;
         });
+        console.log('카드뉴스 이미지:', cardNewsImages.value.length, '개 로드됨');
 
         if (reportRes.created_at) {
             const date = new Date(reportRes.created_at);
@@ -191,6 +188,7 @@ async function loadDaily() {
             lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
         }
     } catch (error) {
+        console.error('데일리 리포트 로드 실패:', error);
         reportHtml.value = "";
         cardNewsImages.value = [];
     } finally {
@@ -216,6 +214,7 @@ async function loadWeekly() {
             reportHtml.value = "";
         }
     } catch (error) {
+        console.error('위클리 리포트 로드 실패:', error);
         reportHtml.value = "";
     } finally {
         isLoading.value = false;
@@ -297,11 +296,11 @@ onMounted(() => {
     border-bottom: 1px solid #cbd5e1;
 }
 
-
-
-.header-content {
-    position: relative;
-    z-index: 1;
+.report-title {
+    font-weight: 700;
+    font-size: 24px;
+    margin: 0;
+    color: #111827;
 }
 
 .update-time {
@@ -545,10 +544,10 @@ onMounted(() => {
 }
 
 .loading-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 8px;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
 .loading-subtitle {

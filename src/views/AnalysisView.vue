@@ -16,21 +16,21 @@
                                     d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div class="key-indicator-value value-orange">${{ fmt(predictedChange) }}</div>
+                        <div class="key-indicator-value value-orange">${{ fmt(predictedBrentPrice) }}</div>
                         <div class="key-indicator-unit">USD per barrel</div>
                     </div>
 
                     <div class="key-indicator-card">
                         <div class="key-indicator-header">
-                            <span class="key-indicator-label">예측 대비 변화 (실제 - 예측)</span>
-                            <svg :class="['key-indicator-icon', predictedBrentPrice >= 0 ? 'icon-green' : 'icon-red']"
+                            <span class="key-indicator-label">예측 대비 변화량</span>
+                            <svg :class="['key-indicator-icon', overallChange >= 0 ? 'icon-green' : 'icon-red']"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </div>
-                        <div :class="['key-indicator-value', predictedBrentPrice >= 0 ? 'value-green' : 'value-red']">
-                            {{ predictedBrentPrice >= 0 ? '+' : '' }}{{ fmt(predictedBrentPrice) }}
+                        <div :class="['key-indicator-value', overallChange >= 0 ? 'value-green' : 'value-red']">
+                            {{ overallChange >= 0 ? '+' : '' }}{{ fmt(overallChange, 4) }}
                         </div>
                         <div class="key-indicator-description">
                             {{ changeDescription }}
@@ -132,7 +132,10 @@ const apiData = ref<any>(null);
 const loading = ref(false);
 const lastUpdated = ref('-');
 const activeCoreCategory = ref('supply');
+
+// overall_score = 예측 Brent 가격, overall_change = 예측 대비 변화량
 const predictedBrentPrice = ref(0);
+const overallChange = ref(0);
 
 const financial = ref<FinancialData>({
     brent: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
@@ -186,7 +189,33 @@ const calcMA = (arr: number[], period: number) => {
     return +(slice.reduce((a, b) => a + b, 0) / slice.length).toFixed(2);
 };
 
+// MA 변화율 계산 (오늘 MA vs 어제 MA)
+const calcMATrend = (arr: number[], period: number) => {
+    if (arr.length < period + 1) return 0;
+    const todayMA = calcMA(arr, period);
+    const yesterdayArr = arr.slice(0, -1);
+    const yesterdayMA = calcMA(yesterdayArr, period);
+    if (!yesterdayMA) return 0;
+    return +((todayMA - yesterdayMA) / yesterdayMA * 100).toFixed(2);
+};
+
 const calcVolatility = (arr: number[]) => arr.length < 2 ? 0 : +(Math.max(...arr) - Math.min(...arr)).toFixed(2);
+
+// 변동폭 변화율 계산 (현재 7일 vs 이전 7일)
+const calcVolatilityTrend = (arr: number[]) => {
+    if (arr.length < 14) return 0;
+    const currentVolatility = calcVolatility(arr.slice(-7));
+    const prevVolatility = calcVolatility(arr.slice(-14, -7));
+    if (!prevVolatility) return 0;
+    return +((currentVolatility - prevVolatility) / prevVolatility * 100).toFixed(2);
+};
+
+// Crack Spread 히스토리 계산 (Gasoline - Brent)
+const calcCrackHistory = () => {
+    const { brent: b, heatingOil: g } = history.value;
+    if (!b.length || !g.length) return [];
+    return Array.from({ length: Math.min(b.length, g.length) }, (_, i) => g[i] - b[i]);
+};
 
 const coreIndicators = computed(() => {
     const f = financial.value;
@@ -207,7 +236,7 @@ const coreIndicators = computed(() => {
         ],
         commodity: [
             { key: 'heating', label: 'RBOB Gasoline', value: f.heatingOil.value, trend: f.heatingOil.change || 0, prefix: '$', color: '#f43f5e', description: '휘발유 선물 (RB=F) - 정제 마진과 유가의 핵심 지표', history: h.heatingOil },
-            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: 0, prefix: '$', color: '#ec4899', description: '정유 정제 마진 (정제제품 가격 -  원유 가격)', history: [] },
+            { key: 'crack', label: 'Crack Spread', value: f.crack.value, trend: calcTrend(calcCrackHistory()), prefix: '$', color: '#ec4899', description: '정유 정제 마진 (정제제품 가격 -  원유 가격)', history: calcCrackHistory() },
             { key: 'copper', label: 'Copper', value: f.copper.value, trend: f.copper.change || 0, prefix: '$', color: '#b45309', description: '구리 (경기 선행지표)', history: h.copper },
             { key: 'gold', label: 'Gold', value: f.gold.value, trend: f.gold.change || 0, prefix: '$', color: '#eab308', description: '금 (인플레 헤지)', history: h.gold },
         ],
@@ -216,28 +245,23 @@ const coreIndicators = computed(() => {
             { key: 'vix', label: 'VIX', value: f.vix.value, trend: f.vix.change || 0, color: '#ef4444', description: '변동성 지수 (공포지수)', history: h.vix },
         ],
         technical: [
-            { key: 'ma5', label: 'Brent MA(5)', value: calcMA(h.brent, 5), trend: 0, prefix: '$', color: '#06b6d4', description: '5일 이동평균', history: h.brent.slice(-5) },
-            { key: 'ma7', label: 'Brent MA(7)', value: calcMA(h.brent, 7), trend: 0, prefix: '$', color: '#0891b2', description: '7일 이동평균', history: h.brent },
-            { key: 'volatility', label: 'High-Low Range', value: calcVolatility(h.brent), trend: 0, prefix: '$', color: '#c026d3', description: '7일 변동폭', history: [] },
-            { key: 'momentum', label: 'Price Momentum', value: calcTrend(h.brent), trend: 0, suffix: '%', color: '#7c3aed', description: '7일 모멘텀', history: h.brent },
+            { key: 'ma5', label: 'Brent MA(5)', value: calcMA(h.brent, 5), trend: calcMATrend(h.brent, 5), prefix: '$', color: '#06b6d4', description: '5일 이동평균', history: h.brent.slice(-5) },
+            { key: 'ma7', label: 'Brent MA(7)', value: calcMA(h.brent, 7), trend: calcMATrend(h.brent, 7), prefix: '$', color: '#0891b2', description: '7일 이동평균', history: h.brent },
+            { key: 'volatility', label: 'High-Low Range', value: calcVolatility(h.brent), trend: calcVolatilityTrend(h.brent), prefix: '$', color: '#c026d3', description: '7일 변동폭', history: h.brent },
+            { key: 'momentum', label: 'Price Momentum', value: calcTrend(h.brent), trend: calcTrend(h.brent), suffix: '%', color: '#7c3aed', description: '7일 모멘텀', history: h.brent },
         ],
     };
 });
 
 const currentCoreIndicators = computed(() => coreIndicators.value[activeCoreCategory.value as keyof typeof coreIndicators.value] || []);
 
-const predictedChange = computed(() => {
-    if (!predictedBrentPrice.value || !financial.value.brent?.price) return 0;
-    return financial.value.brent.price - predictedBrentPrice.value;
-});
-
 const changeDescription = computed(() => {
-    if (predictedChange.value > 0) {
-        return '실제 가격이 예측값보다 낮게 나타났습니다.';
-    } else if (predictedChange.value < 0) {
-        return '실제 가격이 예측값보다 높게 나타났습니다.';
+    if (overallChange.value > 0) {
+        return '가격 상승이 예측됩니다.';
+    } else if (overallChange.value < 0) {
+        return '가격 하락이 예측됩니다.';
     } else {
-        return '실제 가격이 예측값과 동일하게 나타났습니다.';
+        return '가격 변동이 없을 것으로 예측됩니다.';
     }
 });
 
@@ -266,12 +290,16 @@ async function loadFinancialData() {
     lastUpdated.value = new Date().toLocaleString('ko-KR');
 }
 
-async function loadPredictedBrentPrice() {
+async function loadOverallImpact() {
     try {
-        const windowData = (window as any).dashboardData?.overall;
-        predictedBrentPrice.value = windowData?.overall_score ?? (await dashboardAPI.getOverallImpact()).data.overall_score;
+        const response = await dashboardAPI.getOverallImpact();
+        // overall_score = 예측 Brent 가격
+        predictedBrentPrice.value = response.data.overall_score;
+        // overall_change = 예측 대비 변화량
+        overallChange.value = response.data.overall_change;
     } catch {
         predictedBrentPrice.value = 0;
+        overallChange.value = 0;
     }
 }
 
@@ -289,7 +317,7 @@ async function fetchData() {
 onMounted(() => {
     fetchData();
     loadFinancialData();
-    loadPredictedBrentPrice();
+    loadOverallImpact();
 });
 </script>
 
@@ -335,12 +363,6 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
-}
-
-.section-icon {
-    width: 24px;
-    height: 24px;
-    color: #ea580c;
 }
 
 .section-subtitle {
@@ -443,24 +465,6 @@ onMounted(() => {
 
 .text-muted {
     color: #6b7280;
-}
-
-.key-indicator-badge {
-    display: inline-flex;
-    padding: 4px 12px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.badge-positive {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.badge-negative {
-    background: #fee2e2;
-    color: #991b1b;
 }
 
 .category-tabs {

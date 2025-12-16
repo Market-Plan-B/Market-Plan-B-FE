@@ -2,7 +2,9 @@ import axios, { AxiosResponse } from "axios";
 
 // API 응답 타입 정의
 export interface OverallImpact {
+  date: string;
   overall_score: number;
+  overall_change: number;
 }
 
 export interface MapImpact {

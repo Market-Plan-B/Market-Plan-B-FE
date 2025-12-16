@@ -6,7 +6,7 @@
             <div ref="lottieContainer"></div>
             <div class="impact-card" @click="goToAnalysis">
                 <div class="impact-card-label">Brent Oil</div>
-                <div class="impact-card-score">${{ fmt(predictedChange) }}</div>
+                <div class="impact-card-score">${{ fmt(predictedBrentPrice) }}</div>
             </div>
         </div>
 
@@ -36,8 +36,13 @@
 import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
-import { dashboardAPI } from "@/api/dashboard";
 import { loadAllFinancialData } from '@/api/financial';
+import { useMapDataStore } from "@/stores/mapData";
+
+// keep-alive를 위한 컴포넌트 이름 설정
+defineOptions({
+    name: 'DashboardView'
+});
 
 import WorldOilMap from "@/components/WorldOilMap.vue";
 import ChartBar from "@/components/ChartBar.vue";
@@ -47,10 +52,14 @@ import ChatBotFloating from "@/components/ui/ChatBotFloating.vue";
 const router = useRouter();
 const goToAnalysis = () => router.push("/analysis");
 
-const predictedBrentPrice = ref(0);
-const apiData = ref(null);
+const mapDataStore = useMapDataStore();
+
+// 스토어에서 캐시된 데이터 사용
+const predictedBrentPrice = computed(() => mapDataStore.predictedBrentPrice);
+const apiData = computed(() => mapDataStore.dailyFactorData);
+const loading = computed(() => mapDataStore.dailyFactorLoading || !mapDataStore.isDailyFactorLoaded());
+
 const lottieContainer = ref(null);
-const loading = ref(true);
 const chatBot = ref(null);
 
 const financial = ref({
@@ -71,26 +80,19 @@ const financial = ref({
     copper: { value: 0, change: 0 },
 });
 
-const predictedChange = computed(() => {
-    if (!predictedBrentPrice.value || !financial.value.brent?.price) return 0;
-    return financial.value.brent.price - predictedBrentPrice.value;
-});
+// 예측 대비 변화 = overall_score 그대로
+const predictedChange = computed(() => mapDataStore.overallImpactData);
 
 const fmt = (v, decimals = 2) => {
     if (v == null || isNaN(v)) return '-';
     return v.toFixed(decimals);
 };
 
-const loadOverallImpact = async () => {
+const loadPredictedBrentPrice = async () => {
     try {
-        if (window.dashboardData?.overall) {
-            predictedBrentPrice.value = window.dashboardData.overall.overall_score;
-        } else {
-            const response = await dashboardAPI.getOverallImpact();
-            predictedBrentPrice.value = response.data.overall_score;
-        }
+        await mapDataStore.loadPredictedBrentPrice();
     } catch (error) {
-        predictedBrentPrice.value = 0;
+        // 로드 실패 무시
     }
 };
 
@@ -103,15 +105,10 @@ const loadFinancialData = async () => {
 };
 
 const loadDailyFactor = async () => {
-    loading.value = true;
     try {
-        const today = new Date().toISOString().split('T')[0];
-        const response = await dashboardAPI.getImpactAnalysis(today); //  동일한 API
-        apiData.value = response.data;
+        await mapDataStore.loadDailyFactor();
     } catch (err) {
         // 로드 실패 무시
-    } finally {
-        loading.value = false;
     }
 };
 
@@ -126,7 +123,7 @@ onMounted(async () => {
         });
     }
 
-    await Promise.all([loadOverallImpact(), loadFinancialData()]);
+    await Promise.all([loadPredictedBrentPrice(), loadFinancialData()]);
     await loadDailyFactor();
 
     // 채팅 데이터 미리 로드 (비동기로 백그라운드 실행)
@@ -177,6 +174,7 @@ onMounted(async () => {
 
 .impact-card:hover {
     transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .impact-card-label {
@@ -229,7 +227,7 @@ onMounted(async () => {
     overflow: hidden;
 }
 
-@media (min-width: 1024px) {
+@media (min-width:1024px) {
     .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
     }

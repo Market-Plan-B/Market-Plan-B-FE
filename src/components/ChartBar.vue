@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="chart-wrapper">
         <div v-if="loading" class="chart-loading">
             <div class="loading-spinner"></div>
             <div class="loading-text">데이터를 불러오는 중...</div>
@@ -11,13 +11,13 @@
                     {{ mode.label }}
                 </button>
             </div>
-            <div ref="chartContainer" class="w-full"></div>
+            <div ref="chartContainer" class="chart-container"></div>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount, onActivated } from 'vue';
 import * as d3 from 'd3';
 
 const props = defineProps<{
@@ -60,17 +60,15 @@ const processedData = computed(() => {
         features = features.slice(0, props.limit);
     }
 
-    const maxAbs = d3.max(features, d => d.absValue) || 1;
     const count = features.length;
 
     return features.map((d, i) => {
         // Normalized: 순위 기반 비율 (1위=100%, 꼴찌=10%)
         const rankRatio = count > 1 ? 1 - (i / count) * 0.9 : 1;
-        const sign = d.value >= 0 ? 1 : -1;
 
         return {
             ...d,
-            normalized: sign * rankRatio,
+            normalized: (d.value >= 0 ? 1 : -1) * rankRatio,
             negative: d.value < 0 ? Math.abs(d.value) : 0,
             positive: d.value >= 0 ? d.value : 0,
             negativeNorm: d.value < 0 ? rankRatio : 0,
@@ -85,12 +83,14 @@ const drawChart = () => {
 
     const data = processedData.value;
     const isNormalized = viewMode.value === 'normalized';
-    const margin = { top: 20, right: 30, bottom: 60, left: 120 };
-    const width = chartContainer.value.clientWidth - margin.left - margin.right;
+    const margin = { top: 20, right: 40, bottom: 60, left: 120 };
+    // 컨테이너 너비를 안전하게 계산 (최소 300px)
+    const containerWidth = Math.max(300, chartContainer.value.clientWidth - 20);
+    const width = containerWidth - margin.left - margin.right;
     const height = Math.max(300, data.length * 28) - margin.top - margin.bottom;
 
     const svg = d3.select(chartContainer.value).append('svg')
-        .attr('width', width + margin.left + margin.right)
+        .attr('width', containerWidth)
         .attr('height', height + margin.top + margin.bottom)
         .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -174,12 +174,19 @@ const drawChart = () => {
     svg.selectAll('.domain, .tick line').attr('stroke', '#475569');
 };
 
-watch([() => props.apiData, viewMode], () => nextTick(drawChart), { deep: true });
+// processedData 변경 시 차트 다시 그리기 (viewMode 변경도 processedData에 반영됨)
+watch(processedData, () => nextTick(drawChart));
 
 onMounted(() => {
-    nextTick(drawChart);
+    // 초기 렌더링 시 약간의 지연 후 차트 그리기 (DOM 안정화)
+    setTimeout(() => {
+        drawChart();
+    }, 100);
     window.addEventListener('resize', drawChart);
 });
+
+// keep-alive로 캐시된 컴포넌트가 다시 활성화될 때 차트 다시 그리기
+onActivated(() => nextTick(drawChart));
 
 onBeforeUnmount(() => {
     window.removeEventListener('resize', drawChart);
@@ -188,6 +195,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Chart Wrapper - overflow 방지 */
+.chart-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.chart-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 /* Mode Toggle Buttons */
 .chart-mode-toggle {
     display: flex;

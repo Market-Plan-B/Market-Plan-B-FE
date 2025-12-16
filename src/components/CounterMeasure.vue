@@ -82,15 +82,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { dashboardAPI, Strategies } from "@/api/dashboard";
+import { Strategies } from "@/api/dashboard";
+import { useMapDataStore } from "@/stores/mapData";
 
-const strategies = ref<Strategies['strategies']>([]);
+const mapDataStore = useMapDataStore();
+
+// 스토어에서 캐시된 데이터 사용
+const strategies = computed(() => mapDataStore.strategiesData);
 const selectedStrategy = ref<Strategies['strategies'][0] | null>(null);
 
 async function loadStrategies() {
     try {
-        const response = await dashboardAPI.getStrategies();
-        strategies.value = response.data.strategies;
+        await mapDataStore.loadStrategies();
     } catch (error) {
         console.error('AI 대응책 로드 실패:', error);
     }
@@ -195,7 +198,7 @@ onMounted(loadStrategies);
 .strategy-card {
     padding: 16px;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -509,5 +512,90 @@ onMounted(loadStrategies);
     .modal-body {
         padding: 20px;
     }
+}
+
+/* 다크모드 스타일 */
+:global(html.dark) .strategy-card {
+    background: #252536;
+    border-color: #3d3d5c;
+}
+
+:global(html.dark) .strategy-card:hover {
+    background: #2d2d44;
+    border-color: #4b5563;
+}
+
+:global(html.dark) .strategy-card-title {
+    color: #f3f4f6;
+}
+
+:global(html.dark) .strategy-card-objective {
+    color: #9ca3af;
+}
+
+:global(html.dark) .loading-text {
+    color: #9ca3af;
+}
+
+:global(html.dark) .loading-spinner {
+    border-color: #3d3d5c;
+    border-top-color: #ea580c;
+}
+
+:global(html.dark) .modal-panel {
+    background: #1e1e2f;
+}
+
+:global(html.dark) .modal-header {
+    background: #1e1e2f;
+    border-color: #3d3d5c;
+}
+
+:global(html.dark) .modal-title {
+    color: #f3f4f6;
+}
+
+:global(html.dark) .close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f3f4f6;
+}
+
+:global(html.dark) .close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+:global(html.dark) .info-card {
+    background: #252536;
+    border-color: #3d3d5c;
+}
+
+:global(html.dark) .info-card.highlight {
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.15) 0%, rgba(234, 88, 12, 0.1) 100%);
+    border-color: rgba(234, 88, 12, 0.3);
+}
+
+:global(html.dark) .card-header h3 {
+    color: #f3f4f6;
+}
+
+:global(html.dark) .info-card p {
+    color: #d1d5db;
+}
+
+:global(html.dark) .action-text {
+    color: #d1d5db;
+}
+
+:global(html.dark) .evidence-card {
+    background: #1a1a2e;
+}
+
+:global(html.dark) .analysis-text-block p {
+    color: #d1d5db;
+}
+
+:global(html.dark) .strategies-list::-webkit-scrollbar-thumb,
+:global(html.dark) .modal-body::-webkit-scrollbar-thumb {
+    background: #4b5563;
 }
 </style>
