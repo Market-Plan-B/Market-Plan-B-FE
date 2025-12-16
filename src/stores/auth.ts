@@ -19,9 +19,8 @@ export interface User {
 
 export interface TokenPayload {
   accessToken: string;
-  refreshToken: string;
   grantType?: string;
-  refreshTokenExpire?: string | number;
+  userName?: string;
   userId?: number;
   user?: User | null;
 }
@@ -34,9 +33,7 @@ export const useAuthStore = defineStore("auth", () => {
   const accessToken: Ref<string | null> = ref(
     localStorage.getItem("access_token")
   );
-  const refreshToken: Ref<string | null> = ref(
-    localStorage.getItem("refresh_token")
-  );
+
 
   const user: Ref<User | null> = ref(
     JSON.parse(localStorage.getItem("user") || "null")
@@ -65,21 +62,16 @@ export const useAuthStore = defineStore("auth", () => {
 
   const setTokens = (tokens: TokenPayload): void => {
     accessToken.value = tokens.accessToken;
-    refreshToken.value = tokens.refreshToken;
     user.value = tokens.user || null;
 
     localStorage.setItem("access_token", tokens.accessToken);
-    localStorage.setItem("refresh_token", tokens.refreshToken);
 
     if (tokens.grantType) {
       localStorage.setItem("grant_type", tokens.grantType);
     }
 
-    if (tokens.refreshTokenExpire) {
-      localStorage.setItem(
-        "refresh_token_expire",
-        String(tokens.refreshTokenExpire)
-      );
+    if (tokens.userName) {
+      localStorage.setItem("userName", tokens.userName);
     }
 
     if (tokens.user) {
@@ -94,14 +86,12 @@ export const useAuthStore = defineStore("auth", () => {
 
   const clearTokens = (): void => {
     accessToken.value = null;
-    refreshToken.value = null;
     user.value = null;
 
     // 인증 관련 localStorage 정리
     localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
     localStorage.removeItem("grant_type");
-    localStorage.removeItem("refresh_token_expire");
+    localStorage.removeItem("userName");
     localStorage.removeItem("user");
     
     // 채팅 관련 localStorage 정리
@@ -115,9 +105,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   const logout = async (): Promise<void> => {
     try {
-      if (refreshToken.value) {
-        await authService.logout(refreshToken.value);
-      }
+      await authService.logout();
     } catch (error) {
       // 로그아웃 오류 무시
     } finally {
@@ -127,7 +115,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   return {
     accessToken,
-    refreshToken,
     user,
     isAuthenticated,
     isAdmin,
