@@ -71,7 +71,7 @@
                 <div v-else class="seasonal-list">
                     <div v-for="region in oecdRegions" :key="region.code" class="seasonal-item">
                         <span class="seasonal-label">{{ region.name }}</span>
-                        <span class="seasonal-value">
+                        <span class="seasonal-value-1">
                             {{ region.stocksMbbl.toLocaleString() }} Mbbl
                             <span :class="getValueColorClass(region.stocksDiffPct)">
                                 ({{ region.stocksDiffPct >= 0 ? '+' : '' }}{{ region.stocksDiffPct.toFixed(1) }}%)
@@ -136,7 +136,7 @@
         <div v-else class="impact-summary-box" @click="openImpactSummaryModal" @mouseenter="showMoreIndicator = true"
             @mouseleave="showMoreIndicator = false">
             <h3 class="impact-summary-title">국가별 영향도 요약</h3>
-            <div v-if="showMoreIndicator && hasMoreCountries" class="more-indicator">더보기</div>
+            <div v-if="showMoreIndicator" class="more-indicator">더보기</div>
 
             <div v-if="urgentList.length" class="impact-category">
                 <div class="impact-category-label impact-label-urgent">🟥 긴급</div>
@@ -350,7 +350,7 @@
                     </div>
                 </div>
                 <div class="market-update-time">
-                    <p class="update-time-text">업데이트: {{ lastUpdateTime }}</p>
+                    <p class="update-time-text">마지막 업데이트: {{ lastUpdateTime }}</p>
                 </div>
             </div>
         </div>
@@ -462,8 +462,12 @@ import { ref, computed, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import maplibregl from 'maplibre-gl';
 import { dashboardAPI, MapImpact } from '@/api/dashboard';
 import { getBrentOil, getWTI, getDXY, getCrackSpread } from '@/api/financial';
+import { useMapDataStore } from '@/stores/mapData';
 
 const MAPTILER_KEY = (import.meta as any).env.VITE_MAPTILER_KEY;
+
+// 스토어 사용 (데이터 캐싱)
+const mapDataStore = useMapDataStore();
 
 // 버블 레이어는 제거됨 - 미국 지도에 색상으로 표시
 const SHIPPING_SOURCE_ID = 'shipping-routes';
@@ -472,7 +476,8 @@ const SHIPPING_POINT_LAYER_ID = 'shipping-points';
 const SEASONAL_SOURCE_ID = 'seasonal-bands';
 const SEASONAL_LAYER_ID = 'seasonal-overlay';
 
-const mapImpactData = ref<MapImpact[]>([]);
+// 스토어에서 데이터 참조 (캐시됨)
+const mapImpactData = computed(() => mapDataStore.mapImpactData);
 
 // 나라별로 최대 절대값 region_score를 가진 데이터만 남기기
 const aggregatedMapImpactData = computed(() => {
@@ -1038,7 +1043,7 @@ function changeSupplyTab() {
         map.flyTo({ center: [-95, 38], zoom: 3.5, duration: 1200 });
     } else if (supplyTab.value === 'oecdStocks') {
         if (!oecdRegions.value.length) loadOecdInventory();
-        map.flyTo({ center: [140, 45], zoom: 1.2, duration: 1200 });
+        map.flyTo({ center: [160, 40], zoom: 1.2, duration: 1200 });
     } else if (supplyTab.value === 'supplyMonitor') {
         if (!supplyProducers.value.length) loadSupplyMonitor();
         // 5개국 모두 보이도록: 사우디, 러시아, 이라크, UAE, 중국 포함, 유럽이 왼쪽에 오도록
@@ -1063,7 +1068,7 @@ function toggleSupplyMode() {
         // 미국 육지 중심으로 변경 (경도 약 -95, 위도 약 38)
         map.flyTo({ center: [-95, 38], zoom: 3.3, duration: 1200 });
     } else {
-        map.flyTo({ center: [140, 45], zoom: 1.2, duration: 1000 });
+        map.flyTo({ center: [160, 40], zoom: 1.2, duration: 1200 });
     }
     applySupplyLayerVisibility();
 }
@@ -1071,8 +1076,8 @@ function toggleSupplyMode() {
 // 8) Init
 async function loadMapData() {
     try {
-        const response = await dashboardAPI.getMapImpact();
-        mapImpactData.value = response.data;
+        // 스토어를 통해 데이터 로드 (캐시된 데이터가 있으면 바로 반환)
+        await mapDataStore.loadMapData();
 
         // 지도가 이미 로드된 경우 색상 적용
         if (mapInstance.value && mapInstance.value.getLayer('country-fill')) {
@@ -1100,12 +1105,17 @@ async function loadMarketIndicators() {
     }
 }
 
+// 1분 단위 시장 지표 업데이트 타이머
+let marketIndicatorInterval: ReturnType<typeof setInterval> | null = null;
+
 onMounted(async () => {
     await nextTick();
     await loadMapData();
     await loadMarketIndicators();
     initMap();
-    setInterval(loadMarketIndicators, 300000);
+
+    // 1분(60초)마다 시장 지표 자동 갱신
+    marketIndicatorInterval = setInterval(loadMarketIndicators, 60000);
 
     // Supply View 데이터 미리 로드 (백그라운드)
     Promise.all([
@@ -1123,7 +1133,7 @@ async function initMap() {
     const map = new maplibregl.Map({
         container: mapContainer.value,
         style: `https://api.maptiler.com/maps/pastel/style.json?key=${MAPTILER_KEY}`,
-        center: [140, 45],
+        center: [160, 40],
         zoom: 1.2,
         attributionControl: false,
     });
@@ -1403,6 +1413,12 @@ function getScoreClass(level: number): string {
 
 onBeforeUnmount(() => {
     mapInstance.value?.remove();
+
+    // 시장 지표 업데이트 타이머 정리
+    if (marketIndicatorInterval) {
+        clearInterval(marketIndicatorInterval);
+        marketIndicatorInterval = null;
+    }
 });
 </script>
 
@@ -1500,7 +1516,7 @@ onBeforeUnmount(() => {
 }
 
 .impact-summary-box:hover {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgb(255, 255, 255, 0.9);
 }
 
 .more-indicator {
@@ -1590,7 +1606,7 @@ onBeforeUnmount(() => {
 
 .modal-title {
     font-size: 22px;
-    font-weight: 700;
+    font-weight: 600;
     color: #000000;
     margin: 0;
     letter-spacing: -0.3px;
@@ -1689,7 +1705,7 @@ onBeforeUnmount(() => {
 .impact-count {
     font-size: 13px;
     font-weight: 500;
-    color: #64748b;
+    color: #000000;
     background: #e2e8f0;
     padding: 4px 10px;
     border-radius: 20px;
@@ -1892,11 +1908,17 @@ onBeforeUnmount(() => {
 
 .seasonal-label {
     font-size: 14px;
-    color: #6b7280;
+    color: #535761;
 }
 
 .seasonal-value {
     font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.seasonal-value-1 {
+    font-size: 12px;
     font-weight: 600;
     color: #111827;
 }
@@ -1917,6 +1939,11 @@ onBeforeUnmount(() => {
     z-index: 20;
     display: flex;
     flex-direction: column;
+    transition: all 0.2s;
+}
+
+.market-info-box:hover {
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .market-indicators {

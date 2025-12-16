@@ -34,8 +34,8 @@
                     <input :type="showPassword ? 'text' : 'password'" placeholder="Password" v-model="password"
                         class="login-input" @keyup.enter="handleLogin" />
                     <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn">
-                        <Eye v-if="!showPassword" class="password-icon" />
-                        <EyeOff v-else class="password-icon" />
+                        <EyeOff v-if="!showPassword" class="password-icon" />
+                        <Eye v-else class="password-icon" />
                     </button>
                 </div>
 
@@ -265,8 +265,8 @@ const handleLogin = async () => {
 .login-form {
     background: rgba(51, 65, 85, 0.85);
     backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 3rem 2.5rem;
+    border-radius: 16px;
+    padding: 4rem 2.5rem;
     width: 100%;
     max-width: 420px;
     box-shadow:
@@ -278,7 +278,7 @@ const handleLogin = async () => {
     color: white;
     font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 2rem;
+    margin-bottom: 3.5rem;
     text-align: center;
     letter-spacing: -0.5px;
 }
@@ -290,7 +290,7 @@ const handleLogin = async () => {
 }
 
 .password-input-group {
-    margin-bottom: 2.5rem;
+    margin-bottom: 3.5rem;
 }
 
 .login-input {
@@ -298,7 +298,7 @@ const handleLogin = async () => {
     padding: 1rem 3rem 1rem 1rem;
     background: rgba(30, 41, 59, 0.8);
     border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: 12px;
+    border-radius: 8px;
     color: white;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -310,7 +310,7 @@ const handleLogin = async () => {
 
 .login-input:focus {
     outline: none;
-    border-color: rgba(148, 163, 184, 0.5);
+    border-color: rgba(148, 163, 184, 0.8);
     background: rgba(30, 41, 59, 0.9);
     box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }

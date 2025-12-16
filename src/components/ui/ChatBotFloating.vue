@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <div class="header-info">
-                        <h1>Oil Market AI</h1>
+                        <h1>Marimo</h1>
                         <div class="status-row">
                             <span class="status-dot"></span>
                             <span>AI 어시스턴트</span>

@@ -1,6 +1,8 @@
 import { ref, computed, Ref } from "vue";
 import { defineStore } from "pinia";
 import { authService } from "@/api/auth";
+import { useMapDataStore } from "@/stores/mapData";
+import { useReportDataStore } from "@/stores/reportData";
 
 /* ============================
    타입 정의
@@ -88,7 +90,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (tokens.userId) {
       localStorage.setItem("userId", tokens.userId.toString());
-      localStorage.setItem("user_id", tokens.userId.toString()); 
+      localStorage.setItem("user_id", tokens.userId.toString());
     }
   };
 
@@ -103,7 +105,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem("grant_type");
     localStorage.removeItem("refresh_token_expire");
     localStorage.removeItem("user");
-    
+
     // 채팅 관련 localStorage 정리
     localStorage.removeItem("user_id");
     localStorage.removeItem("userId");
@@ -122,6 +124,16 @@ export const useAuthStore = defineStore("auth", () => {
       // 로그아웃 오류 무시
     } finally {
       clearTokens();
+
+      // 다른 스토어들 초기화
+      try {
+        const mapDataStore = useMapDataStore();
+        const reportDataStore = useReportDataStore();
+        mapDataStore.reset();
+        reportDataStore.clearCache();
+      } catch (e) {
+        // 스토어 초기화 오류 무시
+      }
     }
   };
 

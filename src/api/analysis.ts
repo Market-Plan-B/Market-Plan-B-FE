@@ -1,5 +1,12 @@
 import axios, { AxiosResponse } from "axios";
 
+// Overall Impact 타입 정의
+export interface OverallImpact {
+  date: string;
+  overall_score: number;
+  overall_change: number;
+}
+
 // 🔥 영향도 분석 API 타입 정의
 export interface ImpactAnalysisResponse {
   date: string;

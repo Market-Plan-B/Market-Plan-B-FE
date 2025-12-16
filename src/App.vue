@@ -9,9 +9,13 @@
         <Sidebar @sidebar-hover="handleSidebarHover" />
 
         <div class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
-            :style="{ marginLeft: isExpanded ? '13rem' : '4rem' }">
+            :style="{ marginLeft: isExpanded ? '15rem' : '4rem' }">
             <main class="flex-1 overflow-y-auto p-8">
-                <router-view />
+                <router-view v-slot="{ Component }">
+                    <keep-alive :include="['DashboardView']">
+                        <component :is="Component" />
+                    </keep-alive>
+                </router-view>
             </main>
         </div>
     </div>
@@ -23,7 +27,7 @@ import { useRoute } from "vue-router";
 import Sidebar from "@/components/ui/Sidebar.vue";
 
 const route = useRoute();
-const isExpanded = ref(true);
+const isExpanded = ref(false);
 
 const isLoginPage = computed(() => route.path === '/login');
 
