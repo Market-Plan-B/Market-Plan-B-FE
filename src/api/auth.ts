@@ -58,10 +58,15 @@ axios.interceptors.response.use(
 
 export const authService = {
   async signIn(email: string, password: string): Promise<SignInResponse> {
+    console.log('authService.signIn 시작:', { email, password: '***' }); // 디버깅
+    console.log('API URL:', `${API_BASE}/sign-in`); // 디버깅
+    
     const response = await axios.post(`${API_BASE}/sign-in`, { 
       email, 
       password 
     });
+    
+    console.log('signIn 응답:', response.data); // 디버깅
     
     // accessToken만 localStorage에 저장 (refreshToken은 쿠키로 자동 처리)
     localStorage.setItem('access_token', response.data.accessToken);

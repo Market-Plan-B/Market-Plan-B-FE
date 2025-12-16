@@ -7,7 +7,7 @@ import "./assets/styles/theme.css";
 
 // axios 전역 설정
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "https://oil-api.skala25a.project.skala-ai.com";
+// baseURL 제거 - vite proxy 사용
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const app = createApp(App);
