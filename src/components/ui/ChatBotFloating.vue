@@ -336,12 +336,34 @@ const getUserId = async () => {
 const initializeChat = async () => {
     isLoadingQuestions.value = true
     try {
-        const session = await chatAPI.createSession(await getUserId())
-        currentSessionId.value = session.id
-
-        const suggestions = await chatAPI.getSuggestions(session.id)
-
-        quickQuestions.value = suggestions.suggestions.map((text) => ({
+        // 기존 세션 ID 확인
+        let sessionId = localStorage.getItem('session_id')
+        
+        if (sessionId) {
+            console.log('[LOG] 기존 세션 사용 시도:', sessionId)
+            currentSessionId.value = sessionId
+            
+            try {
+                // 세션 유효성 검사 (추천 질문 요청으로 확인)
+                await chatAPI.getSuggestions(currentSessionId.value)
+                console.log('[LOG] 기존 세션 유효함')
+            } catch (error) {
+                console.log('[LOG] 세션 만료/무효 - 새 세션 생성')
+                sessionId = null
+                localStorage.removeItem('session_id')
+            }
+        }
+        
+        if (!sessionId) {
+            console.log('[LOG] 새 세션 생성')
+            const session = await chatAPI.createSession(await getUserId())
+            currentSessionId.value = session.id
+            localStorage.setItem('session_id', session.id)
+        }
+        
+        const suggestions = await chatAPI.getSuggestions(currentSessionId.value)
+        
+        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
             title: text,
             query: text
         }))
@@ -360,7 +382,10 @@ const openChat = async () => {
     try {
         await getUserId()
         isOpen.value = true
-        if (!currentSessionId.value) {
+        
+        // 세션이 없거나 localStorage에 저장된 세션과 다르면 초기화
+        const storedSessionId = localStorage.getItem('session_id')
+        if (!currentSessionId.value || currentSessionId.value !== storedSessionId) {
             await initializeChat()
         }
         nextTick(() => {
@@ -579,27 +604,62 @@ const sendMessage = async (query) => {
         msg.toolText = '시장 데이터 분석 중...'
         scrollToBottom()
 
-        const response = await chatAPI.sendMessage(query, currentSessionId.value, await getUserId())
-
-        msg.status = 'complete'
-        msg.answerTime = getTime()
-
-        const { text, chart } = separateTextAndChart(response.message)
-
-        await typeWriter(msg, text)
-
-        if (chart) {
-            msg.chartData = chart
-            nextTick(() => {
+        try {
+            const response = await chatAPI.sendMessage(query, currentSessionId.value, await getUserId())
+            
+            msg.status = 'complete'
+            msg.answerTime = getTime()
+            
+            // 텍스트와 차트 분리
+            const { text, chart } = separateTextAndChart(response.message)
+            
+            await typeWriter(msg, text)
+            
+            // 차트 렌더링
+            if (chart) {
+              msg.chartData = chart
+              nextTick(() => {
                 const canvas = document.querySelector(`#chart-${messages.length - 1}`)
                 if (canvas) {
-                    renderChart(canvas, chart)
+                  renderChart(canvas, chart)
                 }
-            })
+              })
+            }
+            
+            msg.suggestions = response.suggestions || []
+            
+        } catch (apiError) {
+            // 세션 만료 오류 처리
+            if (apiError.response?.status === 404 || apiError.response?.status === 400) {
+                console.log('[LOG] 세션 만료 - 새 세션으로 재시도')
+                localStorage.removeItem('session_id')
+                await initializeChat()
+                
+                // 새 세션으로 재시도
+                const response = await chatAPI.sendMessage(query, currentSessionId.value, await getUserId())
+                
+                msg.status = 'complete'
+                msg.answerTime = getTime()
+                
+                const { text, chart } = separateTextAndChart(response.message)
+                await typeWriter(msg, text)
+                
+                if (chart) {
+                  msg.chartData = chart
+                  nextTick(() => {
+                    const canvas = document.querySelector(`#chart-${messages.length - 1}`)
+                    if (canvas) {
+                      renderChart(canvas, chart)
+                    }
+                  })
+                }
+                
+                msg.suggestions = response.suggestions || []
+            } else {
+                throw apiError
+            }
         }
-
-        msg.suggestions = response.suggestions || []
-
+        
     } catch (error) {
         if (error.message === '로그인이 필요합니다.') {
             alert('로그인이 필요합니다.')
@@ -627,17 +687,31 @@ const endSession = async () => {
             // 세션 종료 실패 무시
         }
         currentSessionId.value = null
+        localStorage.removeItem('session_id')
     }
 }
 
+
+// 대시보드에서 미리 세션과 추천 질문 로드
 const preloadChatData = async () => {
     try {
-        const session = await chatAPI.createSession(await getUserId())
-        currentSessionId.value = session.id
-
-        const suggestions = await chatAPI.getSuggestions(session.id)
-
-        quickQuestions.value = suggestions.suggestions.map((text) => ({
+        console.log('[LOG] 채팅 데이터 미리 로드 시작')
+        
+        // 기존 세션 ID 확인
+        let sessionId = localStorage.getItem('session_id')
+        
+        if (sessionId) {
+            console.log('[LOG] 기존 세션 사용:', sessionId)
+            currentSessionId.value = sessionId
+        } else {
+            const session = await chatAPI.createSession(await getUserId())
+            currentSessionId.value = session.id
+            localStorage.setItem('session_id', session.id)
+        }
+        
+        const suggestions = await chatAPI.getSuggestions(currentSessionId.value)
+        
+        quickQuestions.value = suggestions.suggestions.map((text, index) => ({
             title: text,
             query: text
         }))

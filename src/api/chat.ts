@@ -1,5 +1,8 @@
 import axios from "axios";
 
+// axios 기본 설정 - 쿠키 자동 포함
+axios.defaults.withCredentials = true;
+
 const API_BASE_URL = "https://oil-api.skala25a.project.skala-ai.com/api/chat";
 
 export interface ChatMessage {

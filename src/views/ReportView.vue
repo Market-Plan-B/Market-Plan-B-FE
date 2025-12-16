@@ -232,8 +232,8 @@ watch([mode, selectedDate], () => {
 onMounted(() => {
     updateLastUpdateTime();
     setInterval(updateLastUpdateTime, 60000);
-    // 초기 로딩
-    loadDaily();
+    // 초기 로딩 - 현재 모드에 따라 결정
+    mode.value === "daily" ? loadDaily() : loadWeekly();
 });
 </script>
 
