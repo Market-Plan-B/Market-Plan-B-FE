@@ -171,7 +171,7 @@ async function loadDaily() {
     try {
         const [reportRes, cardNewsRes] = await Promise.all([
             reportsAPI.getDailyReport(selectedDate.value),
-            reportsAPI.getDailyCardnews()
+            reportsAPI.getDailyCardnews(selectedDate.value)
         ]);
 
         reportHtml.value = reportRes.html_resource ?? "";

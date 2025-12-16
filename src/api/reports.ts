@@ -18,9 +18,10 @@ export interface ReportResponse {
 
 export const reportsAPI = {
   // Daily Cardnews
-  async getDailyCardnews(): Promise<CardNewsImagesResponse> {
+  async getDailyCardnews(queryDate: string): Promise<CardNewsImagesResponse> {
     const res = await axios.get<CardNewsImagesResponse>(
-      `${API_BASE_URL}/api/reports/daily/cardnews`
+      `${API_BASE_URL}/api/reports/daily/cardnews`,
+      { params: { query_date: queryDate}}
     );
     return res.data;
   },

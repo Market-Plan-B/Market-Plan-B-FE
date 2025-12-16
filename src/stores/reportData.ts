@@ -36,7 +36,7 @@ export const useReportDataStore = defineStore("reportData", () => {
       // 리포트와 카드뉴스 병렬 로드
       const [reportRes, cardNewsRes] = await Promise.all([
         reportsAPI.getDailyReport(date),
-        reportsAPI.getDailyCardnews().catch(() => ({ images: [] })),
+        reportsAPI.getDailyCardnews(date).catch(() => ({ images: [] })),
       ]);
 
       const result: CachedReport = {
