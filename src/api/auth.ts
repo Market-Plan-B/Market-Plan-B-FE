@@ -1,12 +1,9 @@
 import axios from 'axios';
 
-// axios 기본 설정 - 쿠키 자동 포함
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "https://oil-api.skala25a.project.skala-ai.com";
-axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const API_BASE = "/api/auth";
 
+// 백엔드 AuthResponse에 맞는 인터페이스
 export interface SignInResponse {
   accessToken: string;
   userName: string;
@@ -17,11 +14,9 @@ export interface RefreshResponse {
   accessToken: string;
 }
 
-
-
 // 요청 인터셉터 - Authorization 헤더 자동 추가
 axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -32,53 +27,88 @@ axios.interceptors.request.use(config => {
 axios.interceptors.response.use(
   response => response,
   async error => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
       try {
+        // refreshToken은 쿠키로 자동 전송됨
         const response = await axios.post(`${API_BASE}/refresh`);
-        localStorage.setItem('accessToken', response.data.accessToken);
+        const newAccessToken = response.data.accessToken;
         
-        // 원래 요청 재시도
-        error.config.headers.Authorization = `Bearer ${response.data.accessToken}`;
-        return axios.request(error.config);
-      } catch {
-        localStorage.removeItem('accessToken');
+        // 새 토큰 저장
+        localStorage.setItem('access_token', newAccessToken);
+        
+        // 원래 요청에 새 토큰 적용
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // 리프레시 토큰도 만료된 경우
+        localStorage.removeItem('access_token');
         window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
+    
     return Promise.reject(error);
   }
 );
 
 export const authService = {
   async signIn(email: string, password: string): Promise<SignInResponse> {
-    const response = await axios.post(`${API_BASE}/sign-in`, { email, password });
+    const response = await axios.post(`${API_BASE}/sign-in`, { 
+      email, 
+      password 
+    });
+    
+    // accessToken만 localStorage에 저장 (refreshToken은 쿠키로 자동 처리)
+    localStorage.setItem('access_token', response.data.accessToken);
+    
     return response.data;
   },
 
   async refresh(): Promise<RefreshResponse> {
+    // refreshToken은 쿠키로 자동 전송됨
     const response = await axios.post(`${API_BASE}/refresh`);
-    localStorage.setItem('accessToken', response.data.accessToken);
+    
+    // 새 accessToken 저장
+    localStorage.setItem('access_token', response.data.accessToken);
+    
     return response.data;
   },
 
   async logout(): Promise<string> {
-    // 현재 채팅 세션 종료
-    const currentSessionId = localStorage.getItem('session_id');
-    if (currentSessionId) {
-      try {
-        await axios.delete(`/api/chat/session/${currentSessionId}`);
-      } catch (error) {
-        console.warn('채팅 세션 종료 실패:', error);
+    try {
+      // 1. 채팅 세션 종료
+      const currentSessionId = localStorage.getItem('session_id');
+      const currentUserId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+      
+      if (currentSessionId && currentUserId) {
+        try {
+          await axios.post('/api/chat/session/end', {
+            session_id: parseInt(currentSessionId),
+            user_id: parseInt(currentUserId)
+          });
+        } catch (error) {
+          console.warn('채팅 세션 종료 실패:', error);
+        }
       }
+      
+      // 2. 백엔드 로그아웃 API 호출 (쿠키 삭제 + DB에서 refreshToken 제거)
+      await axios.post(`${API_BASE}/logout`);
+      
+    } catch (error) {
+      console.warn('로그아웃 API 실패:', error);
+    } finally {
+      // 3. 프론트엔드 데이터 정리
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('session_id');
     }
-    
-    // 프론트엔드 데이터 정리
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('session_id');
     
     return "로그아웃 성공";
   },
 };
 
-// 다른 API에서 사용할 수 있도록 export
 export default axios;
