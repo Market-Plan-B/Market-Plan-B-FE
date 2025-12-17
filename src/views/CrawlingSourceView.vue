@@ -222,7 +222,7 @@
                         <th class="text-left">BASE URL</th>
                         <th class="text-center">상태</th>
                         <th class="text-center">활성화</th>
-                        <th class="text-center">작업</th>
+                        <th class="text-center">수정</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -252,8 +252,11 @@
                         </td>
                         <td class="text-center">
                             <div class="cell-content-center">
-                                <button @click="openModal(source)" class="icon-btn icon-btn--edit">
-                                    <Pencil :size="16" />
+                                <button @click="openModal(source)" class="icon-btn icon-btn--edit" title="수정">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
                                 </button>
                             </div>
                         </td>
@@ -1569,15 +1572,20 @@ const toggleSource = async (source: Source) => {
 
 .icon-btn {
     padding: 8px;
-    border: none;
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    background: transparent;
-    color: #000;
+    background: #f9fafb;
+    color: #374151;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.icon-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
 }
 
 .icon-btn--edit:hover {
