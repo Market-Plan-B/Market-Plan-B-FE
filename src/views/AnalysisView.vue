@@ -25,12 +25,14 @@
                             <span class="key-indicator-label">예측 대비 변화량</span>
                             <svg :class="['key-indicator-icon', overallChange >= 0 ? 'icon-green' : 'icon-red']"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                <path v-if="overallChange >= 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                             </svg>
                         </div>
                         <div :class="['key-indicator-value', overallChange >= 0 ? 'value-green' : 'value-red']">
-                            {{ overallChange >= 0 ? '+' : '' }}{{ fmt(overallChange, 4) }}
+                            {{ overallChange >= 0 ? '+' : '' }}{{ fmt(overallChange, 2) }}%
                         </div>
                         <div class="key-indicator-description">
                             {{ changeDescription }}
