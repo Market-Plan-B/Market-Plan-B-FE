@@ -14,40 +14,18 @@
                 </div>
             </div>
 
-            <!-- 탭바 -->
-            <div class="content-tab-header">
-                <div class="flex justify-between items-center">
-                    <div class="tab-container">
-                        <div class="tab-wrapper">
-                            <button @click="switchMode('daily')" class="tab-button"
-                                :class="{ 'active': mode === 'daily' }">
-                                Daily
-                            </button>
-                            <button @click="switchMode('weekly')" class="tab-button"
-                                :class="{ 'active': mode === 'weekly' }">
-                                Weekly
-                            </button>
-                            <div class="tab-underline" :class="{ 'weekly-active': mode === 'weekly' }"></div>
-                            <div class="tab-underline" :class="{ 'weekly-active': mode === 'weekly' }"></div>
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <input type="date" v-model="selectedDate" class="date-input" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- 로딩 바 제거됨 -->
-
-            <!-- 데일리 뉴스 (Daily 모드에서만) -->
+            <!-- 데일리 뉴스 -->
             <Transition name="fade-slide">
-                <div v-if="mode === 'daily' && !isLoading" class="daily-news-section">
+                <div v-if="!isLoading" class="daily-news-section">
                     <div class="news-header">
                         <div class="flex items-center gap-3">
                             <h2 class="text-xl font-bold text-gray-900">Daily News</h2>
                             <span v-if="cardNewsImages.length > 0" class="news-count-badge">
                                 {{ cardNewsImages.length }} 개의 카드뉴스
                             </span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <input type="date" v-model="selectedDate" class="date-input" />
                         </div>
                     </div>
                     <div v-if="cardNewsImages.length > 0" class="card-news-container">
@@ -133,7 +111,6 @@ const isLoading = ref(false);
 const loadingProgress = ref(0);
 const lastUpdateTime = ref('');
 
-const mode = ref("daily");
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const reportHtml = ref("");
 
@@ -196,44 +173,14 @@ async function loadDaily() {
     }
 }
 
-async function loadWeekly() {
-    isLoading.value = true;
-
-    try {
-        const reportRes = await reportsAPI.getWeeklyReport(selectedDate.value);
-
-        if (reportRes && reportRes.html_resource) {
-            reportHtml.value = reportRes.html_resource;
-            if (reportRes.created_at) {
-                const date = new Date(reportRes.created_at);
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
-            }
-        } else {
-            reportHtml.value = "";
-        }
-    } catch (error) {
-        console.error('위클리 리포트 로드 실패:', error);
-        reportHtml.value = "";
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-function switchMode(m) {
-    mode.value = m;
-}
-
-watch([mode, selectedDate], () => {
-    mode.value === "daily" ? loadDaily() : loadWeekly();
+watch(selectedDate, () => {
+    loadDaily();
 });
 
 onMounted(() => {
     updateLastUpdateTime();
     setInterval(updateLastUpdateTime, 60000);
-    // 초기 로딩 - 현재 모드에 따라 결정
-    mode.value === "daily" ? loadDaily() : loadWeekly();
+    loadDaily();
 });
 </script>
 
@@ -319,64 +266,6 @@ onMounted(() => {
     font-weight: 600;
 }
 
-/* 탭바 */
-.content-tab-header {
-    padding: 16px 32px;
-    background: white;
-    border-bottom: 1px solid #cbd5e1;
-}
-
-/* Daily/Weekly 탭바 스타일 */
-.tab-container {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.tab-wrapper {
-    position: relative;
-    display: flex;
-    background: transparent;
-    border-bottom: 1px solid #cbd5e1;
-    min-width: 200px;
-}
-
-.tab-button {
-    position: relative;
-    padding: 18px 32px;
-    font-size: 16px;
-    font-weight: 500;
-    color: #a0a0a0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 2;
-}
-
-.tab-button:hover {
-    color: #6b7280;
-}
-
-.tab-button.active {
-    color: #f97316;
-    font-weight: 600;
-}
-
-.tab-underline {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 50%;
-    height: 3px;
-    background: #f97316;
-    border-radius: 2px 2px 0 0;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
-}
-
-.tab-underline.weekly-active {
-    transform: translateX(100%);
-}
 
 /* 날짜 입력 */
 .date-input {
@@ -405,7 +294,7 @@ onMounted(() => {
 /* Daily News 섹션 */
 .daily-news-section {
     padding: 32px;
-    background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
     border-bottom: 1px solid #cbd5e1;
 }
 
@@ -414,6 +303,7 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
+    gap: 16px;
 }
 
 .news-count-badge {
@@ -681,14 +571,22 @@ onMounted(() => {
         padding: 24px;
     }
 
-    .content-tab-header {
-        flex-direction: column;
-        gap: 16px;
-        padding: 16px 24px;
-    }
-
     .daily-news-section {
         padding: 24px;
+    }
+
+    .news-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .news-header .flex-shrink-0 {
+        width: 100%;
+    }
+
+    .date-input {
+        width: 100%;
     }
 
     .card-news-container {
@@ -713,9 +611,6 @@ onMounted(() => {
         align-self: flex-start;
     }
 
-    .tab-wrapper {
-        width: 100%;
-    }
 
     .card-news-container {
         grid-template-columns: 1fr;

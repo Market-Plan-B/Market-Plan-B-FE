@@ -35,8 +35,8 @@
 
         <!-- 하단: SK 팀 정보 및 로그아웃 -->
         <div class="sidebar-footer">
-            <!-- 알림 버튼 -->
-            <div class="notification-entry">
+            <!-- 알림 버튼 (크롤링 소스 관리 페이지에서는 숨김) -->
+            <div v-if="route.path !== '/crawling-sources'" class="notification-entry">
                 <button @click="openNotifications" :class="[
                     'nav-button',
                     isExpanded ? 'nav-button-expanded' : 'nav-button-collapsed',
@@ -49,7 +49,7 @@
                         </span>
                     </div>
                     <span v-if="isExpanded" class="nav-label">
-                        알림 설정
+                        알림
                     </span>
                 </button>
             </div>
@@ -204,7 +204,7 @@ const handleLogout = async () => {
 }
 
 .logo-container {
-    width: 2.5rem;
+    width: 3.0rem;
     height: 2.5rem;
     display: flex;
     align-items: center;
@@ -387,7 +387,7 @@ const handleLogout = async () => {
 .team-label {
     display: inline-block;
     width: 100%;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: #94a3b8;
 }
 
