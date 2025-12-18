@@ -32,7 +32,7 @@ export default defineConfig({
         rewrite: (path) =>
           path.replace(/^\/yahoo-finance/, "/v8/finance/chart"),
         secure: false,
-      }
+      },
     },
   },
 });
