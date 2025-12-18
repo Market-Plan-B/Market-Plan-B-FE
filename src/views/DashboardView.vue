@@ -36,7 +36,6 @@
 import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import lottie from "lottie-web";
-import { loadAllFinancialData } from '@/api/financial';
 import { useMapDataStore } from "@/stores/mapData";
 
 // keep-alive를 위한 컴포넌트 이름 설정
@@ -62,27 +61,6 @@ const loading = computed(() => mapDataStore.dailyFactorLoading || !mapDataStore.
 const lottieContainer = ref(null);
 const chatBot = ref(null);
 
-const financial = ref({
-    brent: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
-    wti: { price: 0, value: 0, prevClose: 0, change: 0, changePercent: 0 },
-    crack: { value: 0 },
-    naturalGas: { value: 0, change: 0 },
-    heatingOil: { value: 0, change: 0 },
-    usdkrw: { price: 0 },
-    cnyusd: { price: 0 },
-    eurusd: { price: 0, change: 0 },
-    dxy: { index: 0, change: 0 },
-    us10y: { rate: 0 },
-    us2y: { rate: 0 },
-    sp500: { value: 0, change: 0 },
-    vix: { value: 0, change: 0 },
-    gold: { value: 0, change: 0 },
-    copper: { value: 0, change: 0 },
-});
-
-// 예측 대비 변화 = overall_score 그대로
-const predictedChange = computed(() => mapDataStore.overallImpactData);
-
 const fmt = (v, decimals = 2) => {
     if (v == null || isNaN(v)) return '-';
     return v.toFixed(decimals);
@@ -91,14 +69,6 @@ const fmt = (v, decimals = 2) => {
 const loadPredictedBrentPrice = async () => {
     try {
         await mapDataStore.loadPredictedBrentPrice();
-    } catch (error) {
-        // 로드 실패 무시
-    }
-};
-
-const loadFinancialData = async () => {
-    try {
-        financial.value = await loadAllFinancialData();
     } catch (error) {
         // 로드 실패 무시
     }
@@ -123,7 +93,7 @@ onMounted(async () => {
         });
     }
 
-    await Promise.all([loadPredictedBrentPrice(), loadFinancialData()]);
+    await loadPredictedBrentPrice();
     await loadDailyFactor();
 
     // 채팅 데이터 미리 로드 (비동기로 백그라운드 실행)
