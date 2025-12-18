@@ -57,7 +57,8 @@
                         <div class="loading-spinner"></div>
                         <p class="loading-title">리포트를 불러오는 중...</p>
                     </div>
-                    <div v-else-if="reportHtml" class="report-content report-html-wrapper" v-html="sanitizedReportHtml">
+                    <div v-else-if="reportHtml && reportHtml.trim().length > 0"
+                        class="report-content report-html-wrapper" v-html="sanitizedReportHtml">
                     </div>
                     <div v-else class="empty-state">
                         <p class="empty-title">리포트가 없습니다</p>
@@ -148,24 +149,33 @@ async function loadDaily() {
     try {
         const [reportRes, cardNewsRes] = await Promise.all([
             reportsAPI.getDailyReport(selectedDate.value),
-            reportsAPI.getDailyCardnews(selectedDate.value)
+            reportsAPI.getDailyCardnews(selectedDate.value).catch((err) => {
+                console.warn('카드뉴스 로드 실패:', err);
+                return { images: [] };
+            })
         ]);
 
-        reportHtml.value = reportRes.html_resource ?? "";
-        cardNewsImages.value = cardNewsRes.images.map(base64 => {
+        reportHtml.value = reportRes?.html_resource ?? "";
+        cardNewsImages.value = (cardNewsRes?.images || []).map(base64 => {
+            if (!base64) return null;
             const cleanBase64 = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`;
             return cleanBase64;
-        });
+        }).filter(Boolean);
+
+        console.log('리포트 HTML 길이:', reportHtml.value.length);
         console.log('카드뉴스 이미지:', cardNewsImages.value.length, '개 로드됨');
 
-        if (reportRes.created_at) {
-            const date = new Date(reportRes.created_at);
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
+        if (reportRes?.start_date) {
+            const date = new Date(reportRes.start_date);
+            if (!isNaN(date.getTime())) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
+            }
         }
     } catch (error) {
         console.error('데일리 리포트 로드 실패:', error);
+        console.error('에러 상세:', error.response?.data || error.message);
         reportHtml.value = "";
         cardNewsImages.value = [];
     } finally {
@@ -173,8 +183,11 @@ async function loadDaily() {
     }
 }
 
-watch(selectedDate, () => {
-    loadDaily();
+watch(selectedDate, (newDate, oldDate) => {
+    if (newDate && newDate !== oldDate) {
+        console.log('날짜 변경됨:', oldDate, '->', newDate);
+        loadDaily();
+    }
 });
 
 onMounted(() => {

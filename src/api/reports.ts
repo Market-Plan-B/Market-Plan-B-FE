@@ -1,6 +1,5 @@
 import axios from "axios";
 
-
 const API_BASE_URL = "https://oil-api.skala25a.project.skala-ai.com";
 
 // ==============================
@@ -21,7 +20,10 @@ export const reportsAPI = {
   async getDailyCardnews(queryDate: string): Promise<CardNewsImagesResponse> {
     const res = await axios.get<CardNewsImagesResponse>(
       `${API_BASE_URL}/api/reports/daily/cardnews`,
-      { params: { query_date: queryDate}}
+      {
+        params: { query_date: queryDate },
+        withCredentials: false,
+      }
     );
     return res.data;
   },
@@ -30,17 +32,10 @@ export const reportsAPI = {
   async getDailyReport(queryDate: string): Promise<ReportResponse> {
     const res = await axios.get<ReportResponse>(
       `${API_BASE_URL}/api/reports/daily/report`,
-      { params: { query_date: queryDate } }
-    );
-    return res.data;
-  },
-
-  // Weekly Report
-  // 백엔드는 해당 날짜가 start_date와 end_date 범위에 포함되는 위클리 리포트를 반환
-  async getWeeklyReport(queryDate: string): Promise<ReportResponse> {
-    const res = await axios.get<ReportResponse>(
-      `${API_BASE_URL}/api/reports/weekly/report`,
-      { params: { query_date: queryDate } }
+      {
+        params: { query_date: queryDate },
+        withCredentials: false,
+      }
     );
     return res.data;
   },
