@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { User, Lock, Eye, EyeOff } from 'lucide-vue-next';
+import { User, Eye, EyeOff } from 'lucide-vue-next';
 import { authService } from '@/api/auth';
 
 const router = useRouter();
@@ -88,17 +88,13 @@ const handleLogin = async () => {
         return;
     }
 
-    console.log('로그인 시도:', email.value); // 디버깅
     loading.value = true;
     errorMessage.value = '';
 
     try {
-        // 로그인 API 호출
-        console.log('authService.signIn 호출 전'); // 디버깅
         const { useAuthStore } = await import('@/stores/auth.js');
         const authStore = useAuthStore();
         const response = await authService.signIn(email.value, password.value);
-        console.log('로그인 응답:', response); // 디버깅
 
         // JWT 토큰에서 사용자 정보 추출
         const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
@@ -127,12 +123,7 @@ const handleLogin = async () => {
         }
 
         loading.value = false;
-
-        loading.value = false;
-
     } catch (error: any) {
-        console.error('로그인 에러:', error); // 디버깅
-        console.error('에러 상세:', error.response); // 디버깅
         loading.value = false;
         errorMessage.value = error.response?.data?.message ||
             error.response?.data?.detail ||

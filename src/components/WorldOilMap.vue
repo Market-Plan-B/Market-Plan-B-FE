@@ -1688,7 +1688,7 @@ onBeforeUnmount(() => {
 
 /* 영향도 모달 섹션 카드 */
 .impact-section-card {
-    background: #f8fafc;
+    background: #fbfdff;
 }
 
 .impact-header {

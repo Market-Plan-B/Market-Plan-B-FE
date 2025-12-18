@@ -56,15 +56,9 @@ export const useReportDataStore = defineStore("reportData", () => {
     dailyReportCache.value.clear();
   }
 
-  // 특정 날짜 캐시 삭제
-  function clearDateCache(date: string) {
-    dailyReportCache.value.delete(date);
-  }
-
   return {
     dailyReportCache,
     loadDailyReport,
     clearCache,
-    clearDateCache,
   };
 });

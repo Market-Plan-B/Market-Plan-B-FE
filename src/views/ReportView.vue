@@ -5,11 +5,9 @@
         <section class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
             <!-- 헤더 영역 -->
             <div class="report-header">
-                <div class="header-content">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="report-title">시장 인텔리전스 리포트</h2>
-                        </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="report-title">마켓 인텔리전스 리포트</h2>
                     </div>
                 </div>
             </div>
@@ -109,8 +107,6 @@ const cardNewsImages = ref([]);
 const currentIndex = ref(0);
 const isModalOpen = ref(false);
 const isLoading = ref(false);
-const loadingProgress = ref(0);
-const lastUpdateTime = ref('');
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const reportHtml = ref("");
@@ -136,21 +132,13 @@ const openImage = (idx) => { currentIndex.value = idx; isModalOpen.value = true;
 const nextImage = () => { currentIndex.value = (currentIndex.value + 1) % cardNewsImages.value.length; };
 const prevImage = () => { currentIndex.value = (currentIndex.value - 1 + cardNewsImages.value.length) % cardNewsImages.value.length; };
 
-function updateLastUpdateTime() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
-}
-
 async function loadDaily() {
     isLoading.value = true;
 
     try {
         const [reportRes, cardNewsRes] = await Promise.all([
             reportsAPI.getDailyReport(selectedDate.value),
-            reportsAPI.getDailyCardnews(selectedDate.value).catch((err) => {
-                console.warn('카드뉴스 로드 실패:', err);
+            reportsAPI.getDailyCardnews(selectedDate.value).catch(() => {
                 return { images: [] };
             })
         ]);
@@ -162,20 +150,8 @@ async function loadDaily() {
             return cleanBase64;
         }).filter(Boolean);
 
-        console.log('리포트 HTML 길이:', reportHtml.value.length);
-        console.log('카드뉴스 이미지:', cardNewsImages.value.length, '개 로드됨');
-
-        if (reportRes?.start_date) {
-            const date = new Date(reportRes.start_date);
-            if (!isNaN(date.getTime())) {
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                lastUpdateTime.value = `마지막 업데이트: ${hours}:${minutes}`;
-            }
-        }
     } catch (error) {
         console.error('데일리 리포트 로드 실패:', error);
-        console.error('에러 상세:', error.response?.data || error.message);
         reportHtml.value = "";
         cardNewsImages.value = [];
     } finally {
@@ -185,14 +161,11 @@ async function loadDaily() {
 
 watch(selectedDate, (newDate, oldDate) => {
     if (newDate && newDate !== oldDate) {
-        console.log('날짜 변경됨:', oldDate, '->', newDate);
         loadDaily();
     }
 });
 
 onMounted(() => {
-    updateLastUpdateTime();
-    setInterval(updateLastUpdateTime, 60000);
     loadDaily();
 });
 </script>
@@ -227,17 +200,6 @@ onMounted(() => {
     transform: translateY(20px);
 }
 
-.slide-down-enter-active,
-.slide-down-leave-active {
-    transition: all 0.3s ease;
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-    opacity: 0;
-    transform: translateY(-100%);
-}
-
 .modal-fade-enter-active,
 .modal-fade-leave-active {
     transition: opacity 0.3s ease;
@@ -262,23 +224,6 @@ onMounted(() => {
     margin: 0;
     color: #111827;
 }
-
-.update-time {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(47, 128, 237, 0.08);
-    border-radius: 20px;
-    border: 1px solid rgba(47, 128, 237, 0.15);
-}
-
-.update-text {
-    font-size: 12px;
-    color: #334155;
-    font-weight: 600;
-}
-
 
 /* 날짜 입력 */
 .date-input {
@@ -453,34 +398,6 @@ onMounted(() => {
     font-weight: 500;
 }
 
-.loading-subtitle {
-    font-size: 14px;
-    color: #8b7964;
-    margin-bottom: 32px;
-}
-
-.loading-progress {
-    width: 300px;
-    height: 8px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #ea770c 0%, #f97316 100%);
-    border-radius: 10px;
-    transition: width 0.3s ease;
-}
-
-.loading-percentage {
-    font-size: 14px;
-    font-weight: 600;
-    color: #ea770c;
-}
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -614,17 +531,6 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
-    .header-content .flex {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .update-time {
-        align-self: flex-start;
-    }
-
-
     .card-news-container {
         grid-template-columns: 1fr;
         max-width: 300px;
